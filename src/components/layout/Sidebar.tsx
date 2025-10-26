@@ -1,0 +1,132 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import {
+  Users,
+  Home,
+  Calendar,
+  CreditCard,
+  DollarSign,
+  MessageSquare,
+  Bell,
+  CheckSquare,
+  Settings,
+  LayoutDashboard
+} from 'lucide-react';
+
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ReactNode;
+  children?: { path: string; label: string }[];
+}
+
+const navItems: NavItem[] = [
+  {
+    path: '/',
+    label: '대시보드',
+    icon: <LayoutDashboard className="w-5 h-5" />
+  },
+  {
+    path: '/users',
+    label: '유저 관리',
+    icon: <Users className="w-5 h-5" />
+  },
+  {
+    path: '/properties',
+    label: '매물 관리',
+    icon: <Home className="w-5 h-5" />,
+    children: [
+      { path: '/properties', label: '매물 목록' },
+      { path: '/properties/review', label: '매물 심사' }
+    ]
+  },
+  {
+    path: '/reservations',
+    label: '예약 관리',
+    icon: <Calendar className="w-5 h-5" />
+  },
+  {
+    path: '/payments',
+    label: '결제 관리',
+    icon: <CreditCard className="w-5 h-5" />
+  },
+  {
+    path: '/settlements',
+    label: '정산 관리',
+    icon: <DollarSign className="w-5 h-5" />
+  },
+  {
+    path: '/inquiries',
+    label: '고객센터',
+    icon: <MessageSquare className="w-5 h-5" />
+  },
+  {
+    path: '/notifications',
+    label: '알림 서비스',
+    icon: <Bell className="w-5 h-5" />
+  }
+];
+
+export const Sidebar: React.FC = () => {
+  return (
+    <aside className="w-64 bg-gray-900 text-white min-h-screen flex flex-col">
+      {/* Logo */}
+      <div className="p-6 border-b border-gray-800">
+        <h1 className="text-xl font-bold">EZStay 관리자</h1>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-1">
+        {navItems.map((item) => (
+          <div key={item.path}>
+            <NavLink
+              to={item.path}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`
+              }
+            >
+              {item.icon}
+              <span className="font-medium">{item.label}</span>
+            </NavLink>
+
+            {/* Sub-menu */}
+            {item.children && (
+              <div className="ml-8 mt-1 space-y-1">
+                {item.children.map((child) => (
+                  <NavLink
+                    key={child.path}
+                    to={child.path}
+                    className={({ isActive }) =>
+                      `block px-4 py-2 rounded-lg text-sm transition-colors ${
+                        isActive
+                          ? 'bg-gray-800 text-white'
+                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                      }`
+                    }
+                  >
+                    {child.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </nav>
+
+      {/* Settings */}
+      <div className="p-4 border-t border-gray-800">
+        <NavLink
+          to="/settings"
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+        >
+          <Settings className="w-5 h-5" />
+          <span className="font-medium">설정</span>
+        </NavLink>
+      </div>
+    </aside>
+  );
+};
