@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.local
+
+# MCP configuration with secrets
+.claude/mcp_config.json

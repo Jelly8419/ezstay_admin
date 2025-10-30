@@ -16,7 +16,22 @@
       "Bash(gh:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Initialize EZstay Admin Dashboard\n\n- React 18 + TypeScript + Vite project setup\n- Tailwind CSS for styling\n- Complete admin dashboard layout with sidebar navigation\n- User management system (list, detail, status management)\n- Property management with review/approval workflow\n- Reservation, payment, settlement management pages\n- Inquiry and notification management\n- Mock data services for development\n- Protected routes with authentication context\n- Responsive design implementation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(echo $env:NOTION_API_TOKEN)",
+      "Bash(dir:*)",
+      "Bash(Select-String \"settings\")",
+      "Read(//c/Users/user/.claude/**)",
+      "Bash(npx:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-tree:*)",
+      "Read(//c/Users/user/AppData/Roaming/Claude/**)",
+      "Bash(Select-String \"mcp__notion\" -Path \"C:\\Users\\user\\.claude\\settings.local.json\")",
+      "Bash(git mv:*)",
+      "Bash(npm run build:test:*)"
     ],
     "deny": [],
     "ask": []

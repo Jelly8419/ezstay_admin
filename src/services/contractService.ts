@@ -1,12 +1,12 @@
 /**
- * 예약 관리 API 서비스
+ * 계약 관리 API 서비스
  */
 
 import { api } from './api';
 import { Pagination } from './userService';
 
-// 예약 타입
-export interface Reservation {
+// 계약 타입
+export interface Contract {
   id: number;
   status:
     | 'PENDING_APPROVAL'
@@ -50,8 +50,8 @@ export interface Reservation {
   };
 }
 
-// 예약 상세 타입
-export interface ReservationDetail extends Reservation {
+// 계약 상세 타입
+export interface ContractDetail extends Contract {
   totalWeeks: number;
   rentalItemsFee: number;
   discountType?: string;
@@ -85,14 +85,14 @@ export interface ReservationDetail extends Reservation {
   updatedAt: string;
 }
 
-// 예약 목록 응답 타입
-export interface ReservationListResponse {
-  reservations: Reservation[];
+// 계약 목록 응답 타입
+export interface ContractListResponse {
+  contracts: Contract[];
   pagination: Pagination;
 }
 
-// 예약 목록 조회 파라미터
-export interface ReservationListParams {
+// 계약 목록 조회 파라미터
+export interface ContractListParams {
   page?: number;
   limit?: number;
   status?: string;
@@ -101,25 +101,25 @@ export interface ReservationListParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
-export const reservationService = {
+export const contractService = {
   /**
-   * 예약 목록 조회
+   * 계약 목록 조회
    */
-  getReservations: (params: ReservationListParams = {}) => {
+  getContracts: (params: ContractListParams = {}) => {
     const queryString = new URLSearchParams(
       Object.entries(params)
         .filter(([, value]) => value !== undefined)
         .map(([key, value]) => [key, String(value)])
     ).toString();
 
-    return api.get<ReservationListResponse>(
-      `/admin/reservations${queryString ? `?${queryString}` : ''}`
+    return api.get<ContractListResponse>(
+      `/admin/contracts${queryString ? `?${queryString}` : ''}`
     );
   },
 
   /**
-   * 예약 상세 조회
+   * 계약 상세 조회
    */
-  getReservationDetail: (contractId: number) =>
-    api.get<ReservationDetail>(`/admin/reservations/${contractId}`),
+  getContractDetail: (contractId: number) =>
+    api.get<ContractDetail>(`/admin/contracts/${contractId}`),
 };

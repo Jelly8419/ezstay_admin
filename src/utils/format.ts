@@ -71,7 +71,7 @@ export const getStatusColor = (status: string): string => {
 };
 
 // 상태별 텍스트
-export const getStatusText = (status: string, type?: string): string => {
+export const getStatusText = (status: string, _type?: string): string => {
   const textMap: Record<string, string> = {
     // User
     active: '활성',

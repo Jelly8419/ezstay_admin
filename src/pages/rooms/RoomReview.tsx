@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { SearchBar } from '../../components/common/SearchBar';
 import { Eye, AlertCircle } from 'lucide-react';
-import { propertyService, Property } from '../../services/propertyService';
+import { propertyService, Property } from '../../services/roomService';
 
 const getStatusBadgeVariant = (status: string): 'warning' | 'success' | 'danger' | 'default' => {
   switch (status) {
@@ -30,7 +30,7 @@ const getStatusLabel = (status: string): string => {
   }
 };
 
-export const PropertyReview: React.FC = () => {
+export const RoomReview: React.FC = () => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -236,7 +236,7 @@ export const PropertyReview: React.FC = () => {
             variant="secondary"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/properties/${record.id}`);
+              navigate(`/rooms/${record.id}`);
             }}
           >
             <Eye className="w-4 h-4" />

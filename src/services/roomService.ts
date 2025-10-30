@@ -5,7 +5,7 @@
 import { api } from './api';
 import { Pagination } from './userService';
 
-// 매물 타입
+// API 응답 타입 (백엔드 응답 구조)
 export interface Property {
   id: number;
   roomName: string;

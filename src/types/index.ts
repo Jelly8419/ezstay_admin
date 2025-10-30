@@ -194,3 +194,57 @@ export interface RentalItemReservation {
   createdAt: string;
   updatedAt: string;
 }
+
+// 정산(Settlement) 관련 타입
+export type SettlementStatus = 'pending' | 'completed' | 'on_hold';
+
+export interface Settlement {
+  id: number;
+  hostId: number;
+  hostName: string;
+  amount: number;
+  bankAccount: string;
+  status: SettlementStatus;
+  scheduledAt: string;
+  completedAt?: string;
+}
+
+// 결제(Payment) 관련 타입
+export type PaymentStatus = 'success' | 'failed' | 'refunded';
+
+export interface Payment {
+  id: number;
+  contractId: number;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  paidAt: string;
+}
+
+// 고객 문의(Inquiry) 관련 타입
+export type InquiryStatus = 'pending' | 'answered';
+
+export interface Inquiry {
+  id: number;
+  userId: number;
+  userName: string;
+  title: string;
+  content: string;
+  status: InquiryStatus;
+  createdAt: string;
+  answeredAt?: string;
+  answer?: string;
+}
+
+// 알림(Notification) 관련 타입
+export type NotificationType = 'email' | 'sms';
+export type NotificationStatus = 'success' | 'failed';
+
+export interface Notification {
+  id: number;
+  type: NotificationType;
+  recipient: string;
+  template: string;
+  status: NotificationStatus;
+  sentAt: string;
+}

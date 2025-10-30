@@ -8,7 +8,6 @@ import {
   DollarSign,
   MessageSquare,
   Bell,
-  CheckSquare,
   Settings,
   LayoutDashboard
 } from 'lucide-react';
@@ -32,17 +31,17 @@ const navItems: NavItem[] = [
     icon: <Users className="w-5 h-5" />
   },
   {
-    path: '/properties',
+    path: '/rooms',
     label: '매물 관리',
     icon: <Home className="w-5 h-5" />,
     children: [
-      { path: '/properties', label: '매물 목록' },
-      { path: '/properties/review', label: '매물 심사' }
+      { path: '/rooms', label: '매물 목록' },
+      { path: '/rooms/review', label: '매물 심사' }
     ]
   },
   {
-    path: '/reservations',
-    label: '예약 관리',
+    path: '/contracts',
+    label: '계약 관리',
     icon: <Calendar className="w-5 h-5" />
   },
   {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -7,9 +6,9 @@ import { AdminLayout } from './components/layout/AdminLayout';
 import { Dashboard } from './pages/Dashboard';
 import { UserList } from './pages/users/UserList';
 import { UserDetail } from './pages/users/UserDetail';
-import PropertyList from './pages/properties/PropertyList';
-import { PropertyReview } from './pages/properties/PropertyReview';
-import ReservationList from './pages/reservations/ReservationList';
+import RoomList from './pages/rooms/RoomList';
+import { RoomReview } from './pages/rooms/RoomReview';
+import ContractList from './pages/contracts/ContractList';
 import PaymentList from './pages/payments/PaymentList';
 import SettlementList from './pages/settlements/SettlementList';
 import InquiryList from './pages/inquiries/InquiryList';
@@ -33,11 +32,11 @@ function App() {
               <Route path="users/:id" element={<UserDetail />} />
 
               {/* 매물 관리 */}
-              <Route path="properties" element={<PropertyList />} />
-              <Route path="properties/review" element={<PropertyReview />} />
+              <Route path="rooms" element={<RoomList />} />
+              <Route path="rooms/review" element={<RoomReview />} />
 
-              {/* 예약 관리 */}
-              <Route path="reservations" element={<ReservationList />} />
+              {/* 계약 관리 */}
+              <Route path="contracts" element={<ContractList />} />
 
               {/* 결제 관리 */}
               <Route path="payments" element={<PaymentList />} />

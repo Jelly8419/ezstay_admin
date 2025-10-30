@@ -21,7 +21,17 @@ export const Login: React.FC = () => {
 
     try {
       const response = await loginAdmin(formData);
-      login(response.admin);
+      // AdminInfo 타입으로 변환
+      login({
+        id: response.admin.id,
+        username: response.admin.username,
+        name: response.admin.name,
+        role: response.admin.role as 'super_admin' | 'admin' | 'cs_admin',
+        isActive: true,
+        lastLoginAt: response.admin.lastLoginAt,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
       navigate('/', { replace: true });
     } catch (err: any) {
       console.error('Login failed:', err);

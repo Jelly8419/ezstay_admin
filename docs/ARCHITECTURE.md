@@ -87,11 +87,11 @@ admin-dashboard/
 │   │   ├── users/
 │   │   │   ├── UserList.tsx       # 유저 목록
 │   │   │   └── UserDetail.tsx     # 유저 상세
-│   │   ├── properties/
-│   │   │   ├── PropertyList.tsx   # 매물 목록
-│   │   │   └── PropertyReview.tsx # 매물 심사
-│   │   ├── reservations/
-│   │   │   └── ReservationList.tsx
+│   │   ├── rooms/
+│   │   │   ├── RoomList.tsx       # 매물 목록
+│   │   │   └── RoomReview.tsx     # 매물 심사
+│   │   ├── contracts/
+│   │   │   └── ContractList.tsx   # 계약 목록
 │   │   ├── payments/
 │   │   │   └── PaymentList.tsx
 │   │   ├── settlements/
@@ -102,12 +102,13 @@ admin-dashboard/
 │   │       └── NotificationList.tsx
 │   │
 │   ├── data/               # Mock 데이터
-│   │   ├── mockProperties.ts
-│   │   ├── mockReservations.ts
+│   │   ├── mockRooms.ts
+│   │   ├── mockContracts.ts
 │   │   ├── mockPayments.ts
 │   │   ├── mockSettlements.ts
 │   │   ├── mockInquiries.ts
-│   │   └── mockNotifications.ts
+│   │   ├── mockNotifications.ts
+│   │   └── mockRentalItemReservations.ts
 │   │
 │   ├── types/              # TypeScript 타입 정의
 │   │   └── index.ts
@@ -358,6 +359,194 @@ interface RentalItem {
 }
 ```
 
+**주요 특징**:
+- 5가지 아이템 타입 지원
+- 전체 재고 / 가용 재고 분리 관리
+- 이미지 URL 지원
+- 활성/비활성 상태 관리
+
+**관계**:
+- `1:N` → RentalItemReservation (아이템의 여러 예약)
+
+---
+
+### 5. RentalItemReservation (렌탈 아이템 예약)
+
+```typescript
+type RentalItemReservationStatus =
+  | 'RESERVED'    // 예약됨
+  | 'CONFIRMED'   // 확정됨
+  | 'COMPLETED'   // 완료됨
+  | 'CANCELLED';  // 취소됨
+
+interface RentalItemReservation {
+  id: number;
+  contractId: number;
+  rentalItemId: number;
+  quantity: number;
+  pricePerItem: number;
+  totalPrice: number;
+  reservedFrom: string;
+  reservedUntil: string;
+  status: RentalItemReservationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+**상태 흐름**:
+```
+RESERVED → CONFIRMED → COMPLETED
+    ↓
+CANCELLED
+```
+
+**주요 특징**:
+- Contract와 RentalItem의 다대다 관계 처리
+- 예약 기간 관리 (reservedFrom ~ reservedUntil)
+- 가격 스냅샷 보존 (pricePerItem)
+- 수량 관리로 재고 차감 추적
+
+**관계**:
+- `N:1` → Contract (계약)
+- `N:1` → RentalItem (아이템)
+
+**비즈니스 로직**:
+- 재고 차감: quantity만큼 RentalItem.availableStock 감소
+- 가격 보존: 예약 시점의 pricePerItem 저장
+- 기간 관리: Contract의 checkIn/checkOut과 연동
+
+---
+
+### 6. Settlement (정산)
+
+```typescript
+type SettlementStatus = 'pending' | 'completed' | 'on_hold';
+
+interface Settlement {
+  id: number;
+  hostId: number;
+  hostName: string;
+  amount: number;
+  bankAccount: string;
+  status: SettlementStatus;
+  scheduledAt: string;
+  completedAt?: string;
+}
+```
+
+**상태 흐름**:
+```
+pending → completed (정산 완료)
+    ↓
+on_hold → completed (문제 해결 후)
+```
+
+**주요 특징**:
+- 호스트별 정산 관리
+- 정산 예정일 및 완료일 추적
+- 보류 상태 지원 (문제 발생 시)
+
+**관계**:
+- `N:1` → User (호스트)
+
+---
+
+### 7. Payment (결제)
+
+```typescript
+type PaymentStatus = 'success' | 'failed' | 'refunded';
+
+interface Payment {
+  id: number;
+  contractId: number;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  paidAt: string;
+}
+```
+
+**상태 흐름**:
+```
+success → refunded (환불 처리)
+failed (재결제 또는 계약 취소)
+```
+
+**주요 특징**:
+- 결제 및 환불 내역 관리
+- 다양한 결제 수단 지원 (신용카드, 계좌이체, 간편결제)
+- 결제 상태 추적
+
+**관계**:
+- `1:1` → Contract (계약)
+
+---
+
+### 8. Inquiry (고객 문의)
+
+```typescript
+type InquiryStatus = 'pending' | 'answered';
+
+interface Inquiry {
+  id: number;
+  userId: number;
+  userName: string;
+  title: string;
+  content: string;
+  status: InquiryStatus;
+  createdAt: string;
+  answeredAt?: string;
+  answer?: string;
+}
+```
+
+**상태 흐름**:
+```
+pending → answered (관리자 답변 완료)
+```
+
+**주요 특징**:
+- 사용자 문의 및 답변 관리
+- 답변 일시 추적
+- 문의 상태 관리
+
+**관계**:
+- `N:1` → User (문의 작성자)
+
+---
+
+### 9. Notification (알림)
+
+```typescript
+type NotificationType = 'email' | 'sms';
+type NotificationStatus = 'success' | 'failed';
+
+interface Notification {
+  id: number;
+  type: NotificationType;
+  recipient: string;
+  template: string;
+  status: NotificationStatus;
+  sentAt: string;
+}
+```
+
+**주요 특징**:
+- 이메일/SMS 알림 발송 내역 관리
+- 발송 성공/실패 추적
+- 템플릿 기반 알림
+
+**알림 시나리오**:
+- 계약 확정 → 게스트/호스트 알림
+- 결제 완료 → 게스트 영수증
+- 매물 승인/반려 → 호스트 알림
+- 정산 완료 → 호스트 입금 알림
+- 문의 답변 → 문의자 알림
+
+**관계**:
+- 독립적인 로그 테이블 (다른 엔티티 참조 없음)
+
 ---
 
 ## ✅ 구현된 기능
@@ -378,13 +567,13 @@ interface RentalItem {
 ```typescript
 {
   totalUsers: 1247,
-  totalProperties: 389,
-  activeReservations: 156,
+  totalRooms: 389,
+  activeContracts: 156,
   monthlyRevenue: 45820000,
   pendingReviews: 12,
   pendingInquiries: 8,
   userTrend: { value: 12.5, isPositive: true },
-  propertyTrend: { value: 8.3, isPositive: true },
+  roomTrend: { value: 8.3, isPositive: true },
   revenueTrend: { value: 15.2, isPositive: true }
 }
 ```
@@ -399,8 +588,8 @@ interface RentalItem {
   - 🔐 계정 상태 관리 (활성/정지/탈퇴)
 
 #### 3. 매물 관리
-- **경로**: `/properties`, `/properties/review`
-- **컴포넌트**: `PropertyList.tsx`, `PropertyReview.tsx`
+- **경로**: `/rooms`, `/rooms/review`
+- **컴포넌트**: `RoomList.tsx`, `RoomReview.tsx`
 - **주요 기능**:
   - 📋 매물 목록 조회
   - 🔍 검색 및 필터링 (상태별)
@@ -409,11 +598,11 @@ interface RentalItem {
 
 ### Phase 2: 진행중 🔄
 
-#### 4. 예약 관리
-- **경로**: `/reservations`
-- **컴포넌트**: `ReservationList.tsx`
+#### 4. 계약 관리
+- **경로**: `/contracts`
+- **컴포넌트**: `ContractList.tsx`
 - **상태**: 목록 페이지 구현 완료
-- **TODO**: 예약 상세, 취소 처리
+- **TODO**: 계약 상세, 취소 처리
 
 #### 5. 결제 관리
 - **경로**: `/payments`
@@ -453,11 +642,11 @@ interface RentalItem {
     <Route path="users/:id" element={<UserDetail />} />
 
     {/* 매물 관리 */}
-    <Route path="properties" element={<PropertyList />} />
-    <Route path="properties/review" element={<PropertyReview />} />
+    <Route path="rooms" element={<RoomList />} />
+    <Route path="rooms/review" element={<RoomReview />} />
 
-    {/* 예약 관리 */}
-    <Route path="reservations" element={<ReservationList />} />
+    {/* 계약 관리 */}
+    <Route path="contracts" element={<ContractList />} />
 
     {/* 결제 관리 */}
     <Route path="payments" element={<PaymentList />} />
@@ -638,11 +827,12 @@ Database
 - [ ] API 에러 핸들링
 
 ### Phase 4: 상세 기능 구현
-- [ ] 예약 상세 및 취소 처리
+- [ ] 계약 상세 및 취소 처리
 - [ ] 결제 상세 및 환불 관리
 - [ ] 정산 처리 워크플로우
 - [ ] 문의 답변 시스템
 - [ ] 알림 템플릿 관리
+- [ ] 렌탈 아이템 예약 관리
 
 ### Phase 5: 고도화
 - [ ] 실시간 알림 (WebSocket)
@@ -703,6 +893,8 @@ npm run lint
 | 날짜 | 버전 | 변경 내용 |
 |------|------|-----------|
 | 2025-10-27 | 1.0.0 | 초기 아키텍처 문서 작성 |
+| 2025-10-28 | 1.1.0 | RentalItemReservation 모델 추가, 명명 규칙 통일 (properties→rooms, reservations→contracts) |
+| 2025-10-28 | 1.2.0 | Settlement, Payment, Inquiry, Notification 모델 문서화 완료 (9개 모델 완성) |
 
 ---
 

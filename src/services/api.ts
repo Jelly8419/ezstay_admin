@@ -2,7 +2,7 @@
  * API 기본 설정 및 공통 유틸리티
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 interface ApiResponse<T> {
   success: boolean;

@@ -21,7 +21,7 @@ export default function PaymentList() {
   const filteredPayments = payments.filter((payment) => {
     const matchesSearch =
       payment.id.toString().includes(searchTerm) ||
-      payment.reservationId.toString().includes(searchTerm);
+      payment.contractId.toString().includes(searchTerm);
 
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
     const matchesMethod = methodFilter === 'all' || payment.method === methodFilter;
