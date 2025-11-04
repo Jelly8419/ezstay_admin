@@ -2,7 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // 개발: / | 프로덕션: /admin/
+  base: mode === 'production' ? '/admin/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -12,4 +14,4 @@ export default defineConfig({
   server: {
     port: 3001,
   },
-})
+}))
