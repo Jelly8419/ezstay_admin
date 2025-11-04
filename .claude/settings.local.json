@@ -31,7 +31,9 @@
       "Read(//c/Users/user/AppData/Roaming/Claude/**)",
       "Bash(Select-String \"mcp__notion\" -Path \"C:\\Users\\user\\.claude\\settings.local.json\")",
       "Bash(git mv:*)",
-      "Bash(npm run build:test:*)"
+      "Bash(npm run build:test:*)",
+      "Bash(git commit:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
