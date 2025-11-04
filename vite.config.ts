@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig(({ mode }) => ({
-  // 개발: / | 프로덕션: /admin/
-  base: mode === 'production' ? '/admin/' : '/',
+  // 개발(development): / | 테스트/프로덕션(test/production): /admin/
+  base: mode === 'development' ? '/' : '/admin/',
   plugins: [react()],
   resolve: {
     alias: {
