@@ -13,6 +13,7 @@ import PaymentList from './pages/payments/PaymentList';
 import SettlementList from './pages/settlements/SettlementList';
 import InquiryList from './pages/inquiries/InquiryList';
 import NotificationList from './pages/notifications/NotificationList';
+import { ActionLogs } from './pages/admin/ActionLogs';
 
 function App() {
   return (
@@ -49,6 +50,9 @@ function App() {
 
               {/* 알림 서비스 */}
               <Route path="notifications" element={<NotificationList />} />
+
+              {/* 관리자 액션 로그 */}
+              <Route path="admin/action-logs" element={<ActionLogs />} />
             </Route>
           </Route>
 

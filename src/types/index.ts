@@ -275,3 +275,57 @@ export interface Notification {
   status: NotificationStatus;
   sentAt: string;
 }
+
+// 관리자 액션 로그 관련 타입
+export type ActionType =
+  | 'CREATE'       // 생성
+  | 'UPDATE'       // 수정
+  | 'DELETE'       // 삭제
+  | 'APPROVE'      // 승인
+  | 'REJECT'       // 반려
+  | 'ACTIVATE'     // 활성화
+  | 'DEACTIVATE'   // 비활성화
+  | 'SUSPEND'      // 정지
+  | 'UNLOCK'       // 잠금 해제
+  | 'EXPORT'       // 데이터 내보내기
+  | 'BULK_UPDATE'; // 대량 수정
+
+export type ResourceType =
+  | 'USER'         // 사용자
+  | 'PROPERTY'     // 매물
+  | 'RESERVATION'  // 예약
+  | 'PAYMENT'      // 결제
+  | 'SETTLEMENT'   // 정산
+  | 'INQUIRY'      // 문의
+  | 'NOTIFICATION' // 알림
+  | 'ADMIN'        // 관리자
+  | 'SYSTEM';      // 시스템 설정
+
+export interface AdminActionLog {
+  id: number;
+  adminId: number;
+  adminEmail: string;
+  adminName: string | null;
+  actionType: ActionType;
+  resourceType: ResourceType;
+  resourceId: string | null;
+  method: 'POST' | 'PATCH' | 'DELETE' | 'PUT';
+  endpoint: string;
+  requestBody: Record<string, any> | null;
+  responseStatus: number | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  description: string | null;
+  createdAt: string;
+}
+
+// 로그 조회 필터
+export interface AdminActionLogFilter {
+  adminId?: number;
+  actionType?: ActionType;
+  resourceType?: ResourceType;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}

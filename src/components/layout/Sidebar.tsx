@@ -9,7 +9,8 @@ import {
   MessageSquare,
   Bell,
   Settings,
-  LayoutDashboard
+  LayoutDashboard,
+  FileText
 } from 'lucide-react';
 
 interface NavItem {
@@ -63,6 +64,11 @@ const navItems: NavItem[] = [
     path: '/notifications',
     label: '알림 서비스',
     icon: <Bell className="w-5 h-5" />
+  },
+  {
+    path: '/admin/action-logs',
+    label: '관리자 액션 로그',
+    icon: <FileText className="w-5 h-5" />
   }
 ];
 
