@@ -1,5 +1,23 @@
 // 사용자 관련 타입
 export type UserType = 'local' | 'social';
+export type AccountType = 'email' | 'kakao' | 'naver' | 'google';
+
+export interface AccountTypeDetail {
+  type: AccountType;
+  emailVerified: boolean;
+  failedLoginAttempts: number;
+  isLocked: boolean;
+}
+
+export interface BankAccount {
+  id: number;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  isPrimary: boolean;
+  isVerified: boolean;
+  verifiedAt: string | null;
+}
 
 export interface User {
   id: number;
@@ -20,6 +38,15 @@ export interface User {
   termsAgreedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// 회원 상세 정보 (관리자용)
+export interface UserDetail extends User {
+  accountTypeDetail: AccountTypeDetail;
+  hasVerifiedBankAccount: boolean;
+  bankAccounts: BankAccount[];
+  hostRoomsCount: number;
+  guestReservationsCount: number;
 }
 
 // 매물(Room) 관련 타입
