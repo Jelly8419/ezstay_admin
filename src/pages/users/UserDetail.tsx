@@ -312,7 +312,7 @@ export const UserDetail: React.FC = () => {
               <XCircle className="w-5 h-5 text-red-500" />
             )}
             <span className={user.ageConfirmed ? 'text-green-700' : 'text-red-700'}>
-              만 14세 이상 확인
+              성인 인증 (만 19세 이상)
             </span>
           </div>
         </div>
