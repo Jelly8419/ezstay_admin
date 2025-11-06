@@ -14,6 +14,7 @@ export const UserList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'local' | 'social'>('all');
   const [isActiveFilter, setIsActiveFilter] = useState<'all' | 'true' | 'false'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,9 +22,18 @@ export const UserList: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 20;
 
+  // 검색어 디바운싱: 500ms 후 실제 검색 실행
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     loadUsers();
-  }, [currentPage, searchQuery, userTypeFilter, isActiveFilter]);
+  }, [currentPage, debouncedSearchQuery, userTypeFilter, isActiveFilter]);
 
   const loadUsers = async () => {
     try {
@@ -32,7 +42,7 @@ export const UserList: React.FC = () => {
       const response = await userService.getUsers({
         page: currentPage,
         limit: itemsPerPage,
-        search: searchQuery || undefined,
+        search: debouncedSearchQuery || undefined,
         userType: userTypeFilter !== 'all' ? userTypeFilter : undefined,
         isActive: isActiveFilter !== 'all' ? isActiveFilter === 'true' : undefined,
       });
