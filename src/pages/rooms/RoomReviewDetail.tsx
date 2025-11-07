@@ -6,7 +6,6 @@ import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import {
   ArrowLeft,
-  MapPin,
   Home,
   DollarSign,
   Check,
