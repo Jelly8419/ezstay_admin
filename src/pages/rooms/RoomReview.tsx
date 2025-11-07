@@ -139,7 +139,7 @@ export const RoomReview: React.FC = () => {
         <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
           {photos && photos.length > 0 ? (
             <img
-              src={`http://localhost:8080${photos[0].photoUrl}`}
+              src={`http://localhost:8080${photos[0].url}`}
               alt="매물 썸네일"
               className="w-full h-full object-cover"
             />
@@ -321,7 +321,11 @@ export const RoomReview: React.FC = () => {
             </div>
           </div>
         ) : (
-          <Table columns={columns} data={filteredProperties} />
+          <Table
+            columns={columns}
+            data={filteredProperties}
+            onRowClick={(record) => navigate(`/rooms/review/${record.id}`)}
+          />
         )}
       </Card>
 

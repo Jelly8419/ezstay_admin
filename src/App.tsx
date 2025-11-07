@@ -8,6 +8,7 @@ import { UserList } from './pages/users/UserList';
 import { UserDetail } from './pages/users/UserDetail';
 import RoomList from './pages/rooms/RoomList';
 import { RoomReview } from './pages/rooms/RoomReview';
+import { RoomReviewDetail } from './pages/rooms/RoomReviewDetail';
 import ContractList from './pages/contracts/ContractList';
 import PaymentList from './pages/payments/PaymentList';
 import SettlementList from './pages/settlements/SettlementList';
@@ -44,6 +45,8 @@ function App() {
               {/* 매물 관리 */}
               <Route path="rooms" element={<RoomList />} />
               <Route path="rooms/review" element={<RoomReview />} />
+              <Route path="rooms/review/:id" element={<RoomReviewDetail />} />
+              <Route path="rooms/:id" element={<RoomReviewDetail />} />
 
               {/* 계약 관리 */}
               <Route path="contracts" element={<ContractList />} />

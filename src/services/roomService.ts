@@ -26,9 +26,115 @@ export interface Property {
   };
   photos: Array<{
     id: number;
-    photoUrl: string;
+    url: string;
     displayOrder?: number;
   }>;
+}
+
+// 매물 상세 정보 타입 (심사용 - 민감정보 포함)
+export interface PropertyDetail extends Property {
+  // 위치 정보
+  latitude?: number;
+  longitude?: number;
+  floor?: string;
+  buildingType?: string;
+  entrancePassword?: string;
+
+  // 방 구조
+  parkingAvailable?: boolean;
+  parkingInfo?: string;
+  elevatorAvailable?: boolean;
+  roomCount?: number;
+  bathroomCount?: number;
+  livingRoomCount?: number;
+  kitchenCount?: number;
+  isDuplex?: boolean;
+
+  // 요금 정보 (상세)
+  dailyMaintenanceFee?: number;
+  maintenanceDetail?: string;
+  longTermWeeks?: number;
+  longTermDiscount?: number;
+  quickMoveIn?: string;
+  quickMoveInDiscount?: number;
+  includeElectricity?: boolean;
+  includeWater?: boolean;
+  includeGas?: boolean;
+  includeInternet?: boolean;
+  cleaningFee?: number;
+  minContractWeeks?: number;
+  refundPolicy?: string;
+
+  // 편의시설
+  amenities?: {
+    basicOptions?: {
+      bed?: boolean;
+      desk?: boolean;
+      closet?: boolean;
+      shoeRack?: boolean;
+    };
+    additionalOptions?: {
+      airConditioner?: boolean;
+      refrigerator?: boolean;
+      washingMachine?: boolean;
+      tv?: boolean;
+    };
+    convenienceOptions?: {
+      wifi?: boolean;
+      microwave?: boolean;
+      inductionStove?: boolean;
+    };
+    petsAllowed?: boolean;
+  };
+
+  // 무료 부가서비스
+  freeServices?: {
+    agreeTerms?: boolean;
+    cleaningService?: boolean;
+    cleaningToolImageUrl?: string;
+    hairDryerRental?: boolean;
+    beddingService?: boolean;
+    bedSizes?: {
+      superSingle?: number;
+      queen?: number;
+      king?: number;
+    };
+    amenityKit?: boolean;
+    autoPasswordChange?: boolean;
+    roomPassword?: string | null;
+  };
+
+  // 방 소개
+  description?: string;
+  transportation?: string;
+  houseRules?: string;
+
+  // 호스트 상세 정보
+  host: {
+    id: number;
+    name: string;
+    email: string;
+    phoneNumber: string;
+    isVerified?: boolean;
+    hasBankAccount?: boolean;
+  };
+
+  // 등록 진행 상황
+  registrationProgress?: {
+    currentStep?: string;
+    completionRate?: number;
+    steps?: {
+      basicInfo?: boolean;
+      pricing?: boolean;
+      photosAndAmenities?: boolean;
+      freeServices?: boolean;
+      description?: boolean;
+    };
+  };
+
+  // 게시 정보
+  publishedAt?: string;
+  updatedAt?: string;
 }
 
 // 매물 목록 응답 타입
@@ -71,6 +177,12 @@ export const propertyService = {
       `/admin/properties/pending-review?page=${page}&limit=${limit}`
     );
   },
+
+  /**
+   * 매물 상세 조회 (심사용 - 민감정보 포함)
+   */
+  getPropertyDetail: (roomId: number) =>
+    api.get<PropertyDetail>(`/admin/properties/${roomId}`),
 
   /**
    * 매물 승인
