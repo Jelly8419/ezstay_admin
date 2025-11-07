@@ -16,9 +16,12 @@ import NotificationList from './pages/notifications/NotificationList';
 import { ActionLogs } from './pages/admin/ActionLogs';
 
 function App() {
+  // 환경변수로 basename 제어 (개발: /, 테스트/프로덕션: /admin)
+  const basename = import.meta.env.VITE_BASE_PATH || '/';
+
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={basename}>
         <Routes>
           {/* 로그인 페이지 (인증 불필요) */}
           <Route path="/login" element={<Login />} />
