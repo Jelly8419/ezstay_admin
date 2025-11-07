@@ -49,8 +49,22 @@ async function apiRequest<T>(
   }
 }
 
+/**
+ * Query params를 URL에 추가하는 헬퍼 함수
+ */
+function buildQueryString(params: Record<string, any>): string {
+  const query = Object.entries(params)
+    .filter(([_, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+  return query ? `?${query}` : '';
+}
+
 export const api = {
-  get: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'GET' }),
+  get: <T>(endpoint: string, options?: { params?: Record<string, any> }) => {
+    const queryString = options?.params ? buildQueryString(options.params) : '';
+    return apiRequest<T>(`${endpoint}${queryString}`, { method: 'GET' });
+  },
 
   post: <T>(endpoint: string, body?: unknown) =>
     apiRequest<T>(endpoint, {
