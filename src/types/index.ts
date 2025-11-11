@@ -329,3 +329,114 @@ export interface AdminActionLogFilter {
   page?: number;
   limit?: number;
 }
+
+// ========================================
+// 고객센터 (Support Center) 관련 타입
+// ========================================
+
+// 공지사항 타입
+export type NoticeStatus = 'draft' | 'published' | 'archived';
+
+export interface Notice {
+  id: number;
+  title: string;
+  content: string;
+  isImportant: boolean;
+  viewCount: number;
+  publishedAt: string | null;
+  expiresAt: string | null;
+  status: NoticeStatus;
+  createdBy: number;
+  updatedBy: number | null;
+  createdAt: string;
+  updatedAt: string;
+  author?: {
+    id: number;
+    name: string;
+  };
+  editor?: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface NoticeFormData {
+  title: string;
+  content: string;
+  isImportant: boolean;
+  publishedAt: string | null;
+  expiresAt: string | null;
+  status: NoticeStatus;
+}
+
+// FAQ 타입
+export type FAQUserType = 'all' | 'host' | 'guest';
+
+export interface FAQCategory {
+  id: number;
+  name: string;
+  userType: FAQUserType;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FAQ {
+  id: number;
+  categoryId: number;
+  question: string;
+  answer: string;
+  displayOrder: number;
+  viewCount: number;
+  isActive: boolean;
+  createdBy: number;
+  updatedBy: number | null;
+  createdAt: string;
+  updatedAt: string;
+  category?: FAQCategory;
+}
+
+export interface FAQFormData {
+  categoryId: number;
+  question: string;
+  answer: string;
+  displayOrder?: number;
+  isActive?: boolean;
+}
+
+// 문의 타입 (기존 Inquiry 타입 확장)
+export type InquiryCategoryType =
+  | 'general'
+  | 'reservation'
+  | 'payment'
+  | 'room'
+  | 'account'
+  | 'other';
+
+export interface InquiryDetail extends Inquiry {
+  user?: {
+    id: number;
+    name: string | null;
+    email: string;
+    phoneNumber: string | null;
+  };
+  admin?: {
+    id: number;
+    name: string | null;
+  };
+  categoryType?: InquiryCategoryType;
+}
+
+// API 응답 타입
+export interface PaginationMeta {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: PaginationMeta;
+}

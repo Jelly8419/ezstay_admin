@@ -15,6 +15,7 @@ import SettlementList from './pages/settlements/SettlementList';
 import InquiryList from './pages/inquiries/InquiryList';
 import NotificationList from './pages/notifications/NotificationList';
 import { ActionLogs } from './pages/admin/ActionLogs';
+import { SupportCenter } from './pages/support/SupportCenter';
 
 function App() {
   // 환경변수로 basename 제어 (개발: /, 테스트/프로덕션: /admin)
@@ -57,7 +58,10 @@ function App() {
               {/* 정산 관리 */}
               <Route path="settlements" element={<SettlementList />} />
 
-              {/* 고객센터 */}
+              {/* 고객센터 (통합) */}
+              <Route path="support" element={<SupportCenter />} />
+
+              {/* 고객센터 (기존 문의 페이지 - 호환성 유지) */}
               <Route path="inquiries" element={<InquiryList />} />
 
               {/* 알림 서비스 */}

@@ -56,7 +56,7 @@ const navItems: NavItem[] = [
     icon: <DollarSign className="w-5 h-5" />
   },
   {
-    path: '/inquiries',
+    path: '/support',
     label: '고객센터',
     icon: <MessageSquare className="w-5 h-5" />
   },
