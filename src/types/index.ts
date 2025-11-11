@@ -249,7 +249,7 @@ export interface Payment {
 }
 
 // 고객 문의(Inquiry) 관련 타입
-export type InquiryStatus = 'pending' | 'answered';
+export type InquiryStatus = 'pending' | 'answered' | 'closed';
 
 export interface Inquiry {
   id: number;
