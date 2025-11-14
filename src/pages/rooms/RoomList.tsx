@@ -83,7 +83,7 @@ export default function RoomList() {
     {
       key: 'hostName',
       title: '호스트',
-      render: (_: string, room: Property) => room.hostName || '-',
+      render: (_: string, room: Property) => room.host?.name || '-',
       width: '10%',
     },
     {
