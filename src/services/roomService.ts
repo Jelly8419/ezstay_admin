@@ -1,5 +1,5 @@
 /**
- * 매물 관리 API 서비스
+ * 방 관리 API 서비스
  */
 
 import { api } from './api';

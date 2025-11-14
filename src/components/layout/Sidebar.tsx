@@ -33,11 +33,11 @@ const navItems: NavItem[] = [
   },
   {
     path: '/rooms',
-    label: '매물 관리',
+    label: '방 관리',
     icon: <Home className="w-5 h-5" />,
     children: [
-      { path: '/rooms', label: '매물 목록' },
-      { path: '/rooms/review', label: '매물 심사' }
+      { path: '/rooms', label: '방 목록' },
+      { path: '/rooms/review', label: '방 심사' }
     ]
   },
   {

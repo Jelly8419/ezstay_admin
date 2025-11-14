@@ -27,7 +27,7 @@
 - updateUserStatus(userId, isActive): 유저 상태 변경
 ```
 
-#### `propertyService.ts` - 매물 관리 API
+#### `propertyService.ts` - 방 관리 API
 ```typescript
 - getProperties(params): 매물 목록 조회
 - getPendingReviewProperties(): 심사 대기 매물 조회

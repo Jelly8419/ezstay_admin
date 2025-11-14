@@ -118,16 +118,23 @@ export default function RoomList() {
               상세
             </Button>
           </Link>
+          {room.status === 'published' && (
+            <Link to={`/rooms/${room.id}/management`}>
+              <Button variant="primary" size="sm">
+                관리
+              </Button>
+            </Link>
+          )}
         </div>
       ),
-      width: '11%',
+      width: '15%',
     },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">매물 관리</h1>
+        <h1 className="text-2xl font-bold">방 관리</h1>
       </div>
 
       <Card>

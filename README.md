@@ -33,7 +33,7 @@ ezstay_admin/
 │   │   └── common/         # 공통 기능 (Search, Pagination)
 │   ├── pages/              # 페이지 컴포넌트
 │   │   ├── users/          # 유저 관리
-│   │   └── properties/     # 매물 관리
+│   │   └── properties/     # 방 관리
 │   ├── types/              # TypeScript 타입
 │   └── App.tsx            # 메인 앱
 ├── package.json
