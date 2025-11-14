@@ -49,6 +49,17 @@ export interface PasswordHistory {
   userAgent?: string;
 }
 
+export interface StatusHistory {
+  id: number;
+  previousStatus: string;
+  newStatus: string;
+  reason?: string;
+  changedBy: string;
+  changedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 export interface RoomManagementData {
   roomInfo: RoomInfo;
   hostInfo: HostInfo;
@@ -60,6 +71,16 @@ export interface PasswordHistoryResponse {
   histories: PasswordHistory[];
   pagination: {
     total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+export interface StatusHistoryResponse {
+  total: number;
+  histories: StatusHistory[];
+  pagination: {
     limit: number;
     offset: number;
     hasMore: boolean;

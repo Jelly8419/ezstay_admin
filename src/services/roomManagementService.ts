@@ -3,6 +3,7 @@ import type {
   RoomManagementData,
   Memo,
   PasswordHistoryResponse,
+  StatusHistoryResponse,
   RoomStatus,
 } from '../types/roomManagement';
 
@@ -55,6 +56,26 @@ class RoomManagementService {
   ): Promise<PasswordHistoryResponse> {
     const data = await api.get<PasswordHistoryResponse>(
       `/admin/properties/${roomId}/password-history`,
+      {
+        params: { limit, offset },
+      }
+    );
+    return data;
+  }
+
+  /**
+   * 방 상태 변경 이력 조회
+   * @param roomId 방 ID
+   * @param limit 페이지당 항목 수
+   * @param offset 건너뛸 항목 수
+   */
+  async getStatusHistory(
+    roomId: number,
+    limit = 20,
+    offset = 0
+  ): Promise<StatusHistoryResponse> {
+    const data = await api.get<StatusHistoryResponse>(
+      `/admin/properties/${roomId}/status-history`,
       {
         params: { limit, offset },
       }

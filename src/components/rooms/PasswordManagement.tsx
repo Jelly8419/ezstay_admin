@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff, History } from 'lucide-react';
+import { History } from 'lucide-react';
 import type { PasswordHistory } from '../../types/roomManagement';
 import roomManagementService from '../../services/roomManagementService';
 
@@ -15,7 +15,6 @@ export default function PasswordManagement({
   onPasswordChange,
 }: PasswordManagementProps) {
   const [newPassword, setNewPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [histories, setHistories] = useState<PasswordHistory[]>([]);
@@ -84,22 +83,13 @@ export default function PasswordManagement({
               </span>
             </div>
 
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="새로운 비밀번호를 입력하세요"
-                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
+            <input
+              type="text"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="새로운 비밀번호를 입력하세요"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             <p className="mt-1 text-xs text-gray-500">
               4~8자리 숫자만 입력 가능합니다
             </p>
