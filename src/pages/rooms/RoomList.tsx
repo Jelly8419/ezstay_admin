@@ -81,9 +81,9 @@ export default function RoomList() {
       width: '30%',
     },
     {
-      key: 'area',
-      title: '면적',
-      render: (value: number) => `${value}㎡`,
+      key: 'hostName',
+      title: '호스트',
+      render: (_: string, room: Property) => room.hostName || '-',
       width: '10%',
     },
     {

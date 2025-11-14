@@ -34,9 +34,13 @@ export const getStatusColor = (status: string): string => {
     withdrawn: 'bg-gray-100 text-gray-800',
 
     // Property
-    pending: 'bg-yellow-100 text-yellow-800',
+    draft: 'bg-gray-100 text-gray-800',
+    pending_review: 'bg-yellow-100 text-yellow-800',
     approved: 'bg-green-100 text-green-800',
     rejected: 'bg-red-100 text-red-800',
+    published: 'bg-blue-100 text-blue-800',
+    hidden_by_admin: 'bg-orange-100 text-orange-800',
+    pending: 'bg-yellow-100 text-yellow-800',
     inactive: 'bg-gray-100 text-gray-800',
     visible: 'bg-blue-100 text-blue-800',
     hidden: 'bg-gray-100 text-gray-800',
@@ -84,9 +88,12 @@ export const getStatusText = (status: string, _type?: string): string => {
     both: '게스트/호스트',
 
     // Property
-    pending: '심사중',
+    draft: '작성 중',
+    pending_review: '심사중',
     approved: '승인',
     rejected: '반려',
+    published: '게시중',
+    hidden_by_admin: '숨김(관리자)',
     inactive: '비활성',
     visible: '노출',
     hidden: '비공개',
