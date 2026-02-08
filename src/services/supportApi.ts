@@ -25,15 +25,16 @@ export const noticeApi = {
     page?: number;
     limit?: number;
     status?: string;
-    searchKeyword?: string;
+    userType?: string;
+    search?: string;
   }): Promise<PaginatedResponse<Notice>> => {
     const response = await api.get<{ notices: Notice[]; pagination: any }>('/admin/support/notices', { params });
     return {
       items: response.notices,
       pagination: {
-        totalItems: response.pagination.total,
-        currentPage: response.pagination.page,
-        itemsPerPage: response.pagination.limit,
+        total: response.pagination.total,
+        page: response.pagination.page,
+        limit: response.pagination.limit,
         totalPages: response.pagination.totalPages,
       },
     };
@@ -64,6 +65,13 @@ export const noticeApi = {
   },
 
   /**
+   * 공지사항 게시
+   */
+  publishNotice: async (noticeId: number): Promise<Notice> => {
+    return api.patch<Notice>(`/admin/support/notices/${noticeId}/publish`);
+  },
+
+  /**
    * 공지사항 삭제
    */
   deleteNotice: async (noticeId: number): Promise<void> => {
@@ -79,7 +87,7 @@ export const faqApi = {
   /**
    * FAQ 카테고리 목록 조회
    */
-  getCategories: async (params?: { userType?: string }): Promise<FAQCategory[]> => {
+  getCategories: async (params?: { userType?: string; isActive?: boolean }): Promise<FAQCategory[]> => {
     const response = await api.get<{ categories?: FAQCategory[] } | FAQCategory[]>('/admin/support/faq/categories', { params });
     // 배열 또는 { categories: [...] } 형태 모두 지원
     return Array.isArray(response) ? response : (response.categories || []);
@@ -123,7 +131,9 @@ export const faqApi = {
   getFAQs: async (params?: {
     categoryId?: number;
     userType?: string;
-    searchKeyword?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
   }): Promise<FAQ[]> => {
     const response = await api.get<{ faqs?: FAQ[] } | FAQ[]>('/admin/support/faqs', { params });
     // 배열 또는 { faqs: [...] } 형태 모두 지원
@@ -172,7 +182,8 @@ export const inquiryApi = {
     limit?: number;
     status?: string;
     categoryType?: string;
-    searchKeyword?: string;
+    userType?: string;
+    search?: string;
     userId?: number;
   }): Promise<PaginatedResponse<InquiryDetail>> => {
     const response = await api.get<{ inquiries: InquiryDetail[]; pagination: any }>('/admin/support/inquiries', {
@@ -181,9 +192,9 @@ export const inquiryApi = {
     return {
       items: response.inquiries,
       pagination: {
-        totalItems: response.pagination.total,
-        currentPage: response.pagination.page,
-        itemsPerPage: response.pagination.limit,
+        total: response.pagination.total,
+        page: response.pagination.page,
+        limit: response.pagination.limit,
         totalPages: response.pagination.totalPages,
       },
     };
@@ -215,5 +226,12 @@ export const inquiryApi = {
     return api.patch<InquiryDetail>(`/admin/support/inquiries/${inquiryId}/status`, {
       status,
     });
+  },
+
+  /**
+   * 문의 삭제
+   */
+  deleteInquiry: async (inquiryId: number): Promise<void> => {
+    return api.delete<void>(`/admin/support/inquiries/${inquiryId}`);
   },
 };

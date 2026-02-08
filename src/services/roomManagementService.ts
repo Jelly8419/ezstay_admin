@@ -33,14 +33,15 @@ class RoomManagementService {
   /**
    * 방 비밀번호 변경
    * @param roomId 방 ID
-   * @param newPassword 새 비밀번호 (4~8자리 숫자)
+   * @param newPassword 새 비밀번호 (4~50자)
+   * @param reason 변경 사유
    */
-  async updatePassword(roomId: number, newPassword: string): Promise<void> {
+  async updatePassword(roomId: number, newPassword: string, reason?: string): Promise<void> {
     // 클라이언트 측 검증
-    if (!/^\d{4,8}$/.test(newPassword)) {
-      throw new Error('비밀번호는 4~8자리 숫자만 가능합니다');
+    if (newPassword.length < 4 || newPassword.length > 50) {
+      throw new Error('비밀번호는 4~50자 사이여야 합니다');
     }
-    await api.patch(`/admin/properties/${roomId}/password`, { newPassword });
+    await api.patch(`/admin/properties/${roomId}/password`, { newPassword, reason });
   }
 
   /**
@@ -51,7 +52,7 @@ class RoomManagementService {
    */
   async getPasswordHistory(
     roomId: number,
-    limit = 20,
+    limit = 10,
     offset = 0
   ): Promise<PasswordHistoryResponse> {
     const data = await api.get<PasswordHistoryResponse>(
@@ -71,7 +72,7 @@ class RoomManagementService {
    */
   async getStatusHistory(
     roomId: number,
-    limit = 20,
+    limit = 10,
     offset = 0
   ): Promise<StatusHistoryResponse> {
     const data = await api.get<StatusHistoryResponse>(

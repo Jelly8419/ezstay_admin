@@ -1,12 +1,20 @@
 // 사용자 관련 타입
 export type UserType = 'local' | 'social';
 export type AccountType = 'email' | 'kakao' | 'naver' | 'google';
+export type UserRole = 'host' | 'guest';
 
 export interface AccountTypeDetail {
   type: AccountType;
-  emailVerified: boolean;
-  failedLoginAttempts: number;
-  isLocked: boolean;
+  // email 타입일 때
+  emailVerified?: boolean;
+  failedLoginAttempts?: number;
+  isLocked?: boolean;
+  // social 타입일 때
+  providers?: Array<{
+    provider: string;
+    providerEmail: string;
+    connectedAt: string;
+  }>;
 }
 
 export interface BankAccount {
@@ -23,21 +31,12 @@ export interface User {
   id: number;
   email: string;
   name: string | null;
+  nickname: string | null;
   phoneNumber: string | null;
-  phoneVerified: boolean;
-  phoneVerifiedAt: string | null;
-  profileImageUrl: string | null;
   userType: UserType;
   isActive: boolean;
-  lastLoginAt: string | null;
-  // 약관 동의 정보
-  serviceTermsAgreed: boolean;
-  privacyPolicyAgreed: boolean;
-  marketingConsent: boolean;
-  ageConfirmed: boolean;
-  termsAgreedAt: string | null;
+  role: UserRole;
   createdAt: string;
-  updatedAt: string;
 }
 
 // 회원 상세 정보 (관리자용)
@@ -50,218 +49,198 @@ export interface UserDetail extends User {
 }
 
 // 매물(Room) 관련 타입
-export type RoomStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published';
+export type RoomStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published' | 'hidden_by_admin';
 
 export interface Room {
   id: number;
-  hostId: number;
-  // 기본 정보
   roomName: string;
   address: string;
-  detailAddress: string;
-  latitude: number | null;
-  longitude: number | null;
-  area: number;
-  floor: string | null;
-  buildingType: string;
-  parkingAvailable: boolean;
-  parkingInfo: string | null;
-  elevatorAvailable: boolean;
-  roomCount: number;
-  bathroomCount: number;
-  livingRoomCount: number;
-  kitchenCount: number;
-  isDuplex: boolean;
-  entrancePassword: string | null;
-  // 요금 정보 (1일 기준)
-  dailyRent: number | null;
-  dailyMaintenanceFee: number | null;
-  maintenanceDetail: string | null;
-  longTermWeeks: number | null;
-  longTermDiscount: number | null;
-  quickMoveIn: string | null;
-  quickMoveInDiscount: number | null;
-  includeElectricity: boolean;
-  includeWater: boolean;
-  includeGas: boolean;
-  includeInternet: boolean;
-  cleaningFee: number | null;
-  minContractWeeks: number | null;
-  refundPolicy: string | null;
-  // 방 소개
-  description: string | null;
-  transportation: string | null;
-  houseRules: string | null;
-  // 상태 관리
   status: RoomStatus;
-  submittedAt: string | null;
-  approvedAt: string | null;
-  publishedAt: string | null;
+  dailyRent: number;
+  host: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+    phoneNumber: string;
+  };
+  photos: Array<{
+    id: number;
+    url: string;
+    order?: number;
+  }>;
   createdAt: string;
-  updatedAt: string;
 }
 
-// 계약(Contract) 관련 타입
-export type ContractStatus =
-  | 'PENDING_APPROVAL'    // 승인 대기
-  | 'APPROVED'            // 승인됨 (결제 대기)
-  | 'REJECTED'            // 거절됨
-  | 'PAYMENT_COMPLETED'   // 결제 완료
-  | 'IN_PROGRESS'         // 계약 진행중 (체크인 완료)
-  | 'COMPLETED'           // 계약 완료 (체크아웃 완료)
-  | 'CANCELLED_BY_GUEST'  // 게스트 취소
-  | 'CANCELLED_BY_HOST'   // 호스트 취소
-  | 'REFUNDED'            // 환불 완료
-  | 'APPROVAL_EXPIRED'    // 미승인 만료
-  | 'PAYMENT_EXPIRED';    // 미결제 만료
+// 계약(예약) 관련 타입
+export type ReservationStatus =
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'PAYMENT_COMPLETED'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'EXPIRED';
 
-export type DiscountType =
-  | 'NONE'
-  | 'LONG_TERM_DISCOUNT'
-  | 'QUICK_MOVE_IN'
-  | 'COUPON'
-  | 'PROMOTIONAL';
-
-export type PaymentMethod =
-  | 'CREDIT_CARD'
-  | 'BANK_TRANSFER'
-  | 'SIMPLE_PAY';
-
-export interface Contract {
+export interface Reservation {
   id: number;
-  roomId: number;
-  hostId: number;
-  guestId: number;
-  // 체크인/체크아웃 정보
+  orderId: string;
+  status: ReservationStatus;
+  checkInDate: string;
+  checkOutDate: string;
+  totalAmount: number;
+  guest: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+    phoneNumber: string;
+  };
+  host: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+  };
+  room: {
+    id: number;
+    roomName: string;
+    address: string;
+  };
+  createdAt: string;
+}
+
+export interface ReservationDetail {
+  id: number;
+  orderId: string;
+  status: ReservationStatus;
   checkInDate: string;
   checkOutDate: string;
   totalDays: number;
-  totalWeeks: number | null;
-  // 금액 정보
   rentalFee: number;
   maintenanceFee: number;
   cleaningFee: number;
-  rentalItemsFee: number;
   platformFee: number;
-  discountAmount: number;
-  discountType: DiscountType | null;
-  discountCode: string | null;
-  // 계산된 금액
-  subtotal: number;
-  totalUsageFee: number;
-  deposit: number;
   finalTotalAmount: number;
-  // 렌탈 아이템 정보
-  rentalItems: any; // JSON 저장
-  // 결제 정보
-  paymentMethod: PaymentMethod | null;
-  installmentMonths: number;
-  // 메시지 및 요청사항
-  guestMessage: string | null;
-  hostMessage: string | null;
-  cancellationReason: string | null;
-  // 특별 요청사항
-  specialRequests: any; // JSON 저장
-  // 약관 동의 정보
-  termsAgreed: any; // JSON 저장
-  // 가격 스냅샷
-  pricingSnapshot: any; // JSON 저장
-  // 계약 상태
-  status: ContractStatus;
-  // 계약 진행 시점 기록
-  approvedAt: string | null;
-  rejectedAt: string | null;
   paidAt: string | null;
-  checkedInAt: string | null;
-  checkedOutAt: string | null;
-  cancelledAt: string | null;
+  guest: {
+    id: number;
+    name: string;
+    email: string;
+    phoneNumber: string;
+  };
+  host: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  room: {
+    id: number;
+    roomName: string;
+    photos?: Array<{ id: number; url: string; order: number }>;
+  };
   createdAt: string;
-  updatedAt: string;
-}
-
-// 렌탈 아이템 관련 타입
-export type RentalItemType =
-  | 'hair_dryer'
-  | 'bedding_set'
-  | 'amenity_kit'
-  | 'towel_set'
-  | 'other';
-
-export interface RentalItem {
-  id: number;
-  itemType: RentalItemType;
-  name: string;
-  description: string | null;
-  price: number;
-  totalStock: number;
-  availableStock: number;
-  imageUrl: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// 렌탈 아이템 예약 관련 타입
-export type RentalItemReservationStatus =
-  | 'RESERVED'
-  | 'CONFIRMED'
-  | 'COMPLETED'
-  | 'CANCELLED';
-
-export interface RentalItemReservation {
-  id: number;
-  contractId: number;
-  rentalItemId: number;
-  quantity: number;
-  pricePerItem: number;
-  totalPrice: number;
-  reservedFrom: string;
-  reservedUntil: string;
-  status: RentalItemReservationStatus;
-  createdAt: string;
-  updatedAt: string;
 }
 
 // 정산(Settlement) 관련 타입
 export type SettlementStatus = 'pending' | 'completed' | 'on_hold';
 
 export interface Settlement {
-  id: number;
-  hostId: number;
-  hostName: string;
-  amount: number;
-  bankAccount: string;
+  contractId: number;
+  contractNumber: string;
+  host: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  room: {
+    id: number;
+    roomName: string;
+  };
+  guestName: string;
+  checkInDate: string;
+  checkOutDate: string;
+  rentalDays: number;
+  settlementAmount: number;
+  settlementDate: string;
   status: SettlementStatus;
-  scheduledAt: string;
-  completedAt?: string;
+  statusLabel: string;
+  settlementCompletedAt: string | null;
+  settlementNote: string | null;
+  hasRefund: boolean;
+  refundAmount: number;
+}
+
+export interface SettlementSummary {
+  pendingCount: number;
+  completedCount: number;
+  onHoldCount: number;
 }
 
 // 결제(Payment) 관련 타입
-export type PaymentStatus = 'success' | 'failed' | 'refunded';
+export type PaymentMethod = 'CARD' | 'VIRTUAL_ACCOUNT' | 'TRANSFER' | 'MOBILE' | 'EASY_PAY';
+export type PaymentStatus = 'READY' | 'IN_PROGRESS' | 'DONE' | 'CANCELED' | 'PARTIAL_CANCELED' | 'ABORTED' | 'EXPIRED';
 
 export interface Payment {
   id: number;
   contractId: number;
-  amount: number;
+  contractOrderId: string;
+  paymentKey: string;
+  orderId: string;
   method: PaymentMethod;
   status: PaymentStatus;
-  paidAt: string;
+  totalAmount: number;
+  balanceAmount: number;
+  requestedAt: string;
+  approvedAt: string | null;
+  createdAt: string;
+  guest: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  room: {
+    id: number;
+    roomName: string;
+  };
+  contractStatus: string;
 }
 
 // 고객 문의(Inquiry) 관련 타입
 export type InquiryStatus = 'pending' | 'answered' | 'closed';
+export type InquiryCategoryType =
+  | 'general'
+  | 'reservation'
+  | 'payment'
+  | 'room'
+  | 'account'
+  | 'other';
 
 export interface Inquiry {
   id: number;
-  userId: number;
-  userName: string;
+  categoryType: InquiryCategoryType;
+  userType: 'host' | 'guest';
   title: string;
   content: string;
   status: InquiryStatus;
+  answer: string | null;
+  answeredAt: string | null;
+  answeredBy: number | null;
+  user: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+    phoneNumber: string;
+  };
+  admin: {
+    id: number;
+    name: string;
+  } | null;
   createdAt: string;
-  answeredAt?: string;
-  answer?: string;
 }
+
+export interface InquiryDetail extends Inquiry {}
 
 // 알림(Notification) 관련 타입
 export type NotificationType = 'email' | 'sms';
@@ -278,34 +257,32 @@ export interface Notification {
 
 // 관리자 액션 로그 관련 타입
 export type ActionType =
-  | 'CREATE'       // 생성
-  | 'UPDATE'       // 수정
-  | 'DELETE'       // 삭제
-  | 'APPROVE'      // 승인
-  | 'REJECT'       // 반려
-  | 'ACTIVATE'     // 활성화
-  | 'DEACTIVATE'   // 비활성화
-  | 'SUSPEND'      // 정지
-  | 'UNLOCK'       // 잠금 해제
-  | 'EXPORT'       // 데이터 내보내기
-  | 'BULK_UPDATE'; // 대량 수정
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'APPROVE'
+  | 'REJECT'
+  | 'ACTIVATE'
+  | 'DEACTIVATE'
+  | 'SUSPEND'
+  | 'EXPORT';
 
 export type ResourceType =
-  | 'USER'         // 사용자
-  | 'PROPERTY'     // 매물
-  | 'RESERVATION'  // 예약
-  | 'PAYMENT'      // 결제
-  | 'SETTLEMENT'   // 정산
-  | 'INQUIRY'      // 문의
-  | 'NOTIFICATION' // 알림
-  | 'ADMIN'        // 관리자
-  | 'SYSTEM';      // 시스템 설정
+  | 'USER'
+  | 'PROPERTY'
+  | 'RESERVATION'
+  | 'PAYMENT'
+  | 'SETTLEMENT'
+  | 'INQUIRY'
+  | 'NOTIFICATION'
+  | 'ADMIN'
+  | 'SYSTEM';
 
 export interface AdminActionLog {
   id: number;
   adminId: number;
   adminEmail: string;
-  adminName: string | null;
+  adminName: string;
   actionType: ActionType;
   resourceType: ResourceType;
   resourceId: string | null;
@@ -317,9 +294,14 @@ export interface AdminActionLog {
   userAgent: string | null;
   description: string | null;
   createdAt: string;
+  admin: {
+    id: number;
+    username: string;
+    name: string;
+    role: string;
+  };
 }
 
-// 로그 조회 필터
 export interface AdminActionLogFilter {
   adminId?: number;
   actionType?: ActionType;
@@ -330,43 +312,58 @@ export interface AdminActionLogFilter {
   limit?: number;
 }
 
+export interface AdminActionLogStats {
+  totalLogs: number;
+  actionTypeStats: Array<{ actionType: string; count: number }>;
+  resourceTypeStats: Array<{ resourceType: string; count: number }>;
+  adminActivityStats: Array<{
+    adminId: number;
+    adminName: string;
+    adminEmail: string;
+    count: number;
+  }>;
+}
+
 // ========================================
 // 고객센터 (Support Center) 관련 타입
 // ========================================
 
 // 공지사항 타입
 export type NoticeStatus = 'draft' | 'published' | 'archived';
+export type NoticeUserType = 'all' | 'host' | 'guest';
 
 export interface Notice {
   id: number;
   title: string;
   content: string;
+  status: NoticeStatus;
+  userType: NoticeUserType;
   isImportant: boolean;
-  viewCount: number;
   publishedAt: string | null;
   expiresAt: string | null;
-  status: NoticeStatus;
-  createdBy: number;
-  updatedBy: number | null;
+  viewCount: number;
+  author: {
+    id: number;
+    username: string;
+    name: string;
+  } | null;
+  editor: {
+    id: number;
+    username: string;
+    name: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
-  author?: {
-    id: number;
-    name: string;
-  };
-  editor?: {
-    id: number;
-    name: string;
-  };
 }
 
 export interface NoticeFormData {
   title: string;
   content: string;
-  isImportant: boolean;
-  publishedAt: string | null;
-  expiresAt: string | null;
-  status: NoticeStatus;
+  isImportant?: boolean;
+  userType?: NoticeUserType;
+  publishedAt?: string | null;
+  expiresAt?: string | null;
+  status?: NoticeStatus;
 }
 
 // FAQ 타입
@@ -379,7 +376,6 @@ export interface FAQCategory {
   displayOrder: number;
   isActive: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface FAQ {
@@ -390,11 +386,23 @@ export interface FAQ {
   displayOrder: number;
   viewCount: number;
   isActive: boolean;
-  createdBy: number;
-  updatedBy: number | null;
+  category?: {
+    id: number;
+    name: string;
+    userType: FAQUserType;
+  };
+  author?: {
+    id: number;
+    username: string;
+    name: string;
+  };
+  editor?: {
+    id: number;
+    username: string;
+    name: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
-  category?: FAQCategory;
 }
 
 export interface FAQFormData {
@@ -405,38 +413,207 @@ export interface FAQFormData {
   isActive?: boolean;
 }
 
-// 문의 타입 (기존 Inquiry 타입 확장)
-export type InquiryCategoryType =
-  | 'general'
-  | 'reservation'
-  | 'payment'
-  | 'room'
-  | 'account'
-  | 'other';
+// ========================================
+// 환불 관련 타입
+// ========================================
 
-export interface InquiryDetail extends Inquiry {
-  user?: {
+export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+export type RefundMethod = 'ORIGINAL' | 'BANK_TRANSFER';
+
+export interface Refund {
+  id: number;
+  refundStatus: RefundStatus;
+  contract: {
     id: number;
-    name: string | null;
-    email: string;
-    phoneNumber: string | null;
+    checkInDate: string;
+    checkOutDate: string;
+    room: { id: number; roomName: string; address: string };
+    guest: { id: number; name: string; phoneNumber: string; email: string };
   };
-  admin?: {
+  policyTypeUsed: string;
+  daysBeforeCheckin: number;
+  isSameDayCancellation: boolean;
+  totalRefundAmount: number;
+  finalRefundAmount: number;
+  refundMethod: RefundMethod;
+  cancellationReason: string;
+  requestedAt: string;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  completedAt: string | null;
+}
+
+export interface RefundDetail {
+  refund: {
     id: number;
-    name: string | null;
+    refundStatus: RefundStatus;
+    contract: {
+      id: number;
+      checkInDate: string;
+      checkOutDate: string;
+      totalDays: number;
+      room: { id: number; roomName: string; address: string; refundPolicy: string };
+      host: { id: number; name: string; nickname: string; phoneNumber: string; email: string };
+      guest: { id: number; name: string; nickname: string; phoneNumber: string; email: string };
+    };
+    policyTypeUsed: string;
+    cancellationDate: string;
+    checkInDate: string;
+    daysBeforeCheckin: number;
+    isSameDayCancellation: boolean;
+    originalRentalFee: number;
+    originalCleaningFee: number;
+    originalMaintenanceFee: number;
+    originalTotalAmount: number;
+    rentalFeeRefundRate: number;
+    rentalFeeRefundAmount: number;
+    cleaningFeeRefundAmount: number;
+    maintenanceFeeRefundAmount: number;
+    totalRefundAmount: number;
+    platformFeeDeducted: number;
+    penaltyAmount: number;
+    finalRefundAmount: number;
+    refundMethod: RefundMethod;
+    refundAccountInfo: any | null;
+    cancellationReason: string;
+    rejectionReason: string | null;
+    adminNotes: string | null;
+    requestedAt: string;
+    approvedAt: string | null;
+    rejectedAt: string | null;
+    completedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
   };
-  categoryType?: InquiryCategoryType;
+}
+
+// ========================================
+// 렌탈 주문 관련 타입
+// ========================================
+
+export type RentalOrderStatus = 'PENDING' | 'PAID' | 'PARTIAL_REFUND' | 'FULL_REFUND' | 'CANCELLED';
+export type DeliveryStatus = 'PENDING' | 'IN_TRANSIT' | 'DELIVERED';
+export type RentalItemStatus = 'ACTIVE' | 'CANCELLED';
+
+export interface RentalOrderItem {
+  id: number;
+  rentalItemId?: number;
+  name: string;
+  category?: string;
+  quantity: number;
+  pricePerItem: number;
+  totalPrice: number;
+  status: RentalItemStatus;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  refundAmount: number | null;
+}
+
+export interface RentalOrder {
+  id: number;
+  rentalOrderId: string;
+  orderType: string;
+  status: RentalOrderStatus;
+  deliveryStatus: DeliveryStatus;
+  deliveryStatusLabel: string;
+  deliveredAt: string | null;
+  totalAmount: number;
+  refundedAmount: number;
+  modifiableUntil: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  contract: {
+    id: number;
+    orderId: string;
+    status: string;
+    checkInDate: string;
+    checkOutDate: string;
+    guest: { id: number; name: string; nickname: string; email: string };
+    room: { id: number; roomName: string };
+  };
+  items: RentalOrderItem[];
+}
+
+export interface RentalOrderDetail {
+  order: RentalOrder & {
+    paymentKey?: string;
+    updatedAt: string;
+    contract: {
+      id: number;
+      orderId: string;
+      status: string;
+      checkInDate: string;
+      checkOutDate: string;
+      guest: { id: number; name: string; nickname: string; email: string; phoneNumber: string };
+      host: { id: number; name: string; nickname: string; email: string; phoneNumber: string };
+      room: { id: number; roomName: string; address: string };
+    };
+  };
+  logs: Array<{
+    id: number;
+    action: string;
+    actionLabel: string;
+    description: string;
+    metadata: Record<string, any>;
+    createdAt: string;
+  }>;
+}
+
+export interface RentalHistory {
+  contract: {
+    id: number;
+    orderId: string;
+    status: string;
+    checkInDate: string;
+    checkOutDate: string;
+    guest: { id: number; name: string; nickname: string };
+    room: { id: number; roomName: string };
+  };
+  summary: {
+    totalOrders: number;
+    totalPaid: number;
+    totalRefunded: number;
+    activeItems: number;
+    cancelledItems: number;
+  };
+  orders: Array<{
+    id: number;
+    rentalOrderId: string;
+    orderType: string;
+    status: RentalOrderStatus;
+    totalAmount: number;
+    refundedAmount: number;
+    paidAt: string | null;
+    createdAt: string;
+    items: Array<{
+      id: number;
+      name: string;
+      quantity: number;
+      totalPrice: number;
+      status: RentalItemStatus;
+      cancelledAt: string | null;
+    }>;
+  }>;
+  timeline: Array<{
+    id: number;
+    rentalOrderId: number;
+    action: string;
+    actionLabel: string;
+    description: string;
+    metadata: Record<string, any>;
+    createdAt: string;
+  }>;
 }
 
 // API 응답 타입
-export interface PaginationMeta {
-  currentPage: number;
+export interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
   totalPages: number;
-  totalItems: number;
-  itemsPerPage: number;
 }
 
 export interface PaginatedResponse<T> {
   items: T[];
-  pagination: PaginationMeta;
+  pagination: Pagination;
 }

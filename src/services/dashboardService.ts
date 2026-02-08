@@ -24,13 +24,13 @@ export interface DashboardStats {
 export interface RecentActivity {
   recentReservations: Array<{
     id: number;
+    orderId: string;
     status: string;
-    checkInDate: string;
-    checkOutDate: string;
-    finalTotalAmount: number;
+    totalAmount: number;
     guest: {
       id: number;
       name: string;
+      nickname: string;
       email: string;
     };
     room: {

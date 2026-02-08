@@ -21,7 +21,7 @@ export default function InquiryList() {
   const filteredInquiries = inquiries.filter((inquiry) => {
     const matchesSearch =
       inquiry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inquiry.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inquiry.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       inquiry.content.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || inquiry.status === statusFilter;

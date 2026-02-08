@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Settlement } from '../types';
 
 export const mockSettlements: Settlement[] = [

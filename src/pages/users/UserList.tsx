@@ -5,8 +5,9 @@ import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { SearchBar } from '../../components/common/SearchBar';
 import { Pagination } from '../../components/common/Pagination';
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { userService, User } from '../../services/userService';
+import { AlertCircle } from 'lucide-react';
+import { userService } from '../../services/userService';
+import type { User } from '../../types';
 
 export const UserList: React.FC = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export const UserList: React.FC = () => {
         limit: itemsPerPage,
         search: debouncedSearchQuery || undefined,
         userType: userTypeFilter !== 'all' ? userTypeFilter : undefined,
-        isActive: isActiveFilter !== 'all' ? isActiveFilter === 'true' : undefined,
+        isActive: isActiveFilter !== 'all' ? isActiveFilter : undefined,
       });
       setUsers(response.users);
       setTotalPages(response.pagination.totalPages);
@@ -82,15 +83,8 @@ export const UserList: React.FC = () => {
     {
       key: 'phoneNumber',
       title: '연락처',
-      render: (value: string, record: User) => (
-        <div className="flex items-center gap-2">
-          <span>{value}</span>
-          {record.phoneVerified ? (
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-          ) : (
-            <XCircle className="w-4 h-4 text-red-500" />
-          )}
-        </div>
+      render: (value: string) => (
+        <span>{value || '-'}</span>
       )
     },
     {
@@ -113,10 +107,9 @@ export const UserList: React.FC = () => {
       render: (value: string) => new Date(value).toLocaleDateString('ko-KR')
     },
     {
-      key: 'lastLoginAt',
-      title: '마지막 로그인',
-      render: (value: string | null | undefined) =>
-        value ? new Date(value).toLocaleDateString('ko-KR') : '-'
+      key: 'role',
+      title: '역할',
+      render: (value: string) => value === 'host' ? '호스트' : '게스트'
     }
   ];
 

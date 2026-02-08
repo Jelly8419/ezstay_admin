@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Mock data - 실제 API 연동 시 사용하지 않음
 import { RentalItemReservation } from '../types';
 
 export const mockRentalItemReservations: RentalItemReservation[] = [

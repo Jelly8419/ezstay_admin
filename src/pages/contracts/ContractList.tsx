@@ -1,125 +1,130 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { mockContracts } from '../../data/mockContracts';
-import { Contract, ContractStatus } from '../../types';
-import { formatCurrency, formatDate, getStatusColor, getStatusText } from '../../utils/format';
+import type { Reservation, ReservationStatus, Pagination as PaginationType } from '../../types';
+import { formatCurrency, formatDate } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { SearchBar } from '../../components/common/SearchBar';
 import { Pagination } from '../../components/common/Pagination';
 import { Button } from '../../components/ui/Button';
+import { reservationService } from '../../services/reservationService';
+
+const getStatusBadge = (status: string) => {
+  const map: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
+    PENDING_APPROVAL: { variant: 'warning', label: '승인 대기' },
+    APPROVED: { variant: 'info', label: '승인됨' },
+    PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료' },
+    IN_PROGRESS: { variant: 'success', label: '진행중' },
+    COMPLETED: { variant: 'default', label: '완료' },
+    CANCELLED: { variant: 'danger', label: '취소' },
+    EXPIRED: { variant: 'default', label: '만료' },
+  };
+  const config = map[status] || { variant: 'default' as const, label: status };
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+};
 
 export default function ContractList() {
-  const [contracts, setContracts] = useState<Contract[]>(mockContracts);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [pagination, setPagination] = useState<PaginationType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ContractStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<ReservationStatus | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 10;
 
-  // 필터링
-  const filteredContracts = contracts.filter((contract) => {
-    const matchesSearch =
-      contract.id.toString().includes(searchTerm);
-
-    const matchesStatus = statusFilter === 'all' || contract.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // 페이지네이션
-  const totalPages = Math.ceil(filteredContracts.length / itemsPerPage);
-  const paginatedContracts = filteredContracts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // 계약 취소
-  const handleCancel = (id: number) => {
-    if (confirm('정말 이 계약을 취소하시겠습니까?')) {
-      setContracts(
-        contracts.map((c) => (c.id === id ? { ...c, status: 'CANCELLED_BY_GUEST' } : c))
-      );
+  const loadReservations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await reservationService.getReservations({
+        page: currentPage,
+        limit: itemsPerPage,
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(searchTerm && { search: searchTerm }),
+      });
+      setReservations(response.reservations || []);
+      setPagination(response.pagination || null);
+    } catch (err) {
+      console.error('예약 목록 로드 실패:', err);
+      setError('예약 목록을 불러오는데 실패했습니다.');
+      setReservations([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadReservations();
+  }, [currentPage, statusFilter]);
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    loadReservations();
   };
 
   const columns = [
     {
       key: 'id',
-      title: '계약번호',
+      title: '예약번호',
       render: (value: number) => `#${value}`,
       width: '8%',
     },
     {
-      key: 'roomId',
-      title: '매물 ID',
-      render: (value: number) => `#${value}`,
-      width: '8%',
-    },
-    {
-      key: 'guestId',
-      title: '게스트 ID',
-      render: (value: number) => `#${value}`,
+      key: 'guest',
+      title: '게스트',
+      render: (value: any) => value?.name || '-',
       width: '10%',
+    },
+    {
+      key: 'room',
+      title: '매물',
+      render: (value: any) => value?.roomName || '-',
+      width: '15%',
     },
     {
       key: 'checkInDate',
       title: '체크인',
-      render: (value: string) => formatDate(value),
+      render: (value: string) => value ? formatDate(value) : '-',
       width: '10%',
     },
     {
       key: 'checkOutDate',
       title: '체크아웃',
-      render: (value: string) => formatDate(value),
+      render: (value: string) => value ? formatDate(value) : '-',
       width: '10%',
     },
     {
-      key: 'finalTotalAmount',
+      key: 'totalAmount',
       title: '금액',
-      render: (value: number) => (
-        <span className="font-semibold">{formatCurrency(value)}</span>
+      render: (value: any) => (
+        <span className="font-semibold">{value != null ? formatCurrency(value) : '-'}</span>
       ),
       width: '10%',
     },
     {
       key: 'status',
       title: '상태',
-      render: (value: ContractStatus) => (
-        <Badge className={getStatusColor(value)}>
-          {getStatusText(value)}
-        </Badge>
-      ),
+      render: (value: string) => getStatusBadge(value),
       width: '12%',
     },
     {
       key: 'createdAt',
-      title: '계약일',
-      render: (value: string) => formatDate(value),
+      title: '예약일',
+      render: (value: string) => value ? formatDate(value) : '-',
       width: '10%',
     },
     {
       key: 'actions',
       title: '액션',
-      render: (_: any, contract: Contract) => (
+      render: (_: any, reservation: any) => (
         <div className="flex gap-2">
-          <Link to={`/contracts/${contract.id}`}>
+          <Link to={`/contracts/${reservation.id}`}>
             <Button variant="secondary" size="sm">
               상세
             </Button>
           </Link>
-          {contract.status === 'PAYMENT_COMPLETED' && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCancel(contract.id);
-              }}
-            >
-              취소
-            </Button>
-          )}
         </div>
       ),
       width: '12%',
@@ -129,7 +134,7 @@ export default function ContractList() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">계약 관리</h1>
+        <h1 className="text-2xl font-bold">예약 관리</h1>
       </div>
 
       <Card>
@@ -137,14 +142,18 @@ export default function ContractList() {
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="계약번호로 검색"
+            onSearch={handleSearch}
+            placeholder="예약번호 또는 게스트명으로 검색"
           />
 
           <div className="flex gap-4 items-center">
             <label className="text-sm font-medium text-gray-700">상태:</label>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ContractStatus | 'all')}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as ReservationStatus | 'all');
+                setCurrentPage(1);
+              }}
               className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="all">전체</option>
@@ -153,25 +162,36 @@ export default function ContractList() {
               <option value="PAYMENT_COMPLETED">결제 완료</option>
               <option value="IN_PROGRESS">진행중</option>
               <option value="COMPLETED">완료</option>
-              <option value="CANCELLED_BY_GUEST">게스트 취소</option>
-              <option value="CANCELLED_BY_HOST">호스트 취소</option>
+              <option value="CANCELLED">취소</option>
+              <option value="EXPIRED">만료</option>
             </select>
           </div>
 
           <div className="text-sm text-gray-600">
-            총 {filteredContracts.length}개의 계약
+            총 {pagination?.total ?? reservations.length}개의 예약
           </div>
         </div>
       </Card>
 
       <Card>
-        <Table columns={columns} data={paginatedContracts} />
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={loadReservations}>다시 시도</Button>
+          </div>
+        ) : (
+          <Table columns={columns} data={reservations} />
+        )}
       </Card>
 
-      {totalPages > 1 && (
+      {pagination && pagination.totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
-          totalPages={totalPages}
+          totalPages={pagination.totalPages}
           onPageChange={setCurrentPage}
         />
       )}

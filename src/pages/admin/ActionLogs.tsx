@@ -80,9 +80,7 @@ export const ActionLogs: React.FC = () => {
       ACTIVATE: { variant: 'success', label: '활성화' },
       DEACTIVATE: { variant: 'warning', label: '비활성화' },
       SUSPEND: { variant: 'danger', label: '정지' },
-      UNLOCK: { variant: 'success', label: '잠금해제' },
       EXPORT: { variant: 'info', label: '내보내기' },
-      BULK_UPDATE: { variant: 'warning', label: '대량수정' },
     };
 
     const config = badges[actionType];

@@ -75,7 +75,7 @@ export const NoticeManager: React.FC = () => {
         page: currentPage,
         limit: 10,
         status: statusFilter === 'all' ? undefined : statusFilter,
-        searchKeyword: searchKeyword || undefined,
+        search: searchKeyword || undefined,
       });
       setNotices(response?.items || []);
       setTotalPages(response?.pagination?.totalPages || 1);

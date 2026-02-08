@@ -111,7 +111,7 @@ export const InquiryManager: React.FC = () => {
         limit: 10,
         status: statusFilter === 'all' ? undefined : statusFilter,
         categoryType: categoryFilter === 'all' ? undefined : categoryFilter,
-        searchKeyword: searchKeyword || undefined,
+        search: searchKeyword || undefined,
       });
       setInquiries(response?.items || []);
       setTotalPages(response?.pagination?.totalPages || 1);
@@ -120,7 +120,7 @@ export const InquiryManager: React.FC = () => {
       const allResponse = await inquiryApi.getInquiries({ limit: 1000 });
       const items = allResponse?.items || [];
       setStats({
-        total: allResponse?.pagination?.totalItems || 0,
+        total: allResponse?.pagination?.total || 0,
         pending: items.filter((i) => i.status === 'pending').length,
         answered: items.filter((i) => i.status === 'answered').length,
         closed: items.filter((i) => i.status === 'closed').length,
@@ -389,7 +389,7 @@ export const InquiryManager: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {inquiry.userName}
+                      {inquiry.user?.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge variant={getStatusBadgeVariant(inquiry.status)}>
@@ -483,7 +483,7 @@ export const InquiryManager: React.FC = () => {
                 <User className="w-5 h-5 text-gray-600" />
                 <div>
                   <div className="font-medium text-gray-900">
-                    {selectedInquiry.user?.name || selectedInquiry.userName}
+                    {selectedInquiry.user?.name}
                   </div>
                   <div className="text-sm text-gray-500">
                     {selectedInquiry.user?.email}

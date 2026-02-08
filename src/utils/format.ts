@@ -1,10 +1,12 @@
 // 금액 포맷팅
-export const formatCurrency = (amount: number): string => {
-  return `₩${amount.toLocaleString('ko-KR')}`;
+export const formatCurrency = (amount: number | null | undefined): string => {
+  if (amount == null) return '-';
+  return `₩${Number(amount).toLocaleString('ko-KR')}`;
 };
 
 // 날짜 포맷팅
-export const formatDate = (dateString: string): string => {
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '-';
   const date = new Date(dateString);
   return date.toLocaleDateString('ko-KR', {
     year: 'numeric',

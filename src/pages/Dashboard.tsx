@@ -92,24 +92,19 @@ export const Dashboard: React.FC = () => {
     {
       key: 'room',
       title: '매물',
-      render: (value: { roomName: string }) => (
-        <div className="font-medium text-gray-900">{value.roomName}</div>
+      render: (value: any) => (
+        <div className="font-medium text-gray-900">{value?.roomName ?? '-'}</div>
       )
     },
     {
       key: 'guest',
       title: '게스트',
-      render: (value: { name: string }) => value.name
+      render: (value: any) => value?.name ?? '-'
     },
     {
-      key: 'checkInDate',
-      title: '체크인',
-      render: (value: string) => new Date(value).toLocaleDateString('ko-KR')
-    },
-    {
-      key: 'finalTotalAmount',
+      key: 'totalAmount',
       title: '금액',
-      render: (value: number) => `₩${value.toLocaleString()}`
+      render: (value: any) => value != null ? `₩${Number(value).toLocaleString()}` : '-'
     },
     {
       key: 'status',
@@ -133,33 +128,33 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="전체 사용자"
-          value={stats.totalUsers.toLocaleString()}
+          value={(stats.totalUsers ?? 0).toLocaleString()}
           icon={Users}
-          trend={stats.trends.user}
+          trend={stats.trends?.user}
           iconColor="text-blue-600"
           iconBgColor="bg-blue-100"
         />
         <StatCard
           title="등록 매물"
-          value={stats.totalProperties.toLocaleString()}
+          value={(stats.totalProperties ?? 0).toLocaleString()}
           icon={Home}
-          trend={stats.trends.property}
+          trend={stats.trends?.property}
           iconColor="text-green-600"
           iconBgColor="bg-green-100"
         />
         <StatCard
           title="활성 예약"
-          value={stats.activeReservations.toLocaleString()}
+          value={(stats.activeReservations ?? 0).toLocaleString()}
           icon={CalendarCheck}
-          trend={stats.trends.reservation}
+          trend={stats.trends?.reservation}
           iconColor="text-purple-600"
           iconBgColor="bg-purple-100"
         />
         <StatCard
           title="월 매출"
-          value={`₩${(stats.monthlyRevenue / 10000).toFixed(0)}만`}
+          value={`₩${((stats.monthlyRevenue ?? 0) / 10000).toFixed(0)}만`}
           icon={TrendingUp}
-          trend={stats.trends.revenue}
+          trend={stats.trends?.revenue}
           iconColor="text-orange-600"
           iconBgColor="bg-orange-100"
         />
@@ -182,7 +177,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="text-2xl font-bold text-yellow-600">
-              {stats.pendingReviews}
+              {stats.pendingReviews ?? 0}
             </div>
           </div>
         </Card>
@@ -202,7 +197,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="text-2xl font-bold text-red-600">
-              {stats.pendingInquiries}
+              {stats.pendingInquiries ?? 0}
             </div>
           </div>
         </Card>

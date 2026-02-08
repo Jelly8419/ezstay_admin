@@ -472,51 +472,35 @@ export const RoomReviewDetail: React.FC = () => {
         <Card>
           <h2 className="text-xl font-bold mb-4">편의시설</h2>
 
-          {property.amenities.basicOptions && (
+          {property.amenities.basicOptions && property.amenities.basicOptions.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold mb-3">기본 옵션</h3>
               <div className="flex flex-wrap gap-2">
-                {property.amenities.basicOptions.bed && <Badge>침대</Badge>}
-                {property.amenities.basicOptions.desk && <Badge>책상</Badge>}
-                {property.amenities.basicOptions.closet && <Badge>옷장</Badge>}
-                {property.amenities.basicOptions.shoeRack && <Badge>신발장</Badge>}
+                {property.amenities.basicOptions.map((option) => (
+                  <Badge key={option}>{option}</Badge>
+                ))}
               </div>
             </div>
           )}
 
-          {property.amenities.additionalOptions && (
+          {property.amenities.additionalOptions && property.amenities.additionalOptions.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold mb-3">추가 옵션</h3>
               <div className="flex flex-wrap gap-2">
-                {property.amenities.additionalOptions.airConditioner && (
-                  <Badge variant="success">에어컨</Badge>
-                )}
-                {property.amenities.additionalOptions.refrigerator && (
-                  <Badge variant="success">냉장고</Badge>
-                )}
-                {property.amenities.additionalOptions.washingMachine && (
-                  <Badge variant="success">세탁기</Badge>
-                )}
-                {property.amenities.additionalOptions.tv && (
-                  <Badge variant="success">TV</Badge>
-                )}
+                {property.amenities.additionalOptions.map((option) => (
+                  <Badge key={option} variant="success">{option}</Badge>
+                ))}
               </div>
             </div>
           )}
 
-          {property.amenities.convenienceOptions && (
+          {property.amenities.convenienceOptions && property.amenities.convenienceOptions.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold mb-3">편의 시설</h3>
               <div className="flex flex-wrap gap-2">
-                {property.amenities.convenienceOptions.wifi && (
-                  <Badge variant="success">Wi-Fi</Badge>
-                )}
-                {property.amenities.convenienceOptions.microwave && (
-                  <Badge variant="success">전자레인지</Badge>
-                )}
-                {property.amenities.convenienceOptions.inductionStove && (
-                  <Badge variant="success">인덕션</Badge>
-                )}
+                {property.amenities.convenienceOptions.map((option) => (
+                  <Badge key={option} variant="success">{option}</Badge>
+                ))}
               </div>
             </div>
           )}
@@ -533,18 +517,18 @@ export const RoomReviewDetail: React.FC = () => {
       )}
 
       {/* 무료 부가서비스 */}
-      {property.freeServices && (
+      {property.ezService && (
         <Card>
           <h2 className="text-xl font-bold mb-4">무료 부가서비스</h2>
           <div className="space-y-4">
-            {property.freeServices.cleaningService && (
+            {property.ezService.cleaningService && (
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 mt-0.5" />
                 <div>
                   <div className="font-medium">청소 도구 제공</div>
-                  {property.freeServices.cleaningToolImageUrl && (
+                  {property.ezService.cleaningToolImageUrl && (
                     <img
-                      src={`http://localhost:8080${property.freeServices.cleaningToolImageUrl}`}
+                      src={`http://localhost:8080${property.ezService.cleaningToolImageUrl}`}
                       alt="청소도구"
                       className="mt-2 w-32 h-32 object-cover rounded-lg"
                     />
@@ -552,40 +536,40 @@ export const RoomReviewDetail: React.FC = () => {
                 </div>
               </div>
             )}
-            {property.freeServices.hairDryerRental && (
+            {property.ezService.hairDryerRental && (
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 mt-0.5" />
                 <div className="font-medium">헤어드라이어 대여</div>
               </div>
             )}
-            {property.freeServices.beddingService && (
+            {property.ezService.beddingService && (
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 mt-0.5" />
                 <div>
                   <div className="font-medium">침구류 제공</div>
-                  {property.freeServices.bedSizes && (
+                  {property.ezService.bedSizes && (
                     <div className="mt-2 flex gap-3">
-                      {property.freeServices.bedSizes.superSingle && property.freeServices.bedSizes.superSingle > 0 && (
-                        <Badge>슈퍼싱글 {property.freeServices.bedSizes.superSingle}개</Badge>
+                      {property.ezService.bedSizes.superSingle && property.ezService.bedSizes.superSingle > 0 && (
+                        <Badge>슈퍼싱글 {property.ezService.bedSizes.superSingle}개</Badge>
                       )}
-                      {property.freeServices.bedSizes.queen && property.freeServices.bedSizes.queen > 0 && (
-                        <Badge>퀸 {property.freeServices.bedSizes.queen}개</Badge>
+                      {property.ezService.bedSizes.queen && property.ezService.bedSizes.queen > 0 && (
+                        <Badge>퀸 {property.ezService.bedSizes.queen}개</Badge>
                       )}
-                      {property.freeServices.bedSizes.king && property.freeServices.bedSizes.king > 0 && (
-                        <Badge>킹 {property.freeServices.bedSizes.king}개</Badge>
+                      {property.ezService.bedSizes.king && property.ezService.bedSizes.king > 0 && (
+                        <Badge>킹 {property.ezService.bedSizes.king}개</Badge>
                       )}
                     </div>
                   )}
                 </div>
               </div>
             )}
-            {property.freeServices.amenityKit && (
+            {property.ezService.amenityKit && (
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 mt-0.5" />
                 <div className="font-medium">어메니티 키트</div>
               </div>
             )}
-            {property.freeServices.autoPasswordChange && (
+            {property.ezService.autoPasswordChange && (
               <div className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-600 mt-0.5" />
                 <div className="font-medium">자동 비밀번호 변경</div>
@@ -649,9 +633,9 @@ export const RoomReviewDetail: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">인증 상태</label>
             <div className="flex gap-2">
-              {property.host.isVerified !== undefined && (
-                <Badge variant={property.host.isVerified ? 'success' : 'danger'}>
-                  {property.host.isVerified ? '본인인증 완료' : '미인증'}
+              {property.host.phoneVerified !== undefined && (
+                <Badge variant={property.host.phoneVerified ? 'success' : 'danger'}>
+                  {property.host.phoneVerified ? '본인인증 완료' : '미인증'}
                 </Badge>
               )}
               {property.host.hasBankAccount !== undefined && (

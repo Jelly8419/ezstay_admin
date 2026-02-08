@@ -1,0 +1,45 @@
+/**
+ * 예약(계약) 관리 API 서비스
+ */
+
+import { api } from './api';
+import type { Reservation, ReservationDetail, Pagination } from '../types';
+
+// 예약 목록 응답 타입
+export interface ReservationListResponse {
+  reservations: Reservation[];
+  pagination: Pagination;
+}
+
+// 예약 목록 조회 파라미터
+export interface ReservationListParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export const reservationService = {
+  /**
+   * 예약 목록 조회
+   */
+  getReservations: (params: ReservationListParams = {}) => {
+    const queryString = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, value]) => value !== undefined)
+        .map(([key, value]) => [key, String(value)])
+    ).toString();
+
+    return api.get<ReservationListResponse>(
+      `/admin/reservations${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  /**
+   * 예약 상세 조회
+   */
+  getReservationDetail: (reservationId: number) =>
+    api.get<ReservationDetail>(`/admin/reservations/${reservationId}`),
+};

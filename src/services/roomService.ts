@@ -3,7 +3,7 @@
  */
 
 import { api } from './api';
-import { Pagination } from './userService';
+import type { Pagination } from '../types';
 
 // API 응답 타입 (백엔드 응답 구조)
 export interface Property {
@@ -13,7 +13,7 @@ export interface Property {
   detailAddress?: string;
   area: number;
   dailyRent: number;
-  status: 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published';
+  status: 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published' | 'hidden_by_admin';
   submittedAt?: string;
   approvedAt?: string;
   rejectionReason?: string;
@@ -21,6 +21,7 @@ export interface Property {
   host: {
     id: number;
     name: string;
+    nickname: string;
     email: string;
     phoneNumber: string;
   };
@@ -41,6 +42,7 @@ export interface PropertyDetail extends Property {
   entrancePassword?: string;
 
   // 방 구조
+  maxGuests?: number;
   parkingAvailable?: boolean;
   parkingInfo?: string;
   elevatorAvailable?: boolean;
@@ -65,30 +67,16 @@ export interface PropertyDetail extends Property {
   minContractWeeks?: number;
   refundPolicy?: string;
 
-  // 편의시설
+  // 편의시설 (string 배열로 변경)
   amenities?: {
-    basicOptions?: {
-      bed?: boolean;
-      desk?: boolean;
-      closet?: boolean;
-      shoeRack?: boolean;
-    };
-    additionalOptions?: {
-      airConditioner?: boolean;
-      refrigerator?: boolean;
-      washingMachine?: boolean;
-      tv?: boolean;
-    };
-    convenienceOptions?: {
-      wifi?: boolean;
-      microwave?: boolean;
-      inductionStove?: boolean;
-    };
+    basicOptions?: string[];
+    additionalOptions?: string[];
+    convenienceOptions?: string[];
     petsAllowed?: boolean;
   };
 
-  // 무료 부가서비스
-  freeServices?: {
+  // EZ서비스 (freeServices → ezService)
+  ezService?: {
     agreeTerms?: boolean;
     cleaningService?: boolean;
     cleaningToolImageUrl?: string;
@@ -113,9 +101,10 @@ export interface PropertyDetail extends Property {
   host: {
     id: number;
     name: string;
+    nickname: string;
     email: string;
     phoneNumber: string;
-    isVerified?: boolean;
+    phoneVerified?: boolean;
     hasBankAccount?: boolean;
   };
 
@@ -123,13 +112,8 @@ export interface PropertyDetail extends Property {
   registrationProgress?: {
     currentStep?: string;
     completionRate?: number;
-    steps?: {
-      basicInfo?: boolean;
-      pricing?: boolean;
-      photosAndAmenities?: boolean;
-      freeServices?: boolean;
-      description?: boolean;
-    };
+    completedSteps?: string[];
+    requiredSteps?: string[];
   };
 
   // 게시 정보

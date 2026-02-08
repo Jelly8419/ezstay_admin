@@ -117,17 +117,9 @@ export const UserDetail: React.FC = () => {
       {/* Page Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          {user.profileImageUrl ? (
-            <img
-              src={user.profileImageUrl}
-              alt={user.name || '프로필'}
-              className="w-20 h-20 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
-              <UserIcon className="w-10 h-10 text-gray-400" />
-            </div>
-          )}
+          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+            <UserIcon className="w-10 h-10 text-gray-400" />
+          </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{user.name || '이름 없음'}</h1>
             <p className="text-gray-500 mt-1">회원번호: {user.id}</p>
@@ -165,10 +157,9 @@ export const UserDetail: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">연락처</p>
               <p className="font-medium">{user.phoneNumber || '-'}</p>
-              {user.phoneVerified && user.phoneVerifiedAt && (
-                <span className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                  <CheckCircle className="w-3 h-3" />
-                  인증 완료 ({formatDate(user.phoneVerifiedAt)})
+              {user.phoneNumber && (
+                <span className="text-xs text-gray-500 mt-1">
+                  연락처 등록됨
                 </span>
               )}
             </div>
@@ -185,8 +176,8 @@ export const UserDetail: React.FC = () => {
           <div className="flex items-start gap-3">
             <Calendar className="w-5 h-5 text-gray-400 mt-1" />
             <div>
-              <p className="text-sm text-gray-500">마지막 로그인</p>
-              <p className="font-medium">{formatDate(user.lastLoginAt)}</p>
+              <p className="text-sm text-gray-500">역할</p>
+              <p className="font-medium">{user.role === 'host' ? '호스트' : '게스트'}</p>
             </div>
           </div>
         </div>
@@ -269,58 +260,24 @@ export const UserDetail: React.FC = () => {
         )}
       </Card>
 
-      {/* 약관 동의 정보 */}
-      <Card title="약관 동의">
+      {/* 활동 정보 */}
+      <Card title="활동 정보">
         <div className="grid grid-cols-2 gap-6">
           <div className="flex items-center gap-2">
-            {user.serviceTermsAgreed ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            ) : (
-              <XCircle className="w-5 h-5 text-red-500" />
-            )}
-            <span className={user.serviceTermsAgreed ? 'text-green-700' : 'text-red-700'}>
-              서비스 이용약관
-            </span>
+            <Home className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">호스트 등록 매물</p>
+              <p className="font-medium">{user.hostRoomsCount ?? 0}개</p>
+            </div>
           </div>
-
           <div className="flex items-center gap-2">
-            {user.privacyPolicyAgreed ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            ) : (
-              <XCircle className="w-5 h-5 text-red-500" />
-            )}
-            <span className={user.privacyPolicyAgreed ? 'text-green-700' : 'text-red-700'}>
-              개인정보 처리방침
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {user.marketingConsent ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            ) : (
-              <XCircle className="w-5 h-5 text-gray-400" />
-            )}
-            <span className={user.marketingConsent ? 'text-green-700' : 'text-gray-600'}>
-              마케팅 수신 동의
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {user.ageConfirmed ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            ) : (
-              <XCircle className="w-5 h-5 text-red-500" />
-            )}
-            <span className={user.ageConfirmed ? 'text-green-700' : 'text-red-700'}>
-              성인 인증 (만 19세 이상)
-            </span>
+            <ClipboardList className="w-5 h-5 text-gray-400" />
+            <div>
+              <p className="text-sm text-gray-500">게스트 예약 수</p>
+              <p className="font-medium">{user.guestReservationsCount ?? 0}건</p>
+            </div>
           </div>
         </div>
-        {user.termsAgreedAt && (
-          <p className="text-sm text-gray-500 mt-4">
-            동의일: {formatDate(user.termsAgreedAt)}
-          </p>
-        )}
       </Card>
 
       {/* 활동 통계 */}
