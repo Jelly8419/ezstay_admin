@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    // 환경변수로 base path 제어 (fallback: 개발 = /, 그 외 = /admin/)
-    base: env.VITE_BASE_PATH || (mode === 'development' ? '/' : '/admin/'),
+    // 환경변수로 base path 제어 (fallback: 테섭 = /admin, 그 외 = /)
+    base: env.VITE_BASE_PATH || (mode === 'test' ? '/admin' : '/'),
     plugins: [react()],
     resolve: {
       alias: {
