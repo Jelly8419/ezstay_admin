@@ -715,32 +715,28 @@ export interface CreateDepositHoldRequest {
 // 영수증 관련 타입
 // ========================================
 
+export type ReceiptType = 'personal' | 'business' | 'tax_invoice';
+export type ReceiptRequired = 'yes' | 'no';
+export type ReceiptIssueStatus = 'requested' | 'issued' | 'rejected';
+
 export interface Receipt {
   id: number;
-  contractId: number;
-  orderId: string;
-  receiptType: string;
-  status: string;
-  totalAmount: number;
-  issuedAt: string;
-  receiptUrl?: string;
-  guest?: { id: number; name: string; email: string };
-  room?: { id: number; roomName: string };
+  hostId: number;
+  hostName: string;
+  hostPhone: string;
+  hostEmail: string;
+  receiptRequired: ReceiptRequired;
+  receiptType: ReceiptType | null;
+  receiptNumber: string | null;
+  businessName: string | null;
+  repName: string | null;
+  email: string | null;
+  issueStatus: ReceiptIssueStatus;
+  issuedAt: string | null;
+  issuedByAdmin: number | null;
+  issueNote: string | null;
   createdAt: string;
-}
-
-export interface ReceiptDetail extends Receipt {
-  contract?: {
-    id: number;
-    orderId: string;
-    checkInDate: string;
-    checkOutDate: string;
-    finalTotalAmount: number;
-    rentalFee: number;
-    maintenanceFee: number;
-    cleaningFee: number;
-    platformFee: number;
-  };
+  updatedAt: string;
 }
 
 // ========================================
