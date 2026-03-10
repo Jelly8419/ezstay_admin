@@ -12,7 +12,8 @@ import {
   LayoutDashboard,
   FileText,
   ShieldCheck,
-  Receipt
+  Receipt,
+  Send
 } from 'lucide-react';
 
 interface NavItem {
@@ -76,6 +77,11 @@ const navItems: NavItem[] = [
     path: '/notifications',
     label: '알림 서비스',
     icon: <Bell className="w-5 h-5" />
+  },
+  {
+    path: '/alimtalk',
+    label: '알림톡 관리',
+    icon: <Send className="w-5 h-5" />
   },
   {
     path: '/admin/action-logs',

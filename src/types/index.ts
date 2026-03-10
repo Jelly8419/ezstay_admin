@@ -743,6 +743,106 @@ export interface ReceiptDetail extends Receipt {
   };
 }
 
+// ========================================
+// 알림톡 (Alimtalk) 관련 타입
+// ========================================
+
+export type AlimtalkInspStatus = 'APR' | 'REJ' | 'REG';
+export type AlimtalkLogStatus = 'PENDING' | 'SENT' | 'FAILED' | 'RETRIED' | 'FALLBACK_SENT' | 'FALLBACK_FAILED';
+
+export interface AlimtalkTemplateButton {
+  name: string;
+  linkType: string;
+  linkMo: string;
+  linkPc?: string;
+}
+
+export interface AlimtalkTemplate {
+  eventName: string | null;
+  tplCode: string | null;
+  eventLabel: string | null;
+  varMap: Record<string, string> | null;
+  isActive: boolean;
+  isLinked: boolean;
+  inspStatus: AlimtalkInspStatus | null;
+  templtName: string | null;
+  templtContent: string | null;
+  buttons: AlimtalkTemplateButton[] | null;
+  lastFetched: string | null;
+}
+
+export interface AlimtalkTemplateListResponse {
+  totalTemplates: number;
+  activeTemplates: number;
+  unmappedCount: number;
+  lastSyncTime: string | null;
+  syncError: string | null;
+  templates: AlimtalkTemplate[];
+}
+
+export interface AlimtalkTemplateSyncResponse {
+  templateCount: number;
+  lastSyncTime: string;
+}
+
+export interface AlimtalkLog {
+  id: number;
+  eventName: string;
+  contractId: number | null;
+  chatRoomId: number | null;
+  receiverId: number;
+  receiverPhone: string;
+  tplCode: string;
+  status: AlimtalkLogStatus;
+  retryCount: number;
+  errorMessage: string | null;
+  sentAt: string | null;
+  failedAt: string | null;
+  createdAt: string;
+}
+
+export interface AlimtalkLogListParams {
+  page?: number;
+  limit?: number;
+  status?: AlimtalkLogStatus;
+  eventName?: string;
+  receiverId?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface AlimtalkStatsSummary {
+  total: number;
+  sent: number;
+  retried: number;
+  fallbackSent: number;
+  failed: number;
+  successRate: string;
+}
+
+export interface AlimtalkStatsByStatus {
+  status: string;
+  count: number;
+}
+
+export interface AlimtalkStatsByEvent {
+  eventName: string;
+  total: number;
+  sent: number;
+  failed: number;
+  fallback: number;
+}
+
+export interface AlimtalkStatsResponse {
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  summary: AlimtalkStatsSummary;
+  byStatus: AlimtalkStatsByStatus[];
+  byEvent: AlimtalkStatsByEvent[];
+}
+
 // API 응답 타입
 export interface Pagination {
   total: number;

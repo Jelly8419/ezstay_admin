@@ -20,6 +20,7 @@ import { ActionLogs } from './pages/admin/ActionLogs';
 import { SupportCenter } from './pages/support/SupportCenter';
 import DepositHoldList from './pages/deposit-holds/DepositHoldList';
 import ReceiptList from './pages/receipts/ReceiptList';
+import AlimtalkManagement from './pages/alimtalk/AlimtalkManagement';
 
 function App() {
   // 환경변수로 basename 제어 (개발: /, 테스트/프로덕션: /admin)
@@ -78,6 +79,9 @@ function App() {
 
               {/* 알림 서비스 */}
               <Route path="notifications" element={<NotificationList />} />
+
+              {/* 알림톡 관리 */}
+              <Route path="alimtalk" element={<AlimtalkManagement />} />
 
               {/* 관리자 액션 로그 */}
               <Route path="admin/action-logs" element={<ActionLogs />} />
