@@ -79,8 +79,8 @@ export const RoomReview: React.FC = () => {
         rejected: allResponse.properties.filter((p) => p.status === 'rejected').length,
       });
     } catch (err) {
-      console.error('매물 목록 로드 실패:', err);
-      setError('매물 목록을 불러오는데 실패했습니다.');
+      console.error('방 목록 로드 실패:', err);
+      setError('방 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -105,18 +105,18 @@ export const RoomReview: React.FC = () => {
 
       if (reviewAction === 'approve') {
         await propertyService.approveProperty(selectedProperty.id);
-        alert('매물이 승인되었습니다.');
+        alert('방이 승인되었습니다.');
       } else {
         await propertyService.rejectProperty(selectedProperty.id, rejectionReason);
-        alert('매물이 반려되었습니다.');
+        alert('방이 반려되었습니다.');
       }
 
       setIsReviewModalOpen(false);
       setRejectionReason('');
       loadProperties(); // 목록 새로고침
     } catch (err: any) {
-      console.error('매물 심사 처리 실패:', err);
-      alert(err.message || '매물 심사 처리에 실패했습니다.');
+      console.error('방 심사 처리 실패:', err);
+      alert(err.message || '방 심사 처리에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,7 +140,7 @@ export const RoomReview: React.FC = () => {
           {photos && photos.length > 0 ? (
             <img
               src={`http://localhost:8080${photos[0].url}`}
-              alt="매물 썸네일"
+              alt="방 썸네일"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -151,7 +151,7 @@ export const RoomReview: React.FC = () => {
     },
     {
       key: 'roomName',
-      title: '매물 제목',
+      title: '방 제목',
       render: (value: string, record: Property) => (
         <div>
           <div className="font-medium">{value}</div>
@@ -250,8 +250,8 @@ export const RoomReview: React.FC = () => {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">매물 심사</h1>
-        <p className="text-gray-500 mt-2">새로 등록된 매물을 심사하고 승인/반려 처리합니다</p>
+        <h1 className="text-3xl font-bold text-gray-900">방 심사</h1>
+        <p className="text-gray-500 mt-2">새로 등록된 방을 심사하고 승인/반려 처리합니다</p>
       </div>
 
       {/* Filters */}
@@ -336,7 +336,7 @@ export const RoomReview: React.FC = () => {
           setIsReviewModalOpen(false);
           setRejectionReason('');
         }}
-        title={reviewAction === 'approve' ? '매물 승인' : '매물 반려'}
+        title={reviewAction === 'approve' ? '방 승인' : '방 반려'}
         size="lg"
         footer={
           <div className="flex gap-2 justify-end">
@@ -383,14 +383,14 @@ export const RoomReview: React.FC = () => {
             {reviewAction === 'approve' ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-sm text-green-800">
-                  ✓ 이 매물을 승인하시겠습니까? 승인 후 호스트가 게시할 수 있습니다.
+                  ✓ 이 방을 승인하시겠습니까? 승인 후 호스트가 게시할 수 있습니다.
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-sm text-red-800">
-                    ⚠️ 이 매물을 반려하시겠습니까? 반려 사유를 입력해주세요.
+                    ⚠️ 이 방을 반려하시겠습니까? 반려 사유를 입력해주세요.
                   </p>
                 </div>
                 <div>

@@ -195,11 +195,11 @@ export default function ContractDetail() {
               <dd className="font-medium">{detail.orderId}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">체크인</dt>
+              <dt className="text-gray-500">입실</dt>
               <dd>{formatDate(detail.checkInDate)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">체크아웃</dt>
+              <dt className="text-gray-500">퇴실</dt>
               <dd>{formatDate(detail.checkOutDate)}</dd>
             </div>
             <div className="flex justify-between">
@@ -240,7 +240,7 @@ export default function ContractDetail() {
         </Card>
       </div>
 
-      {/* 게스트 / 호스트 / 매물 */}
+      {/* 게스트 / 호스트 / 방 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <h2 className="text-lg font-semibold mb-4">게스트</h2>
@@ -275,10 +275,10 @@ export default function ContractDetail() {
         </Card>
 
         <Card>
-          <h2 className="text-lg font-semibold mb-4">매물</h2>
+          <h2 className="text-lg font-semibold mb-4">방</h2>
           <dl className="space-y-2">
             <div className="flex justify-between">
-              <dt className="text-gray-500">매물명</dt>
+              <dt className="text-gray-500">방 이름</dt>
               <dd>{detail.room.roomName}</dd>
             </div>
           </dl>

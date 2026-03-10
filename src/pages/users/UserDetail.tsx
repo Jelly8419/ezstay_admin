@@ -216,8 +216,8 @@ export const UserDetail: React.FC = () => {
         </div>
       </Card>
 
-      {/* 계좌 정보 */}
-      <Card title="계좌 정보">
+      {/* 정산 계좌 */}
+      <Card title="정산 계좌">
         {user.bankAccounts.length > 0 ? (
           <div className="space-y-4">
             {user.bankAccounts.map((account) => (
@@ -256,7 +256,42 @@ export const UserDetail: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">등록된 계좌가 없습니다.</div>
+          <div className="text-center py-8 text-gray-500">등록된 정산 계좌가 없습니다.</div>
+        )}
+      </Card>
+
+      {/* 환불 계좌 */}
+      <Card title="환불 계좌">
+        {user.refundAccount ? (
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-3">
+              <CreditCard className="w-5 h-5 text-gray-400 mt-1" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{user.refundAccount.bankName}</p>
+                  <Badge variant="info" size="sm">
+                    환불용
+                  </Badge>
+                  {user.refundAccount.isVerified && (
+                    <Badge variant="success" size="sm">
+                      인증 완료
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {formatAccountNumber(user.refundAccount.accountNumber)}
+                </p>
+                <p className="text-sm text-gray-500">예금주: {user.refundAccount.accountHolder}</p>
+                {user.refundAccount.verifiedAt && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    인증일: {formatDate(user.refundAccount.verifiedAt)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">등록된 환불 계좌가 없습니다.</div>
         )}
       </Card>
 
@@ -266,14 +301,14 @@ export const UserDetail: React.FC = () => {
           <div className="flex items-center gap-2">
             <Home className="w-5 h-5 text-gray-400" />
             <div>
-              <p className="text-sm text-gray-500">호스트 등록 매물</p>
+              <p className="text-sm text-gray-500">호스트 등록 방</p>
               <p className="font-medium">{user.hostRoomsCount ?? 0}개</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-gray-400" />
             <div>
-              <p className="text-sm text-gray-500">게스트 예약 수</p>
+              <p className="text-sm text-gray-500">게스트 계약 수</p>
               <p className="font-medium">{user.guestReservationsCount ?? 0}건</p>
             </div>
           </div>
@@ -286,7 +321,7 @@ export const UserDetail: React.FC = () => {
           <div className="flex items-start gap-3">
             <Home className="w-5 h-5 text-gray-400 mt-1" />
             <div>
-              <p className="text-sm text-gray-500">호스트 매물 수</p>
+              <p className="text-sm text-gray-500">호스트 방 수</p>
               <p className="text-2xl font-bold text-gray-900">{user.hostRoomsCount}개</p>
             </div>
           </div>
@@ -294,7 +329,7 @@ export const UserDetail: React.FC = () => {
           <div className="flex items-start gap-3">
             <ClipboardList className="w-5 h-5 text-gray-400 mt-1" />
             <div>
-              <p className="text-sm text-gray-500">게스트 예약 수</p>
+              <p className="text-sm text-gray-500">게스트 계약 수</p>
               <p className="text-2xl font-bold text-gray-900">{user.guestReservationsCount}건</p>
             </div>
           </div>

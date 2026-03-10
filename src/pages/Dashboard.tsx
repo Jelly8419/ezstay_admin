@@ -91,7 +91,7 @@ export const Dashboard: React.FC = () => {
   const reservationColumns = [
     {
       key: 'room',
-      title: '매물',
+      title: '방',
       render: (value: any) => (
         <div className="font-medium text-gray-900">{value?.roomName ?? '-'}</div>
       )
@@ -135,7 +135,7 @@ export const Dashboard: React.FC = () => {
           iconBgColor="bg-blue-100"
         />
         <StatCard
-          title="등록 매물"
+          title="등록 방"
           value={(stats.totalProperties ?? 0).toLocaleString()}
           icon={Home}
           trend={stats.trends?.property}
@@ -152,12 +152,50 @@ export const Dashboard: React.FC = () => {
         />
         <StatCard
           title="월 매출"
-          value={`₩${((stats.monthlyRevenue ?? 0) / 10000).toFixed(0)}만`}
+          value={`₩${((stats.monthlyRevenue?.total ?? 0) / 10000).toFixed(0)}만`}
           icon={TrendingUp}
           trend={stats.trends?.revenue}
           iconColor="text-orange-600"
           iconBgColor="bg-orange-100"
         />
+      </div>
+
+      {/* 매출 상세 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">이번 달 매출</h2>
+          <dl className="space-y-3">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">계약 매출</dt>
+              <dd className="font-semibold">₩{(stats.monthlyRevenue?.contract ?? 0).toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">렌탈 매출</dt>
+              <dd className="font-semibold">₩{(stats.monthlyRevenue?.rental ?? 0).toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-t pt-3">
+              <dt className="text-gray-900 font-semibold">합계</dt>
+              <dd className="text-lg font-bold text-primary-600">₩{(stats.monthlyRevenue?.total ?? 0).toLocaleString()}</dd>
+            </div>
+          </dl>
+        </Card>
+        <Card>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">지난 달 매출</h2>
+          <dl className="space-y-3">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">계약 매출</dt>
+              <dd className="font-semibold">₩{(stats.lastMonthRevenue?.contract ?? 0).toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">렌탈 매출</dt>
+              <dd className="font-semibold">₩{(stats.lastMonthRevenue?.rental ?? 0).toLocaleString()}</dd>
+            </div>
+            <div className="flex justify-between border-t pt-3">
+              <dt className="text-gray-900 font-semibold">합계</dt>
+              <dd className="text-lg font-bold text-gray-600">₩{(stats.lastMonthRevenue?.total ?? 0).toLocaleString()}</dd>
+            </div>
+          </dl>
+        </Card>
       </div>
 
       {/* Action Required Section */}
@@ -172,8 +210,8 @@ export const Dashboard: React.FC = () => {
                 <Clock className="w-6 h-6 text-yellow-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">매물 심사 대기</h3>
-                <p className="text-sm text-gray-500">승인이 필요한 매물이 있습니다</p>
+                <h3 className="font-semibold text-gray-900">방 심사 대기</h3>
+                <p className="text-sm text-gray-500">승인이 필요한 방이 있습니다</p>
               </div>
             </div>
             <div className="text-2xl font-bold text-yellow-600">
@@ -268,7 +306,7 @@ export const Dashboard: React.FC = () => {
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-primary-300 transition-colors"
           >
             <Home className="w-8 h-8 text-primary-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">매물 관리</span>
+            <span className="text-sm font-medium text-gray-900">방 관리</span>
           </button>
           <button
             onClick={() => navigate('/payments')}

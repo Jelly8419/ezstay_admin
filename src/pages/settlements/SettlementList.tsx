@@ -110,7 +110,7 @@ export default function SettlementList() {
     },
     {
       key: 'room',
-      title: '매물',
+      title: '방',
       render: (value: any) => value?.roomName || '-',
       width: '13%',
     },

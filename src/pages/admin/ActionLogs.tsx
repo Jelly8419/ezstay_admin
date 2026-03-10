@@ -90,7 +90,7 @@ export const ActionLogs: React.FC = () => {
   const getResourceTypeBadge = (resourceType: ResourceType) => {
     const labels: Record<ResourceType, string> = {
       USER: '사용자',
-      PROPERTY: '매물',
+      PROPERTY: '방',
       RESERVATION: '예약',
       PAYMENT: '결제',
       SETTLEMENT: '정산',
@@ -202,7 +202,7 @@ export const ActionLogs: React.FC = () => {
           >
             <option value="all">전체 리소스</option>
             <option value="USER">사용자</option>
-            <option value="PROPERTY">매물</option>
+            <option value="PROPERTY">방</option>
             <option value="RESERVATION">예약</option>
             <option value="PAYMENT">결제</option>
             <option value="SETTLEMENT">정산</option>

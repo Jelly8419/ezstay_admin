@@ -39,11 +39,23 @@ export interface User {
   createdAt: string;
 }
 
+export interface RefundAccount {
+  id: number;
+  bankCode: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  isVerified: boolean;
+  verifiedAt: string | null;
+}
+
 // 회원 상세 정보 (관리자용)
 export interface UserDetail extends User {
   accountTypeDetail: AccountTypeDetail;
   hasVerifiedBankAccount: boolean;
   bankAccounts: BankAccount[];
+  refundAccount: RefundAccount | null;
+  hasRefundAccount: boolean;
   hostRoomsCount: number;
   guestReservationsCount: number;
 }
@@ -76,15 +88,18 @@ export interface Room {
 export type ReservationStatus =
   | 'PENDING_APPROVAL'
   | 'APPROVED'
+  | 'REJECTED'
   | 'PAYMENT_COMPLETED'
   | 'IN_PROGRESS'
   | 'COMPLETED'
-  | 'CANCELLED'
-  | 'EXPIRED'
-  | 'CANCEL_REQUESTED'
+  | 'CANCELLED_BY_GUEST'
+  | 'CANCELLED_BY_HOST'
   | 'CANCELLED_BY_ADMIN_WITH_REFUND'
-  | 'CANCELLED_BY_ADMIN_WITHOUT_REFUND'
-  | 'CANCELLED_BY_HOST';
+  | 'CANCELLED_BY_ADMIN_NO_REFUND'
+  | 'REFUNDED'
+  | 'APPROVAL_EXPIRED'
+  | 'PAYMENT_EXPIRED'
+  | 'CANCEL_REQUESTED';
 
 export type CancellationType = 'BEFORE_PAYMENT' | 'AFTER_PAYMENT' | 'DURING_STAY';
 export type CancellationFaultType = 'GUEST' | 'HOST' | 'ADMIN';

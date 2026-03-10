@@ -46,7 +46,7 @@ const getCategoryLabel = (category?: InquiryCategoryType): string => {
     case 'payment':
       return '결제';
     case 'room':
-      return '매물';
+      return '방';
     case 'account':
       return '계정';
     case 'other':
@@ -89,6 +89,7 @@ export const InquiryManager: React.FC = () => {
   const [selectedInquiry, setSelectedInquiry] = useState<InquiryDetail | null>(null);
   const [answerText, setAnswerText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditingAnswer, setIsEditingAnswer] = useState(false);
 
   // 통계
   const [stats, setStats] = useState({
@@ -145,6 +146,7 @@ export const InquiryManager: React.FC = () => {
       const detail = await inquiryApi.getInquiryById(inquiry.id);
       setSelectedInquiry(detail);
       setAnswerText(detail.answer || '');
+      setIsEditingAnswer(false);
       setIsDetailModalOpen(true);
     } catch (err: any) {
       console.error('문의 상세 조회 실패:', err);
@@ -162,8 +164,13 @@ export const InquiryManager: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      await inquiryApi.answerInquiry(selectedInquiry.id, answerText);
-      alert('답변이 등록되었습니다.');
+      if (isEditingAnswer) {
+        await inquiryApi.updateAnswer(selectedInquiry.id, answerText);
+      } else {
+        await inquiryApi.answerInquiry(selectedInquiry.id, answerText);
+      }
+      alert(isEditingAnswer ? '답변이 수정되었습니다.' : '답변이 등록되었습니다.');
+      setIsEditingAnswer(false);
       setIsDetailModalOpen(false);
       loadInquiries();
     } catch (err: any) {
@@ -316,7 +323,7 @@ export const InquiryManager: React.FC = () => {
               <option value="general">일반</option>
               <option value="reservation">예약</option>
               <option value="payment">결제</option>
-              <option value="room">매물</option>
+              <option value="room">방</option>
               <option value="account">계정</option>
               <option value="other">기타</option>
             </select>
@@ -471,6 +478,21 @@ export const InquiryManager: React.FC = () => {
                   {isSubmitting ? '답변 등록 중...' : '답변 등록'}
                 </Button>
               )}
+              {selectedInquiry?.status === 'answered' && !isEditingAnswer && (
+                <Button variant="secondary" onClick={() => setIsEditingAnswer(true)}>
+                  답변 수정
+                </Button>
+              )}
+              {selectedInquiry?.status === 'answered' && isEditingAnswer && (
+                <>
+                  <Button variant="secondary" onClick={() => { setIsEditingAnswer(false); setAnswerText(selectedInquiry?.answer || ''); }}>
+                    취소
+                  </Button>
+                  <Button onClick={handleSubmitAnswer} disabled={isSubmitting}>
+                    {isSubmitting ? '수정 중...' : '수정 완료'}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         }
@@ -521,7 +543,7 @@ export const InquiryManager: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 답변 {selectedInquiry.status === 'answered' && '(답변 완료)'}
               </label>
-              {selectedInquiry.status === 'answered' && selectedInquiry.answer ? (
+              {selectedInquiry.status === 'answered' && selectedInquiry.answer && !isEditingAnswer ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-gray-900 whitespace-pre-wrap">
                     {selectedInquiry.answer}
@@ -540,7 +562,7 @@ export const InquiryManager: React.FC = () => {
                   value={answerText}
                   onChange={setAnswerText}
                   rows={8}
-                  disabled={selectedInquiry.status !== 'pending'}
+                  disabled={selectedInquiry.status === 'closed'}
                 />
               )}
             </div>

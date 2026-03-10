@@ -8,6 +8,7 @@ import type { Payment, Pagination } from '../types';
 export interface PaymentListParams {
   page?: number;
   limit?: number;
+  type?: 'contract' | 'rental' | 'all';
   status?: string;
   method?: string;
   search?: string;
@@ -17,9 +18,16 @@ export interface PaymentListParams {
   sortOrder?: 'ASC' | 'DESC';
 }
 
+export interface PaymentSummary {
+  contractCount: number;
+  rentalCount: number;
+  totalCount: number;
+}
+
 export interface PaymentListResponse {
   payments: Payment[];
   pagination: Pagination;
+  summary?: PaymentSummary;
 }
 
 export interface RefundRequest {
@@ -38,8 +46,8 @@ export const paymentService = {
   /**
    * 결제 상세 조회
    */
-  getPaymentDetail: (paymentId: number) =>
-    api.get<any>(`/admin/payments/${paymentId}`),
+  getPaymentDetail: (paymentId: number, type: 'contract' | 'rental' = 'contract') =>
+    api.get<any>(`/admin/payments/${paymentId}?type=${type}`),
 
   /**
    * 환불 처리

@@ -5,11 +5,18 @@
 import { api } from './api';
 
 // 대시보드 통계 타입
+export interface RevenueBreakdown {
+  total: number;
+  contract: number;
+  rental: number;
+}
+
 export interface DashboardStats {
   totalUsers: number;
   totalProperties: number;
   activeReservations: number;
-  monthlyRevenue: number;
+  monthlyRevenue: RevenueBreakdown;
+  lastMonthRevenue: RevenueBreakdown;
   pendingReviews: number;
   pendingInquiries: number;
   trends: {

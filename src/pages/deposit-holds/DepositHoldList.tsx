@@ -128,7 +128,7 @@ export default function DepositHoldList() {
     },
     {
       key: 'contractRoom',
-      title: '매물',
+      title: '방',
       render: (_: any, hold: DepositHold) => (hold as any).contract?.room?.roomName || '-',
       width: '15%',
     },

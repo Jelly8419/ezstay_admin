@@ -80,7 +80,7 @@ export const RoomReviewDetail: React.FC = () => {
       setLoading(true);
       setError(null);
       const data = await propertyService.getPropertyDetail(roomId);
-      console.log('🔍 매물 데이터:', data);
+      console.log('🔍 방 데이터:', data);
       console.log('📸 사진 데이터:', data.photos);
       if (data.photos && data.photos.length > 0) {
         console.log('🖼️ 첫 번째 사진 URL:', data.photos[0].url);
@@ -88,8 +88,8 @@ export const RoomReviewDetail: React.FC = () => {
       }
       setProperty(data);
     } catch (err: any) {
-      console.error('매물 상세 조회 실패:', err);
-      setError(err.message || '매물 정보를 불러오는데 실패했습니다.');
+      console.error('방 상세 조회 실패:', err);
+      setError(err.message || '방 정보를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -113,18 +113,18 @@ export const RoomReviewDetail: React.FC = () => {
 
       if (reviewAction === 'approve') {
         await propertyService.approveProperty(property.id);
-        alert('매물이 승인되었습니다.');
+        alert('방이 승인되었습니다.');
       } else {
         await propertyService.rejectProperty(property.id, rejectionReason);
-        alert('매물이 반려되었습니다.');
+        alert('방이 반려되었습니다.');
       }
 
       setIsReviewModalOpen(false);
       setRejectionReason('');
       navigate('/rooms/review'); // 목록으로 돌아가기
     } catch (err: any) {
-      console.error('매물 심사 처리 실패:', err);
-      alert(err.message || '매물 심사 처리에 실패했습니다.');
+      console.error('방 심사 처리 실패:', err);
+      alert(err.message || '방 심사 처리에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -149,7 +149,7 @@ export const RoomReviewDetail: React.FC = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">매물 정보를 불러오는 중...</p>
+          <p className="text-gray-500">방 정보를 불러오는 중...</p>
         </div>
       </div>
     );
@@ -160,7 +160,7 @@ export const RoomReviewDetail: React.FC = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-900 font-semibold mb-2">매물 정보 로드 실패</p>
+          <p className="text-gray-900 font-semibold mb-2">방 정보 로드 실패</p>
           <p className="text-gray-500 mb-4">{error}</p>
           <div className="flex gap-2 justify-center">
             <Button variant="secondary" onClick={() => navigate('/rooms/review')}>
@@ -187,7 +187,7 @@ export const RoomReviewDetail: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">매물 심사 상세</h1>
+            <h1 className="text-3xl font-bold text-gray-900">방 심사 상세</h1>
             <p className="text-gray-500 mt-1">ID: {property.id}</p>
           </div>
         </div>
@@ -198,14 +198,14 @@ export const RoomReviewDetail: React.FC = () => {
 
       {/* 사진 갤러리 */}
       <Card>
-        <h2 className="text-xl font-bold mb-4">매물 사진</h2>
+        <h2 className="text-xl font-bold mb-4">방 사진</h2>
         <div className="relative">
           {property.photos && property.photos.length > 0 ? (
             <>
               <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
                 <img
                   src={`http://localhost:8080${property.photos[currentPhotoIndex].url}`}
-                  alt={`매물 사진 ${currentPhotoIndex + 1}`}
+                  alt={`방 사진 ${currentPhotoIndex + 1}`}
                   className="w-full h-full object-contain"
                 />
                 {property.photos.length > 1 && (
@@ -472,7 +472,7 @@ export const RoomReviewDetail: React.FC = () => {
         <Card>
           <h2 className="text-xl font-bold mb-4">편의시설</h2>
 
-          {property.amenities.basicOptions && property.amenities.basicOptions.length > 0 && (
+          {Array.isArray(property.amenities.basicOptions) && property.amenities.basicOptions.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold mb-3">기본 옵션</h3>
               <div className="flex flex-wrap gap-2">
@@ -483,7 +483,7 @@ export const RoomReviewDetail: React.FC = () => {
             </div>
           )}
 
-          {property.amenities.additionalOptions && property.amenities.additionalOptions.length > 0 && (
+          {Array.isArray(property.amenities.additionalOptions) && property.amenities.additionalOptions.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold mb-3">추가 옵션</h3>
               <div className="flex flex-wrap gap-2">
@@ -494,7 +494,7 @@ export const RoomReviewDetail: React.FC = () => {
             </div>
           )}
 
-          {property.amenities.convenienceOptions && property.amenities.convenienceOptions.length > 0 && (
+          {Array.isArray(property.amenities.convenienceOptions) && property.amenities.convenienceOptions.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold mb-3">편의 시설</h3>
               <div className="flex flex-wrap gap-2">
@@ -585,7 +585,7 @@ export const RoomReviewDetail: React.FC = () => {
         <div className="space-y-4">
           {property.description && (
             <div>
-              <h3 className="font-semibold mb-2">매물 설명</h3>
+              <h3 className="font-semibold mb-2">방 설명</h3>
               <p className="text-gray-700 whitespace-pre-wrap">{property.description}</p>
             </div>
           )}
@@ -733,7 +733,7 @@ export const RoomReviewDetail: React.FC = () => {
           setIsReviewModalOpen(false);
           setRejectionReason('');
         }}
-        title={reviewAction === 'approve' ? '매물 승인' : '매물 반려'}
+        title={reviewAction === 'approve' ? '방 승인' : '방 반려'}
         size="lg"
         footer={
           <div className="flex gap-2 justify-end">
@@ -779,14 +779,14 @@ export const RoomReviewDetail: React.FC = () => {
           {reviewAction === 'approve' ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm text-green-800">
-                ✓ 이 매물을 승인하시겠습니까? 승인 후 호스트가 게시할 수 있습니다.
+                ✓ 이 방을 승인하시겠습니까? 승인 후 호스트가 게시할 수 있습니다.
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-sm text-red-800">
-                  ⚠️ 이 매물을 반려하시겠습니까? 반려 사유를 입력해주세요.
+                  ⚠️ 이 방을 반려하시겠습니까? 반려 사유를 입력해주세요.
                 </p>
               </div>
               <div>

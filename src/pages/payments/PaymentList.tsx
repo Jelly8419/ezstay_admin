@@ -38,8 +38,10 @@ export default function PaymentList() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [pagination, setPagination] = useState<PaginationType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'contract' | 'rental'>('all');
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | 'all'>('all');
+  const [summary, setSummary] = useState<{ contractCount: number; rentalCount: number; totalCount: number } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,12 +54,14 @@ export default function PaymentList() {
       const response = await paymentService.getPayments({
         page: currentPage,
         limit: itemsPerPage,
+        ...(typeFilter !== 'all' && { type: typeFilter }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(methodFilter !== 'all' && { method: methodFilter }),
         ...(searchTerm && { search: searchTerm }),
       });
       setPayments(response.payments || []);
       setPagination(response.pagination || null);
+      setSummary(response.summary || null);
     } catch (err) {
       console.error('결제 목록 로드 실패:', err);
       setError('결제 목록을 불러오는데 실패했습니다.');
@@ -69,7 +73,7 @@ export default function PaymentList() {
 
   useEffect(() => {
     loadPayments();
-  }, [currentPage, statusFilter, methodFilter]);
+  }, [currentPage, typeFilter, statusFilter, methodFilter]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -81,6 +85,16 @@ export default function PaymentList() {
       key: 'id',
       title: '결제번호',
       render: (value: number) => `#${value}`,
+      width: '6%',
+    },
+    {
+      key: 'type',
+      title: '구분',
+      render: (value: string) => (
+        <Badge variant={value === 'rental' ? 'info' : 'default'}>
+          {value === 'rental' ? '렌탈' : '계약'}
+        </Badge>
+      ),
       width: '7%',
     },
     {
@@ -91,7 +105,7 @@ export default function PaymentList() {
     },
     {
       key: 'room',
-      title: '매물',
+      title: '방',
       render: (value: any) => value?.roomName || '-',
       width: '13%',
     },
@@ -156,7 +170,23 @@ export default function PaymentList() {
             placeholder="결제번호, 계약번호, paymentKey, orderId로 검색"
           />
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-2 items-center">
+              <label className="text-sm font-medium text-gray-700">구분:</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => {
+                  setTypeFilter(e.target.value as 'all' | 'contract' | 'rental');
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="all">전체</option>
+                <option value="contract">계약</option>
+                <option value="rental">렌탈</option>
+              </select>
+            </div>
+
             <div className="flex gap-2 items-center">
               <label className="text-sm font-medium text-gray-700">상태:</label>
               <select
@@ -198,8 +228,14 @@ export default function PaymentList() {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600">
-            총 {pagination?.total ?? payments.length}개의 결제 내역
+          <div className="text-sm text-gray-600 flex gap-4">
+            <span>총 {pagination?.total ?? payments.length}건</span>
+            {summary && (
+              <>
+                <span>계약 {summary.contractCount}건</span>
+                <span>렌탈 {summary.rentalCount}건</span>
+              </>
+            )}
           </div>
         </div>
       </Card>

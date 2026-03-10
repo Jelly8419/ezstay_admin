@@ -37,8 +37,8 @@ export default function RoomList() {
 
       setRooms(response.properties);
     } catch (err: any) {
-      console.error('매물 목록 로드 실패:', err);
-      setError('매물 목록을 불러오는데 실패했습니다.');
+      console.error('방 목록 로드 실패:', err);
+      setError('방 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -164,7 +164,7 @@ export default function RoomList() {
           </div>
 
           <div className="text-sm text-gray-600">
-            총 {filteredRooms.length}개의 매물
+            총 {filteredRooms.length}개의 방
           </div>
         </div>
       </Card>

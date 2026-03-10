@@ -112,9 +112,9 @@ export const UserList: React.FC = () => {
       render: (value: string) => new Date(value).toLocaleDateString('ko-KR')
     },
     {
-      key: 'role',
+      key: 'hasBankAccount',
       title: '역할',
-      render: (value: string) => value === 'host' ? '호스트' : '게스트'
+      render: (value: boolean) => value ? '호스트' : '게스트'
     }
   ];
 

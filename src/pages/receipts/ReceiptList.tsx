@@ -113,7 +113,7 @@ export default function ReceiptList() {
     },
     {
       key: 'room',
-      title: '매물',
+      title: '방',
       render: (value: any) => value?.roomName || '-',
       width: '15%',
     },

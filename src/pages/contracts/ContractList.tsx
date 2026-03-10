@@ -12,17 +12,20 @@ import { reservationService } from '../../services/reservationService';
 
 const getStatusBadge = (status: string) => {
   const map: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
-    PENDING_APPROVAL: { variant: 'warning', label: '승인 대기' },
-    APPROVED: { variant: 'info', label: '승인됨' },
-    PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료' },
-    IN_PROGRESS: { variant: 'success', label: '진행중' },
-    COMPLETED: { variant: 'default', label: '완료' },
-    CANCELLED: { variant: 'danger', label: '취소' },
-    EXPIRED: { variant: 'default', label: '만료' },
-    CANCEL_REQUESTED: { variant: 'warning', label: '취소 요청' },
-    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '관리자 취소(환불)' },
-    CANCELLED_BY_ADMIN_WITHOUT_REFUND: { variant: 'danger', label: '관리자 취소' },
-    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트 취소' },
+    PENDING_APPROVAL: { variant: 'warning', label: '계약 요청' },
+    APPROVED: { variant: 'info', label: '계약 승인(결제 대기)' },
+    REJECTED: { variant: 'danger', label: '계약 거절' },
+    PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료(계약 성사)' },
+    IN_PROGRESS: { variant: 'success', label: '임대 중' },
+    COMPLETED: { variant: 'default', label: '계약 종료' },
+    CANCELLED_BY_GUEST: { variant: 'danger', label: '게스트에 의한 취소' },
+    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트에 의한 취소' },
+    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '미환불취소(관리자)' },
+    CANCELLED_BY_ADMIN_NO_REFUND: { variant: 'danger', label: '환불(관리자)' },
+    REFUNDED: { variant: 'info', label: '환불' },
+    APPROVAL_EXPIRED: { variant: 'default', label: '미승인 만료' },
+    PAYMENT_EXPIRED: { variant: 'default', label: '미결제 만료' },
+    CANCEL_REQUESTED: { variant: 'warning', label: '요청 취소' },
   };
   const config = map[status] || { variant: 'default' as const, label: status };
   return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -83,24 +86,24 @@ export default function ContractList() {
     },
     {
       key: 'room',
-      title: '매물',
+      title: '방이름',
       render: (value: any) => value?.roomName || '-',
       width: '15%',
     },
     {
       key: 'checkInDate',
-      title: '체크인',
+      title: '입실',
       render: (value: string) => value ? formatDate(value) : '-',
       width: '10%',
     },
     {
       key: 'checkOutDate',
-      title: '체크아웃',
+      title: '퇴실',
       render: (value: string) => value ? formatDate(value) : '-',
       width: '10%',
     },
     {
-      key: 'totalAmount',
+      key: 'finalTotalAmount',
       title: '금액',
       render: (value: any) => (
         <span className="font-semibold">{value != null ? formatCurrency(value) : '-'}</span>
@@ -121,7 +124,7 @@ export default function ContractList() {
     },
     {
       key: 'actions',
-      title: '액션',
+      title: '상세보기',
       render: (_: any, reservation: any) => (
         <div className="flex gap-2">
           <Link to={`/contracts/${reservation.id}`}>
@@ -161,17 +164,20 @@ export default function ContractList() {
               className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="all">전체</option>
-              <option value="PENDING_APPROVAL">승인 대기</option>
-              <option value="APPROVED">승인됨</option>
+              <option value="PENDING_APPROVAL">계약 요청</option>
+              <option value="APPROVED">계약 승인(결제 대기)</option>
+              <option value="REJECTED">계약 거절</option>
               <option value="PAYMENT_COMPLETED">결제 완료</option>
-              <option value="IN_PROGRESS">진행중</option>
-              <option value="COMPLETED">완료</option>
-              <option value="CANCELLED">취소</option>
-              <option value="EXPIRED">만료</option>
-              <option value="CANCEL_REQUESTED">취소 요청</option>
-              <option value="CANCELLED_BY_ADMIN_WITH_REFUND">관리자 취소(환불)</option>
-              <option value="CANCELLED_BY_ADMIN_WITHOUT_REFUND">관리자 취소</option>
-              <option value="CANCELLED_BY_HOST">호스트 취소</option>
+              <option value="IN_PROGRESS">임대 중</option>
+              <option value="COMPLETED">계약 종료</option>
+              <option value="CANCELLED_BY_GUEST">게스트에 의한 취소</option>
+              <option value="CANCELLED_BY_HOST">호스트에 의한 취소</option>
+              <option value="CANCELLED_BY_ADMIN_WITH_REFUND">미환불취소(관리자)</option>
+              <option value="CANCELLED_BY_ADMIN_NO_REFUND">환불(관리자)</option>
+              <option value="REFUNDED">환불</option>
+              <option value="APPROVAL_EXPIRED">미승인 만료</option>
+              <option value="PAYMENT_EXPIRED">미결제 만료</option>
+              <option value="CANCEL_REQUESTED">요청 취소</option>
             </select>
           </div>
 

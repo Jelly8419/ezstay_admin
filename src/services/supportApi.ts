@@ -217,6 +217,15 @@ export const inquiryApi = {
   },
 
   /**
+   * 문의 답변 수정
+   */
+  updateAnswer: async (inquiryId: number, answer: string): Promise<InquiryDetail> => {
+    return api.patch<InquiryDetail>(`/admin/support/inquiries/${inquiryId}/answer`, {
+      answer,
+    });
+  },
+
+  /**
    * 문의 상태 변경
    */
   updateInquiryStatus: async (
