@@ -19,6 +19,10 @@ const getStatusBadge = (status: string) => {
     COMPLETED: { variant: 'default', label: '완료' },
     CANCELLED: { variant: 'danger', label: '취소' },
     EXPIRED: { variant: 'default', label: '만료' },
+    CANCEL_REQUESTED: { variant: 'warning', label: '취소 요청' },
+    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '관리자 취소(환불)' },
+    CANCELLED_BY_ADMIN_WITHOUT_REFUND: { variant: 'danger', label: '관리자 취소' },
+    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트 취소' },
   };
   const config = map[status] || { variant: 'default' as const, label: status };
   return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -164,6 +168,10 @@ export default function ContractList() {
               <option value="COMPLETED">완료</option>
               <option value="CANCELLED">취소</option>
               <option value="EXPIRED">만료</option>
+              <option value="CANCEL_REQUESTED">취소 요청</option>
+              <option value="CANCELLED_BY_ADMIN_WITH_REFUND">관리자 취소(환불)</option>
+              <option value="CANCELLED_BY_ADMIN_WITHOUT_REFUND">관리자 취소</option>
+              <option value="CANCELLED_BY_HOST">호스트 취소</option>
             </select>
           </div>
 

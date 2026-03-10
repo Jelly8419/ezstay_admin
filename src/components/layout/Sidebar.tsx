@@ -10,7 +10,9 @@ import {
   Bell,
   Settings,
   LayoutDashboard,
-  FileText
+  FileText,
+  ShieldCheck,
+  Receipt
 } from 'lucide-react';
 
 interface NavItem {
@@ -54,6 +56,16 @@ const navItems: NavItem[] = [
     path: '/settlements',
     label: '정산 관리',
     icon: <DollarSign className="w-5 h-5" />
+  },
+  {
+    path: '/deposit-holds',
+    label: '보증금 보류',
+    icon: <ShieldCheck className="w-5 h-5" />
+  },
+  {
+    path: '/receipts',
+    label: '영수증 관리',
+    icon: <Receipt className="w-5 h-5" />
   },
   {
     path: '/support',

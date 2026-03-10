@@ -11,12 +11,15 @@ import { RoomReview } from './pages/rooms/RoomReview';
 import { RoomReviewDetail } from './pages/rooms/RoomReviewDetail';
 import RoomManagement from './pages/rooms/RoomManagement';
 import ContractList from './pages/contracts/ContractList';
+import ContractDetail from './pages/contracts/ContractDetail';
 import PaymentList from './pages/payments/PaymentList';
 import SettlementList from './pages/settlements/SettlementList';
 import InquiryList from './pages/inquiries/InquiryList';
 import NotificationList from './pages/notifications/NotificationList';
 import { ActionLogs } from './pages/admin/ActionLogs';
 import { SupportCenter } from './pages/support/SupportCenter';
+import DepositHoldList from './pages/deposit-holds/DepositHoldList';
+import ReceiptList from './pages/receipts/ReceiptList';
 
 function App() {
   // 환경변수로 basename 제어 (개발: /, 테스트/프로덕션: /admin)
@@ -53,12 +56,19 @@ function App() {
 
               {/* 계약 관리 */}
               <Route path="contracts" element={<ContractList />} />
+              <Route path="contracts/:id" element={<ContractDetail />} />
 
               {/* 결제 관리 */}
               <Route path="payments" element={<PaymentList />} />
 
               {/* 정산 관리 */}
               <Route path="settlements" element={<SettlementList />} />
+
+              {/* 보증금 보류 관리 */}
+              <Route path="deposit-holds" element={<DepositHoldList />} />
+
+              {/* 영수증 관리 */}
+              <Route path="receipts" element={<ReceiptList />} />
 
               {/* 고객센터 (통합) */}
               <Route path="support" element={<SupportCenter />} />

@@ -21,7 +21,11 @@ export interface RentalOrderListParams {
   page?: number;
   limit?: number;
   status?: string;
-  search?: string;
+  deliveryStatus?: string;
+  orderType?: string;
+  contractId?: number;
+  startDate?: string;
+  endDate?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
 }
@@ -43,19 +47,28 @@ export const rentalOrderService = {
   },
 
   /**
-   * 렌탈 주문 상세 조회
+   * 렌탈 주문 상세 조회 (주문번호 문자열)
    */
-  getRentalOrderDetail: (orderId: number) =>
-    api.get<RentalOrderDetail>(`/admin/rental-orders/${orderId}`),
+  getRentalOrderDetail: (rentalOrderId: string) =>
+    api.get<RentalOrderDetail>(`/admin/rental-orders/${rentalOrderId}`),
 
   /**
    * 계약별 렌탈 이력 조회
    */
   getRentalHistory: (contractId: number) =>
-    api.get<RentalHistory>(`/admin/rental-orders/contract/${contractId}/history`),
+    api.get<RentalHistory>(`/admin/contracts/${contractId}/rental-history`),
 
   /**
-   * 렌탈 아이템 취소
+   * 렌탈 주문 전체 취소 (관리자 강제 취소)
+   */
+  cancelRentalOrder: (rentalOrderId: string, reason: string, refundAmount?: number) =>
+    api.post<any>(`/admin/rental-orders/${rentalOrderId}/cancel`, {
+      reason,
+      ...(refundAmount !== undefined && { refundAmount }),
+    }),
+
+  /**
+   * 렌탈 아이템 개별 취소
    */
   cancelRentalItem: (orderId: number, itemId: number, cancelReason: string) =>
     api.post<void>(`/admin/rental-orders/${orderId}/items/${itemId}/cancel`, {
@@ -63,7 +76,7 @@ export const rentalOrderService = {
     }),
 
   /**
-   * 배송 상태 변경
+   * 배송 상태 변경 (숫자 PK)
    */
   updateDeliveryStatus: (orderId: number, deliveryStatus: string, deliveredAt?: string) =>
     api.patch<void>(`/admin/rental-orders/${orderId}/delivery-status`, {

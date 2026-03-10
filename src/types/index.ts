@@ -80,7 +80,14 @@ export type ReservationStatus =
   | 'IN_PROGRESS'
   | 'COMPLETED'
   | 'CANCELLED'
-  | 'EXPIRED';
+  | 'EXPIRED'
+  | 'CANCEL_REQUESTED'
+  | 'CANCELLED_BY_ADMIN_WITH_REFUND'
+  | 'CANCELLED_BY_ADMIN_WITHOUT_REFUND'
+  | 'CANCELLED_BY_HOST';
+
+export type CancellationType = 'BEFORE_PAYMENT' | 'AFTER_PAYMENT' | 'DURING_STAY';
+export type CancellationFaultType = 'GUEST' | 'HOST' | 'ADMIN';
 
 export interface Reservation {
   id: number;
@@ -603,6 +610,122 @@ export interface RentalHistory {
     metadata: Record<string, any>;
     createdAt: string;
   }>;
+}
+
+// ========================================
+// 예약 취소 관련 타입
+// ========================================
+
+export interface ForceCancelRequest {
+  reason: string;
+  withRefund: boolean;
+}
+
+export interface ForceCancelResponse {
+  contractId: number;
+  previousStatus: string;
+  newStatus: string;
+  withRefund: boolean;
+  cancellationType: CancellationType;
+  reason: string;
+  refundId?: number;
+  totalRefundAmount?: number;
+}
+
+export interface ApproveCancelRequest {
+  withRefund: boolean;
+  adminNote?: string;
+}
+
+export interface ApproveCancelResponse {
+  contractId: number;
+  previousStatus: string;
+  newStatus: string;
+  withRefund: boolean;
+  adminNote?: string;
+  refundId?: number;
+  totalRefundAmount?: number;
+  hostBurdenAmount?: number;
+}
+
+export interface RejectCancelRequest {
+  adminNote?: string;
+}
+
+export interface RejectCancelResponse {
+  contractId: number;
+  status: string;
+  adminNote?: string;
+}
+
+// ========================================
+// 보증금 보류 관련 타입
+// ========================================
+
+export type DepositHoldStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'RELEASED';
+
+export interface DepositHold {
+  id: number;
+  contractId: number;
+  holdAmount: number;
+  reason: string;
+  status: DepositHoldStatus;
+  contract?: {
+    id: number;
+    orderId: string;
+    checkInDate: string;
+    checkOutDate: string;
+    guest: { id: number; name: string; email: string; phoneNumber?: string };
+    host: { id: number; name: string; email: string };
+    room: { id: number; roomName: string; address?: string };
+  };
+  adminNotes?: string;
+  rejectionReason?: string;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  releasedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DepositHoldDetail extends DepositHold {}
+
+export interface CreateDepositHoldRequest {
+  contractId: number;
+  holdAmount: number;
+  reason: string;
+}
+
+// ========================================
+// 영수증 관련 타입
+// ========================================
+
+export interface Receipt {
+  id: number;
+  contractId: number;
+  orderId: string;
+  receiptType: string;
+  status: string;
+  totalAmount: number;
+  issuedAt: string;
+  receiptUrl?: string;
+  guest?: { id: number; name: string; email: string };
+  room?: { id: number; roomName: string };
+  createdAt: string;
+}
+
+export interface ReceiptDetail extends Receipt {
+  contract?: {
+    id: number;
+    orderId: string;
+    checkInDate: string;
+    checkOutDate: string;
+    finalTotalAmount: number;
+    rentalFee: number;
+    maintenanceFee: number;
+    cleaningFee: number;
+    platformFee: number;
+  };
 }
 
 // API 응답 타입

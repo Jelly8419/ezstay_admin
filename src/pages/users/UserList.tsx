@@ -77,6 +77,11 @@ export const UserList: React.FC = () => {
       )
     },
     {
+      key: 'nickname',
+      title: '닉네임',
+      render: (value: string) => value || '-'
+    },
+    {
       key: 'email',
       title: '이메일'
     },

@@ -47,11 +47,16 @@ export const refundService = {
    * 환불 승인
    */
   approveRefund: (refundId: number, adminNotes?: string) =>
-    api.post<void>(`/admin/refunds/${refundId}/approve`, { adminNotes }),
+    api.patch<any>(`/admin/refunds/${refundId}/approve`, {
+      admin_notes: adminNotes,
+    }),
 
   /**
    * 환불 거절
    */
   rejectRefund: (refundId: number, rejectionReason: string, adminNotes?: string) =>
-    api.post<void>(`/admin/refunds/${refundId}/reject`, { rejectionReason, adminNotes }),
+    api.patch<any>(`/admin/refunds/${refundId}/reject`, {
+      rejection_reason: rejectionReason,
+      admin_notes: adminNotes,
+    }),
 };
