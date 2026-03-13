@@ -716,26 +716,44 @@ export interface CreateDepositHoldRequest {
 // ========================================
 
 export type ReceiptType = 'personal' | 'business' | 'tax_invoice';
-export type ReceiptRequired = 'yes' | 'no';
-export type ReceiptIssueStatus = 'requested' | 'issued' | 'rejected';
+export type ReceiptStatus = 'PENDING' | 'ISSUED';
+export type ReceiptUserType = 'HOST' | 'GUEST';
+export type ReceiptTargetType = 'CONTRACT_FEE' | 'HOST_CANCEL_FEE' | 'GUEST_CANCEL_FEE' | 'OPTION_SALE';
 
 export interface Receipt {
   id: number;
-  hostId: number;
-  hostName: string;
-  hostPhone: string;
-  hostEmail: string;
-  receiptRequired: ReceiptRequired;
-  receiptType: ReceiptType | null;
+  userType: ReceiptUserType;
+  userId: number;
+  userName: string;
+  orderId: string;
+  receiptType: ReceiptType;
+  targetType: ReceiptTargetType;
+  amount: number;
+  date: string;
+  status: ReceiptStatus;
+  issuedAt: string | null;
+  createdAt: string;
+  issuedByAdmin?: { id: number; name: string } | null;
+}
+
+export interface ReceiptDetail extends Receipt {
+  userPhone: string;
+  userEmail: string;
+  contractId: number | null;
+  settlementId: number | null;
+  issuedByAdmin: { id: number; name: string } | null;
+  issueNote: string | null;
   receiptNumber: string | null;
   businessName: string | null;
   repName: string | null;
   email: string | null;
-  issueStatus: ReceiptIssueStatus;
-  issuedAt: string | null;
-  issuedByAdmin: number | null;
-  issueNote: string | null;
-  createdAt: string;
+  settlement: {
+    id: number;
+    status: string;
+    netAmount: number;
+    expectedDate: string;
+    completedAt: string | null;
+  } | null;
   updatedAt: string;
 }
 
