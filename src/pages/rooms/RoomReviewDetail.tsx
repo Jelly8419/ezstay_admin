@@ -384,10 +384,10 @@ export const RoomReviewDetail: React.FC = () => {
               1일 임대료
             </label>
             <p className="text-2xl font-bold text-primary-600">
-              ₩{property.dailyRent.toLocaleString()}
+              ₩{(property.dailyRent ?? 0).toLocaleString()}
             </p>
           </div>
-          {property.dailyMaintenanceFee !== undefined && (
+          {property.dailyMaintenanceFee != null && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">관리비</label>
               <p className="text-xl font-semibold text-gray-900">
@@ -403,7 +403,7 @@ export const RoomReviewDetail: React.FC = () => {
               <p className="text-gray-900">{property.maintenanceDetail}</p>
             </div>
           )}
-          {property.cleaningFee !== undefined && (
+          {property.cleaningFee != null && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 청소비

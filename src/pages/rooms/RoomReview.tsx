@@ -186,7 +186,7 @@ export const RoomReview: React.FC = () => {
     {
       key: 'dailyRent',
       title: '일일 임대료',
-      render: (value: number) => `₩${value.toLocaleString()}`,
+      render: (value: number | null) => value != null ? `₩${value.toLocaleString()}` : '-',
     },
     {
       key: 'status',
