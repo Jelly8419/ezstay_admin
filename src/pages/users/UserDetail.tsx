@@ -11,9 +11,6 @@ import {
   Calendar,
   CreditCard,
   CheckCircle,
-  XCircle,
-  AlertCircle,
-  Shield,
   Home,
   ClipboardList
 } from 'lucide-react';
