@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import type {
   PaymentSummaryItem,
   PaymentLog,
-  PaymentMethod,
   PaymentTransactionType,
   Pagination as PaginationType,
 } from '../../types';

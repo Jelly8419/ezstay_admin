@@ -183,39 +183,6 @@ export const UserDetail: React.FC = () => {
         </div>
       </Card>
 
-      {/* 계정 보안 정보 */}
-      <Card title="계정 보안">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-gray-400 mt-1" />
-            <div>
-              <p className="text-sm text-gray-500">계정 상태</p>
-              <div className="flex items-center gap-2 mt-1">
-                {user.accountTypeDetail.isLocked ? (
-                  <>
-                    <XCircle className="w-4 h-4 text-red-500" />
-                    <span className="font-medium text-red-600">잠김</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                    <span className="font-medium text-green-600">정상</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-gray-400 mt-1" />
-            <div>
-              <p className="text-sm text-gray-500">로그인 실패 횟수</p>
-              <p className="font-medium">{user.accountTypeDetail.failedLoginAttempts}회</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
       {/* 정산 계좌 */}
       <Card title="정산 계좌">
         {user.bankAccounts.length > 0 ? (
@@ -297,40 +264,36 @@ export const UserDetail: React.FC = () => {
 
       {/* 활동 정보 */}
       <Card title="활동 정보">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="flex items-center gap-2">
-            <Home className="w-5 h-5 text-gray-400" />
-            <div>
-              <p className="text-sm text-gray-500">호스트 등록 방</p>
-              <p className="font-medium">{user.hostRoomsCount ?? 0}개</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-gray-400" />
-            <div>
-              <p className="text-sm text-gray-500">게스트 계약 수</p>
-              <p className="font-medium">{user.guestReservationsCount ?? 0}건</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* 활동 통계 */}
-      <Card title="활동 통계">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="flex items-start gap-3">
-            <Home className="w-5 h-5 text-gray-400 mt-1" />
-            <div>
-              <p className="text-sm text-gray-500">호스트 방 수</p>
-              <p className="text-2xl font-bold text-gray-900">{user.hostRoomsCount}개</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 호스트 활동 */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              호스트 활동
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">게시중인 방</span>
+                <span className="font-semibold text-gray-900">{user.hostActiveRoomsCount ?? 0}개</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">계약 수</span>
+                <span className="font-semibold text-gray-900">{user.hostContractsCount ?? 0}건</span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <ClipboardList className="w-5 h-5 text-gray-400 mt-1" />
-            <div>
-              <p className="text-sm text-gray-500">게스트 계약 수</p>
-              <p className="text-2xl font-bold text-gray-900">{user.guestReservationsCount}건</p>
+          {/* 게스트 활동 */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <ClipboardList className="w-4 h-4" />
+              게스트 활동
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">계약 수</span>
+                <span className="font-semibold text-gray-900">{user.guestContractsCount ?? 0}건</span>
+              </div>
             </div>
           </div>
         </div>

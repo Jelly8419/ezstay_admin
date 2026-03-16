@@ -187,7 +187,7 @@ export const RoomReviewDetail: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">방 심사 상세</h1>
+            <h1 className="text-3xl font-bold text-gray-900">방 상세</h1>
             <p className="text-gray-500 mt-1">ID: {property.id}</p>
           </div>
         </div>
