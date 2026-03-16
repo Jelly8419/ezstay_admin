@@ -19,13 +19,20 @@ import { dashboardService, DashboardStats, RecentActivity } from '../services/da
 
 const getReservationStatus = (status: string): { variant: 'warning' | 'success' | 'danger' | 'default'; label: string } => {
   const statusMap: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default'; label: string }> = {
-    PENDING_APPROVAL: { variant: 'warning', label: '승인대기' },
-    APPROVED: { variant: 'warning', label: '승인됨' },
-    PAYMENT_COMPLETED: { variant: 'success', label: '결제완료' },
-    IN_PROGRESS: { variant: 'success', label: '진행중' },
-    COMPLETED: { variant: 'default', label: '완료' },
-    CANCELLED_BY_GUEST: { variant: 'danger', label: '게스트취소' },
-    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트취소' },
+    PENDING_APPROVAL: { variant: 'warning', label: '계약 요청' },
+    APPROVED: { variant: 'warning', label: '계약 승인(결제 대기)' },
+    REJECTED: { variant: 'danger', label: '계약 거절' },
+    PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료' },
+    IN_PROGRESS: { variant: 'success', label: '임대 중' },
+    COMPLETED: { variant: 'default', label: '계약 종료' },
+    CANCELLED_BY_GUEST: { variant: 'danger', label: '게스트 취소' },
+    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트 취소' },
+    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '관리자 취소(환불)' },
+    CANCELLED_BY_ADMIN_NO_REFUND: { variant: 'danger', label: '관리자 취소(미환불)' },
+    REFUNDED: { variant: 'default', label: '환불' },
+    APPROVAL_EXPIRED: { variant: 'default', label: '승인 만료' },
+    PAYMENT_EXPIRED: { variant: 'default', label: '결제 만료' },
+    CANCEL_REQUESTED: { variant: 'warning', label: '요청 취소' },
   };
   return statusMap[status] || { variant: 'default', label: status };
 };

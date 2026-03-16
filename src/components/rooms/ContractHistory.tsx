@@ -8,28 +8,23 @@ interface ContractHistoryProps {
 const getStatusInfo = (
   status: ContractStatus
 ): { label: string; className: string } => {
-  switch (status) {
-    case 'IN_PROGRESS':
-      return {
-        label: '입실 중',
-        className: 'bg-blue-100 text-blue-800',
-      };
-    case 'COMPLETED':
-      return {
-        label: '계약 종료',
-        className: 'bg-gray-100 text-gray-800',
-      };
-    case 'CANCELLED':
-      return {
-        label: '취소됨',
-        className: 'bg-red-100 text-red-800',
-      };
-    default:
-      return {
-        label: status,
-        className: 'bg-gray-100 text-gray-800',
-      };
-  }
+  const map: Record<string, { label: string; className: string }> = {
+    PENDING_APPROVAL: { label: '계약 요청', className: 'bg-yellow-100 text-yellow-800' },
+    APPROVED: { label: '계약 승인(결제 대기)', className: 'bg-blue-100 text-blue-800' },
+    REJECTED: { label: '계약 거절', className: 'bg-red-100 text-red-800' },
+    PAYMENT_COMPLETED: { label: '결제 완료', className: 'bg-green-100 text-green-800' },
+    IN_PROGRESS: { label: '임대 중', className: 'bg-blue-100 text-blue-800' },
+    COMPLETED: { label: '계약 종료', className: 'bg-gray-100 text-gray-800' },
+    CANCELLED_BY_GUEST: { label: '게스트 취소', className: 'bg-red-100 text-red-800' },
+    CANCELLED_BY_HOST: { label: '호스트 취소', className: 'bg-red-100 text-red-800' },
+    CANCELLED_BY_ADMIN_WITH_REFUND: { label: '관리자 취소(환불)', className: 'bg-red-100 text-red-800' },
+    CANCELLED_BY_ADMIN_NO_REFUND: { label: '관리자 취소(미환불)', className: 'bg-red-100 text-red-800' },
+    REFUNDED: { label: '환불', className: 'bg-purple-100 text-purple-800' },
+    APPROVAL_EXPIRED: { label: '승인 만료', className: 'bg-gray-100 text-gray-800' },
+    PAYMENT_EXPIRED: { label: '결제 만료', className: 'bg-gray-100 text-gray-800' },
+    CANCEL_REQUESTED: { label: '요청 취소', className: 'bg-yellow-100 text-yellow-800' },
+  };
+  return map[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
 };
 
 const formatDate = (dateString: string) => {

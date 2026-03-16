@@ -3,31 +3,35 @@
  */
 
 import { api } from './api';
-import type { Payment, Pagination } from '../types';
+import type { PaymentSummaryItem, PaymentLog, PaymentOrderDetail, Pagination } from '../types';
 
-export interface PaymentListParams {
+export interface PaymentSummaryParams {
   page?: number;
   limit?: number;
-  type?: 'contract' | 'rental' | 'all';
-  status?: string;
-  method?: string;
   search?: string;
   startDate?: string;
   endDate?: string;
-  sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  productType?: string;
 }
 
-export interface PaymentSummary {
-  contractCount: number;
-  rentalCount: number;
-  totalCount: number;
+export interface PaymentLogParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  transactionType?: string;
+  productType?: string;
 }
 
-export interface PaymentListResponse {
-  payments: Payment[];
+export interface PaymentSummaryListResponse {
+  payments: PaymentSummaryItem[];
   pagination: Pagination;
-  summary?: PaymentSummary;
+}
+
+export interface PaymentLogListResponse {
+  logs: PaymentLog[];
+  pagination: Pagination;
 }
 
 export interface RefundRequest {
@@ -37,21 +41,28 @@ export interface RefundRequest {
 
 export const paymentService = {
   /**
-   * 결제 목록 조회
+   * 탭1: 주문별 결제 현황 (계약 기준 결제 요약)
    */
-  getPayments: (params: PaymentListParams = {}) => {
-    return api.get<PaymentListResponse>('/admin/payments', { params });
+  getPaymentSummary: (params: PaymentSummaryParams = {}) => {
+    return api.get<PaymentSummaryListResponse>('/admin/payments/summary', { params });
   },
 
   /**
-   * 결제 상세 조회
+   * 계약 기준 결제 통합 상세 조회
    */
-  getPaymentDetail: (paymentId: number, type: 'contract' | 'rental' = 'contract') =>
-    api.get<any>(`/admin/payments/${paymentId}?type=${type}`),
+  getPaymentDetail: (contractId: number | string) =>
+    api.get<PaymentOrderDetail>(`/admin/payments/${contractId}`),
 
   /**
-   * 환불 처리
+   * 탭2: 결제/취소 내역 (결제/환불 이벤트 로그)
    */
-  refund: (paymentId: number, data: RefundRequest) =>
-    api.post<any>(`/admin/payments/${paymentId}/refund`, data),
+  getPaymentLogs: (params: PaymentLogParams = {}) => {
+    return api.get<PaymentLogListResponse>('/admin/payments/logs', { params });
+  },
+
+  /**
+   * 환불 처리 (contractId 기준)
+   */
+  refund: (contractId: number | string, data: RefundRequest) =>
+    api.post<any>(`/admin/payments/${contractId}/refund`, data),
 };

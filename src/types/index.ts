@@ -56,8 +56,9 @@ export interface UserDetail extends User {
   bankAccounts: BankAccount[];
   refundAccount: RefundAccount | null;
   hasRefundAccount: boolean;
-  hostRoomsCount: number;
-  guestReservationsCount: number;
+  hostActiveRoomsCount: number;
+  hostContractsCount: number;
+  guestContractsCount: number;
 }
 
 // 매물(Room) 관련 타입
@@ -106,11 +107,14 @@ export type CancellationFaultType = 'GUEST' | 'HOST' | 'ADMIN';
 
 export interface Reservation {
   id: number;
+  contractNumber: string;
   orderId: string;
   status: ReservationStatus;
   checkInDate: string;
   checkOutDate: string;
   totalAmount: number;
+  finalTotalAmount: number | null;
+  userType: 'guest' | 'host';
   guest: {
     id: number;
     name: string;
@@ -139,27 +143,44 @@ export interface ReservationDetail {
   checkInDate: string;
   checkOutDate: string;
   totalDays: number;
+  totalWeeks: number;
   rentalFee: number;
   maintenanceFee: number;
   cleaningFee: number;
+  rentalItems: string | null;
+  rentalItemsFee: number;
   platformFee: number;
+  hostPlatformFee: number;
+  discountAmount: number;
+  subtotal: number;
+  totalUsageFee: number;
+  deposit: number;
   finalTotalAmount: number;
   paidAt: string | null;
   guest: {
     id: number;
     name: string;
+    nickname: string;
     email: string;
     phoneNumber: string;
   };
   host: {
     id: number;
     name: string;
+    nickname: string;
     email: string;
+    phoneNumber: string;
   };
   room: {
     id: number;
     roomName: string;
+    address: string;
+    detailAddress: string;
     photos?: Array<{ id: number; url: string; order: number }>;
+    ezService?: {
+      cleaningService: boolean;
+      [key: string]: any;
+    };
   };
   createdAt: string;
 }
@@ -200,32 +221,133 @@ export interface SettlementSummary {
 }
 
 // 결제(Payment) 관련 타입
-export type PaymentMethod = 'CARD' | 'VIRTUAL_ACCOUNT' | 'TRANSFER' | 'MOBILE' | 'EASY_PAY';
+export type PaymentMethod = 'CARD' | 'VIRTUAL_ACCOUNT' | 'TRANSFER' | 'MOBILE' | 'EASY_PAY' | 'CREDIT_CARD';
 export type PaymentStatus = 'READY' | 'IN_PROGRESS' | 'DONE' | 'CANCELED' | 'PARTIAL_CANCELED' | 'ABORTED' | 'EXPIRED';
+export type PaymentProductType = 'contract' | 'rental' | 'contract_rental' | 'penalty' | 'deposit_refund';
+export type PaymentTransactionType = 'PAYMENT_COMPLETED' | 'PARTIAL_CANCEL' | 'FULL_CANCEL';
 
-export interface Payment {
-  id: number;
-  contractId: number;
-  contractOrderId: string;
-  paymentKey: string;
+// 탭1: 주문별 결제 현황 (/admin/payments/summary)
+export interface PaymentSummaryItem {
+  id?: number | string;
   orderId: string;
-  method: PaymentMethod;
-  status: PaymentStatus;
-  totalAmount: number;
-  balanceAmount: number;
-  requestedAt: string;
-  approvedAt: string | null;
-  createdAt: string;
+  contractId: number;
+  paidAt: string | null;
+  productType: PaymentProductType;
+  roomName: string;
+  userName: string;
+  userType: 'guest' | 'host';
+  totalPaidAmount: number;
+  totalRefundedAmount: number;
+  currentBalance: number;
+  paymentMethod: PaymentMethod;
+  contractStatus: string;
   guest: {
     id: number;
     name: string;
     email: string;
   };
+  host: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+// 하위호환용 alias
+export type Payment = PaymentSummaryItem;
+
+// 결제 상세 - 타임라인 이벤트
+export interface PaymentTimelineEvent {
+  occurredAt: string;
+  type: string;
+  amount: number;
+  description: string;
+  actor: string;
+  pgStatus: string | null;
+}
+
+// 결제 상세 - 계약 정보
+export interface PaymentContractInfo {
+  id: number;
+  orderId: string;
+  status: string;
+  paymentMethod: string;
+  finalTotalAmount: number;
+  rentalFee: number;
+  maintenanceFee: number;
+  cleaningFee: number;
+  platformFee: number;
+  hostPlatformFee: number;
+  deposit: number;
+  checkInDate: string;
+  checkOutDate: string;
+  paidAt: string | null;
+}
+
+// 결제 상세 - 결제 요약
+export interface PaymentDetailSummary {
+  totalPaidAmount: number;
+  totalRefundedAmount: number;
+  currentBalance: number;
+}
+
+// 결제 상세 - 렌탈 주문
+export interface PaymentRentalOrderItem {
+  id: number;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface PaymentRentalOrder {
+  id: number;
+  orderId: string;
+  status: string;
+  totalAmount: number;
+  paidAt: string | null;
+  items: PaymentRentalOrderItem[];
+}
+
+// GET /admin/payments/:contractId 응답
+export interface PaymentOrderDetail {
+  contract: PaymentContractInfo;
+  guest: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+    phoneNumber: string;
+  };
+  host: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+    phoneNumber: string;
+  };
   room: {
     id: number;
     roomName: string;
+    address: string;
   };
-  contractStatus: string;
+  summary: PaymentDetailSummary;
+  timeline: PaymentTimelineEvent[];
+  rentalOrders: PaymentRentalOrder[];
+}
+
+// 탭2: 결제/취소 내역 (/admin/payments/logs)
+export interface PaymentLog {
+  id: number;
+  orderId: string;
+  occurredAt: string;
+  transactionType: PaymentTransactionType;
+  paymentMethod: PaymentMethod;
+  productType: string;
+  amount: number;
+  userName: string;
+  userType: 'guest' | 'host';
+  roomName: string;
 }
 
 // 고객 문의(Inquiry) 관련 타입

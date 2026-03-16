@@ -15,16 +15,16 @@ const getStatusBadge = (status: string) => {
     PENDING_APPROVAL: { variant: 'warning', label: '계약 요청' },
     APPROVED: { variant: 'info', label: '계약 승인(결제 대기)' },
     REJECTED: { variant: 'danger', label: '계약 거절' },
-    PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료(계약 성사)' },
+    PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료' },
     IN_PROGRESS: { variant: 'success', label: '임대 중' },
     COMPLETED: { variant: 'default', label: '계약 종료' },
-    CANCELLED_BY_GUEST: { variant: 'danger', label: '게스트에 의한 취소' },
-    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트에 의한 취소' },
-    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '미환불취소(관리자)' },
-    CANCELLED_BY_ADMIN_NO_REFUND: { variant: 'danger', label: '환불(관리자)' },
+    CANCELLED_BY_GUEST: { variant: 'danger', label: '게스트 취소' },
+    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트 취소' },
+    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '관리자 취소(환불)' },
+    CANCELLED_BY_ADMIN_NO_REFUND: { variant: 'danger', label: '관리자 취소(미환불)' },
     REFUNDED: { variant: 'info', label: '환불' },
-    APPROVAL_EXPIRED: { variant: 'default', label: '미승인 만료' },
-    PAYMENT_EXPIRED: { variant: 'default', label: '미결제 만료' },
+    APPROVAL_EXPIRED: { variant: 'default', label: '승인 만료' },
+    PAYMENT_EXPIRED: { variant: 'default', label: '결제 만료' },
     CANCEL_REQUESTED: { variant: 'warning', label: '요청 취소' },
   };
   const config = map[status] || { variant: 'default' as const, label: status };
@@ -71,24 +71,41 @@ export default function ContractList() {
     loadReservations();
   };
 
+  const getUserTypeLabel = (reservation: Reservation) => {
+    const userType = reservation.userType;
+    if (userType === 'host') return <Badge variant="info">호스트</Badge>;
+    return <Badge variant="success">게스트</Badge>;
+  };
+
+  const getUserName = (reservation: Reservation) => {
+    if (reservation.userType === 'host') return reservation.host?.name || '-';
+    return reservation.guest?.name || '-';
+  };
+
   const columns = [
     {
-      key: 'id',
-      title: '예약번호',
-      render: (value: number) => `#${value}`,
+      key: 'orderId',
+      title: '계약번호',
+      render: (value: string) => value || '-',
+      width: '10%',
+    },
+    {
+      key: 'userType',
+      title: '유저 구분',
+      render: (_: any, reservation: Reservation) => getUserTypeLabel(reservation),
       width: '8%',
     },
     {
       key: 'guest',
-      title: '게스트',
-      render: (value: any) => value?.name || '-',
-      width: '10%',
+      title: '이름',
+      render: (_: any, reservation: Reservation) => getUserName(reservation),
+      width: '8%',
     },
     {
       key: 'room',
       title: '방이름',
       render: (value: any) => value?.roomName || '-',
-      width: '15%',
+      width: '13%',
     },
     {
       key: 'checkInDate',
@@ -114,7 +131,7 @@ export default function ContractList() {
       key: 'status',
       title: '상태',
       render: (value: string) => getStatusBadge(value),
-      width: '12%',
+      width: '11%',
     },
     {
       key: 'createdAt',
@@ -124,17 +141,15 @@ export default function ContractList() {
     },
     {
       key: 'actions',
-      title: '상세보기',
+      title: '',
       render: (_: any, reservation: any) => (
-        <div className="flex gap-2">
-          <Link to={`/contracts/${reservation.id}`}>
-            <Button variant="secondary" size="sm">
-              상세
-            </Button>
-          </Link>
-        </div>
+        <Link to={`/contracts/${reservation.id}`}>
+          <Button variant="secondary" size="sm">
+            상세
+          </Button>
+        </Link>
       ),
-      width: '12%',
+      width: '7%',
     },
   ];
 
@@ -150,7 +165,7 @@ export default function ContractList() {
             value={searchTerm}
             onChange={setSearchTerm}
             onSearch={handleSearch}
-            placeholder="예약번호 또는 게스트명으로 검색"
+            placeholder="계약번호 또는 이름으로 검색"
           />
 
           <div className="flex gap-4 items-center">
@@ -170,13 +185,13 @@ export default function ContractList() {
               <option value="PAYMENT_COMPLETED">결제 완료</option>
               <option value="IN_PROGRESS">임대 중</option>
               <option value="COMPLETED">계약 종료</option>
-              <option value="CANCELLED_BY_GUEST">게스트에 의한 취소</option>
-              <option value="CANCELLED_BY_HOST">호스트에 의한 취소</option>
-              <option value="CANCELLED_BY_ADMIN_WITH_REFUND">미환불취소(관리자)</option>
-              <option value="CANCELLED_BY_ADMIN_NO_REFUND">환불(관리자)</option>
+              <option value="CANCELLED_BY_GUEST">게스트 취소</option>
+              <option value="CANCELLED_BY_HOST">호스트 취소</option>
+              <option value="CANCELLED_BY_ADMIN_WITH_REFUND">관리자 취소(환불)</option>
+              <option value="CANCELLED_BY_ADMIN_NO_REFUND">관리자 취소(미환불)</option>
               <option value="REFUNDED">환불</option>
-              <option value="APPROVAL_EXPIRED">미승인 만료</option>
-              <option value="PAYMENT_EXPIRED">미결제 만료</option>
+              <option value="APPROVAL_EXPIRED">승인 만료</option>
+              <option value="PAYMENT_EXPIRED">결제 만료</option>
               <option value="CANCEL_REQUESTED">요청 취소</option>
             </select>
           </div>

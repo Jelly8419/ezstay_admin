@@ -13,6 +13,7 @@ import RoomManagement from './pages/rooms/RoomManagement';
 import ContractList from './pages/contracts/ContractList';
 import ContractDetail from './pages/contracts/ContractDetail';
 import PaymentList from './pages/payments/PaymentList';
+import PaymentDetail from './pages/payments/PaymentDetail';
 import SettlementList from './pages/settlements/SettlementList';
 import InquiryList from './pages/inquiries/InquiryList';
 import NotificationList from './pages/notifications/NotificationList';
@@ -61,6 +62,7 @@ function App() {
 
               {/* 결제 관리 */}
               <Route path="payments" element={<PaymentList />} />
+              <Route path="payments/:contractId" element={<PaymentDetail />} />
 
               {/* 정산 관리 */}
               <Route path="settlements" element={<SettlementList />} />

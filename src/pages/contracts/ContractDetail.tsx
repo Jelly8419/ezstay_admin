@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { ReservationDetail } from '../../types';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
@@ -9,17 +9,20 @@ import { reservationService } from '../../services/reservationService';
 
 const getStatusBadge = (status: string) => {
   const map: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
-    PENDING_APPROVAL: { variant: 'warning', label: '승인 대기' },
-    APPROVED: { variant: 'info', label: '승인됨' },
+    PENDING_APPROVAL: { variant: 'warning', label: '계약 요청' },
+    APPROVED: { variant: 'info', label: '계약 승인(결제 대기)' },
+    REJECTED: { variant: 'danger', label: '계약 거절' },
     PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료' },
-    IN_PROGRESS: { variant: 'success', label: '진행중' },
-    COMPLETED: { variant: 'default', label: '완료' },
-    CANCELLED: { variant: 'danger', label: '취소' },
-    EXPIRED: { variant: 'default', label: '만료' },
-    CANCEL_REQUESTED: { variant: 'warning', label: '취소 요청' },
-    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '관리자 취소(환불)' },
-    CANCELLED_BY_ADMIN_WITHOUT_REFUND: { variant: 'danger', label: '관리자 취소(환불없음)' },
+    IN_PROGRESS: { variant: 'success', label: '임대 중' },
+    COMPLETED: { variant: 'default', label: '계약 종료' },
+    CANCELLED_BY_GUEST: { variant: 'danger', label: '게스트 취소' },
     CANCELLED_BY_HOST: { variant: 'danger', label: '호스트 취소' },
+    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '관리자 취소(환불)' },
+    CANCELLED_BY_ADMIN_NO_REFUND: { variant: 'danger', label: '관리자 취소(미환불)' },
+    REFUNDED: { variant: 'info', label: '환불' },
+    APPROVAL_EXPIRED: { variant: 'default', label: '승인 만료' },
+    PAYMENT_EXPIRED: { variant: 'default', label: '결제 만료' },
+    CANCEL_REQUESTED: { variant: 'warning', label: '요청 취소' },
   };
   const config = map[status] || { variant: 'default' as const, label: status };
   return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -191,7 +194,7 @@ export default function ContractDetail() {
           <h2 className="text-lg font-semibold mb-4">예약 정보</h2>
           <dl className="space-y-3">
             <div className="flex justify-between">
-              <dt className="text-gray-500">주문번호</dt>
+              <dt className="text-gray-500">계약번호</dt>
               <dd className="font-medium">{detail.orderId}</dd>
             </div>
             <div className="flex justify-between">
@@ -225,9 +228,52 @@ export default function ContractDetail() {
               <dd>{formatCurrency(detail.maintenanceFee)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">청소비</dt>
+              <dt className="text-gray-500">
+                {detail.room?.ezService?.cleaningService ? '청소비(이지서비스)' : '청소비'}
+              </dt>
               <dd>{formatCurrency(detail.cleaningFee)}</dd>
             </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">보증금</dt>
+              <dd>{formatCurrency(detail.deposit)}</dd>
+            </div>
+            {(() => {
+              let items: Array<{ id?: number; name: string; price: number; quantity: number }> = [];
+              try {
+                if (detail.rentalItems) {
+                  const parsed = typeof detail.rentalItems === 'string'
+                    ? JSON.parse(detail.rentalItems)
+                    : detail.rentalItems;
+                  if (Array.isArray(parsed)) items = parsed;
+                }
+              } catch { /* 파싱 실패 시 무시 */ }
+
+              if (items.length === 0) return null;
+              return (
+                <>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">렌탈 용품</dt>
+                    <dd>{formatCurrency(detail.rentalItemsFee)}</dd>
+                  </div>
+                  <div className="pl-3 space-y-1">
+                    {items.map((item, idx) => (
+                      <div key={item.id ?? idx} className="flex justify-between text-sm">
+                        <dt className="text-gray-400">
+                          {item.name} × {item.quantity}
+                        </dt>
+                        <dd className="text-gray-500">{formatCurrency(item.price * item.quantity)}</dd>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+            {detail.discountAmount > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-gray-500">할인</dt>
+                <dd className="text-green-600">-{formatCurrency(detail.discountAmount)}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-gray-500">플랫폼 수수료</dt>
               <dd>{formatCurrency(detail.platformFee)}</dd>
@@ -250,6 +296,10 @@ export default function ContractDetail() {
               <dd>{detail.guest.name}</dd>
             </div>
             <div className="flex justify-between">
+              <dt className="text-gray-500">닉네임</dt>
+              <dd>{detail.guest.nickname || '-'}</dd>
+            </div>
+            <div className="flex justify-between">
               <dt className="text-gray-500">이메일</dt>
               <dd className="text-sm">{detail.guest.email}</dd>
             </div>
@@ -268,8 +318,16 @@ export default function ContractDetail() {
               <dd>{detail.host.name}</dd>
             </div>
             <div className="flex justify-between">
+              <dt className="text-gray-500">닉네임</dt>
+              <dd>{detail.host.nickname || '-'}</dd>
+            </div>
+            <div className="flex justify-between">
               <dt className="text-gray-500">이메일</dt>
               <dd className="text-sm">{detail.host.email}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">전화번호</dt>
+              <dd>{detail.host.phoneNumber}</dd>
             </div>
           </dl>
         </Card>
@@ -279,18 +337,26 @@ export default function ContractDetail() {
           <dl className="space-y-2">
             <div className="flex justify-between">
               <dt className="text-gray-500">방 이름</dt>
-              <dd>{detail.room.roomName}</dd>
+              <dd>
+                <Link
+                  to={`/rooms/${detail.room.id}`}
+                  className="text-primary-600 hover:underline"
+                >
+                  {detail.room.roomName}
+                </Link>
+              </dd>
             </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">주소</dt>
+              <dd className="text-sm text-right">{detail.room.address}</dd>
+            </div>
+            {detail.room.detailAddress && (
+              <div className="flex justify-between">
+                <dt className="text-gray-500">상세주소</dt>
+                <dd className="text-sm text-right">{detail.room.detailAddress}</dd>
+              </div>
+            )}
           </dl>
-          {detail.room.photos && detail.room.photos.length > 0 && (
-            <div className="mt-3">
-              <img
-                src={detail.room.photos[0].url}
-                alt={detail.room.roomName}
-                className="w-full h-32 object-cover rounded-lg"
-              />
-            </div>
-          )}
         </Card>
       </div>
 
