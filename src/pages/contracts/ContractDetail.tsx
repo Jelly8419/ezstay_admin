@@ -60,8 +60,12 @@ export default function ContractDetail() {
     try {
       setLoading(true);
       setError(null);
-      const response = await reservationService.getReservationDetail(contractId);
-      setDetail(response);
+      const response = await reservationService.getReservationDetail(contractId) as any;
+      const reservation = response.reservation || response;
+      if (response.timeline) {
+        reservation.timeline = response.timeline;
+      }
+      setDetail(reservation);
     } catch (err) {
       console.error('예약 상세 로드 실패:', err);
       setError('예약 상세 정보를 불러오는데 실패했습니다.');
