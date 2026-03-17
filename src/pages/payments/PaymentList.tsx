@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import type {
   PaymentSummaryItem,
   PaymentLog,
-  PaymentTransactionType,
   Pagination as PaginationType,
 } from '../../types';
 import { formatCurrency, formatDateTime } from '../../utils/format';
@@ -17,101 +16,47 @@ import { paymentService } from '../../services/paymentService';
 
 // ── 공통 유틸 ──
 
-const getMethodLabel = (method: string) => {
-  const map: Record<string, string> = {
-    CARD: '신용카드',
-    CREDIT_CARD: '신용카드',
-    VIRTUAL_ACCOUNT: '가상계좌',
-    TRANSFER: '계좌이체',
-    MOBILE: '휴대폰',
-    EASY_PAY: '간편결제',
-    ORIGINAL_PAYMENT: '원결제수단',
-    '카드': '카드',
-    '가상계좌': '가상계좌',
-    '계좌이체': '계좌이체',
-    '휴대폰': '휴대폰',
-    '간편결제': '간편결제',
-  };
-  return map[method] || method;
-};
-
+/** 결제수단 뱃지 (API가 한글/영문 혼용으로 내려줌) */
 const getMethodBadge = (method: string) => {
-  const colorMap: Record<string, string> = {
-    CARD: 'bg-blue-100 text-blue-800',
-    CREDIT_CARD: 'bg-blue-100 text-blue-800',
-    EASY_PAY: 'bg-yellow-100 text-yellow-800',
-    VIRTUAL_ACCOUNT: 'bg-green-100 text-green-800',
-    TRANSFER: 'bg-green-100 text-green-800',
-    MOBILE: 'bg-purple-100 text-purple-800',
-  };
-  const cls = colorMap[method] || 'bg-gray-100 text-gray-800';
+  const label = method.toUpperCase();
+  const isCard = label === 'CARD' || label === 'CREDIT_CARD' || method === '카드';
+  const cls = isCard
+    ? 'bg-blue-100 text-blue-800'
+    : 'bg-gray-100 text-gray-800';
+  const display = isCard ? '카드' : method;
   return (
     <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${cls}`}>
-      {getMethodLabel(method)}
+      {display}
     </span>
   );
 };
 
-const getProductTypeLabel = (type: string) => {
-  const map: Record<string, string> = {
-    contract: '계약',
-    rental: '렌탈',
-    contract_rental: '계약/렌탈',
-    penalty: '위약금',
-    deposit_refund: '보증금 환급',
+/** 거래유형 뱃지 (API가 한글로 내려줌: 결제완료, 부분취소, 전체취소) */
+const getTransactionTypeBadge = (type: string) => {
+  const map: Record<string, 'success' | 'warning' | 'danger'> = {
+    '결제완료': 'success',
+    '부분취소': 'warning',
+    '전체취소': 'danger',
   };
-  return map[type] || type;
+  return <Badge variant={map[type] || 'default'}>{type}</Badge>;
 };
 
-const getTransactionTypeBadge = (type: PaymentTransactionType | string) => {
-  const map: Record<string, { variant: 'success' | 'warning' | 'danger' | 'default'; label: string }> = {
-    PAYMENT_COMPLETED: { variant: 'success', label: '결제완료' },
-    PARTIAL_CANCEL: { variant: 'warning', label: '부분취소' },
-    FULL_CANCEL: { variant: 'danger', label: '전체취소' },
-    '결제완료': { variant: 'success', label: '결제완료' },
-    '부분취소': { variant: 'warning', label: '부분취소' },
-    '전체취소': { variant: 'danger', label: '전체취소' },
-  };
-  const config = map[type] || { variant: 'default' as const, label: type };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
-};
-
+/** 유저구분 뱃지 (API가 한글로 내려줌: 게스트, 호스트) */
 const getUserTypeBadge = (userType: string) => {
-  if (userType === 'host') return <Badge variant="info">호스트</Badge>;
+  if (userType === 'host' || userType === '호스트') return <Badge variant="info">호스트</Badge>;
   return <Badge variant="success">게스트</Badge>;
 };
 
+/** 상품구분 뱃지 (API가 한글로 내려줌: 계약, 렌탈, 계약/렌탈 등) */
 const getProductTypeBadge = (type: string) => {
-  const map: Record<string, { variant: 'default' | 'info' | 'warning' | 'danger'; label: string }> = {
-    contract: { variant: 'default', label: '계약' },
-    rental: { variant: 'info', label: '렌탈' },
-    contract_rental: { variant: 'warning', label: '계약/렌탈' },
-    penalty: { variant: 'danger', label: '위약금' },
-    deposit_refund: { variant: 'info', label: '보증금 환급' },
+  const map: Record<string, 'default' | 'info' | 'warning' | 'danger'> = {
+    '계약': 'default',
+    '렌탈': 'info',
+    '계약/렌탈': 'warning',
+    '위약금': 'danger',
+    '보증금 환급': 'info',
   };
-  const config = map[type] || { variant: 'default' as const, label: type };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
-};
-
-const getContractStatusBadge = (status: string) => {
-  const map: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
-    PENDING_APPROVAL: { variant: 'warning', label: '계약 요청' },
-    APPROVED: { variant: 'info', label: '계약 승인(결제 대기)' },
-    REJECTED: { variant: 'danger', label: '계약 거절' },
-    PAYMENT_COMPLETED: { variant: 'success', label: '결제 완료' },
-    IN_PROGRESS: { variant: 'success', label: '임대 중' },
-    COMPLETED: { variant: 'default', label: '계약 종료' },
-    CANCELLED_BY_GUEST: { variant: 'danger', label: '게스트 취소' },
-    CANCELLED_BY_HOST: { variant: 'danger', label: '호스트 취소' },
-    CANCELLED_BY_ADMIN_WITH_REFUND: { variant: 'danger', label: '관리자 취소(환불)' },
-    CANCELLED_BY_ADMIN_NO_REFUND: { variant: 'danger', label: '관리자 취소(미환불)' },
-    REFUNDED: { variant: 'info', label: '환불' },
-    APPROVAL_EXPIRED: { variant: 'default', label: '승인 만료' },
-    PAYMENT_EXPIRED: { variant: 'default', label: '결제 만료' },
-    CANCEL_REQUESTED: { variant: 'warning', label: '요청 취소' },
-  };
-  const config = map[status] || { variant: 'default' as const, label: status };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return <Badge variant={map[type] || 'default'}>{type}</Badge>;
 };
 
 // ── 탭1: 주문별 결제 현황 ──
@@ -139,8 +84,9 @@ function OrderPaymentTab() {
         ...(endDate && { endDate }),
         ...(productTypeFilter && { productType: productTypeFilter }),
       });
-      setPayments(response.payments || []);
-      setPagination(response.pagination || null);
+      const data = response as any;
+      setPayments(data.payments || data.logs || []);
+      setPagination(data.pagination || null);
     } catch (err) {
       console.error('결제 목록 로드 실패:', err);
       setError('결제 목록을 불러오는데 실패했습니다.');
@@ -161,12 +107,12 @@ function OrderPaymentTab() {
 
   const columns = [
     {
-      key: 'contractId',
-      title: '계약ID',
+      key: 'orderId',
+      title: '주문번호',
       render: (value: string) => (
         <span className="font-mono text-sm">{value || '-'}</span>
       ),
-      width: '9%',
+      width: '12%',
     },
     {
       key: 'paidAt',
@@ -174,23 +120,7 @@ function OrderPaymentTab() {
       render: (value: string | null) => (
         <span className="text-sm">{value ? formatDateTime(value) : '-'}</span>
       ),
-      width: '10%',
-    },
-    {
-      key: 'productType',
-      title: '상품 구분',
-      render: (value: string) => getProductTypeBadge(value),
-      width: '7%',
-    },
-    {
-      key: 'roomName',
-      title: '방 이름',
-      render: (value: string) => (
-        <span className="text-sm truncate block max-w-[140px]" title={value}>
-          {value || '-'}
-        </span>
-      ),
-      width: '10%',
+      width: '12%',
     },
     {
       key: 'userName',
@@ -198,63 +128,61 @@ function OrderPaymentTab() {
       render: (value: string, record: PaymentSummaryItem) => (
         <span className="text-sm">{value || record.guest?.name || '-'}</span>
       ),
-      width: '7%',
+      width: '8%',
     },
     {
-      key: 'userType',
-      title: '유저 구분',
-      render: (value: string) => getUserTypeBadge(value),
-      width: '6%',
+      key: 'roomName',
+      title: '방 이름',
+      render: (value: string) => (
+        <span className="text-sm truncate block max-w-[160px]" title={value}>
+          {value || '-'}
+        </span>
+      ),
+      width: '14%',
     },
     {
       key: 'totalPaidAmount',
-      title: '총 결제금액',
+      title: '총결제금액',
       render: (value: number) => (
         <span className="font-semibold">{formatCurrency(value)}</span>
       ),
-      width: '9%',
+      width: '11%',
     },
     {
       key: 'totalRefundedAmount',
-      title: '총 환불금액',
+      title: '총환불누적금액',
       render: (value: number) => (
-        <span className={value > 0 ? 'text-red-600' : ''}>
+        <span className={value > 0 ? 'text-red-600 font-semibold' : ''}>
           {value > 0 ? formatCurrency(value) : '0'}
         </span>
       ),
-      width: '9%',
+      width: '11%',
     },
     {
       key: 'currentBalance',
-      title: '현재 잔액',
+      title: '현재 유지금액',
       render: (value: number) => (
         <span className={`font-semibold ${value < 0 ? 'text-red-600' : ''}`}>
           {formatCurrency(value)}
         </span>
       ),
-      width: '9%',
+      width: '11%',
     },
     {
       key: 'paymentMethod',
       title: '결제수단',
       render: (value: string) => getMethodBadge(value),
-      width: '7%',
-    },
-    {
-      key: 'contractStatus',
-      title: '계약상태',
-      render: (value: string) => getContractStatusBadge(value),
-      width: '9%',
+      width: '8%',
     },
     {
       key: 'actions',
       title: '',
       render: (_: any, record: PaymentSummaryItem) => (
-        <Link to={`/payments/${record.contractId}`}>
-          <Button variant="secondary" size="sm">상세</Button>
+        <Link to={`/payments/${record.orderId}`}>
+          <Button variant="secondary" size="sm">상세 버튼</Button>
         </Link>
       ),
-      width: '5%',
+      width: '8%',
     },
   ];
 
@@ -363,8 +291,9 @@ function PaymentLogTab() {
         ...(transactionTypeFilter && { transactionType: transactionTypeFilter }),
         ...(productTypeFilter && { productType: productTypeFilter }),
       });
-      setLogs(response.logs || []);
-      setPagination(response.pagination || null);
+      const data = response as any;
+      setLogs(data.logs || data.payments || []);
+      setPagination(data.pagination || null);
     } catch (err) {
       console.error('결제 로그 로드 실패:', err);
       setError('결제/취소 내역을 불러오는데 실패했습니다.');
@@ -381,20 +310,6 @@ function PaymentLogTab() {
   const handleSearch = () => {
     setCurrentPage(1);
     loadLogs();
-  };
-
-  const getLogProductTypeLabel = (type: string) => {
-    const map: Record<string, string> = {
-      contract: '계약',
-      contract_option: '계약/옵션',
-      option: '옵션',
-      host_cancel_penalty: '호스트 취소 위약금',
-      guest_cancel: '게스트 취소',
-      deposit_refund: '보증금 환급',
-      rental: '렌탈',
-      penalty: '위약금',
-    };
-    return map[type] || getProductTypeLabel(type);
   };
 
   const columns = [
@@ -421,9 +336,7 @@ function PaymentLogTab() {
     {
       key: 'productType',
       title: '상품 구분',
-      render: (value: string) => (
-        <span className="text-sm">{getLogProductTypeLabel(value)}</span>
-      ),
+      render: (value: string) => getProductTypeBadge(value),
       width: '12%',
     },
     {
@@ -468,6 +381,17 @@ function PaymentLogTab() {
         </span>
       ),
       width: '10%',
+    },
+    {
+      key: 'actions',
+      title: '',
+      render: (_: any, record: PaymentLog) =>
+        record.orderId ? (
+          <Link to={`/payments/${record.orderId}`}>
+            <Button variant="secondary" size="sm">상세</Button>
+          </Link>
+        ) : null,
+      width: '5%',
     },
   ];
 
@@ -569,11 +493,11 @@ function PaymentLogTab() {
 type TabType = 'orders' | 'logs';
 
 export default function PaymentList() {
-  const [activeTab, setActiveTab] = useState<TabType>('orders');
+  const [activeTab, setActiveTab] = useState<TabType>('logs');
 
   const tabs: { key: TabType; label: string }[] = [
-    { key: 'orders', label: '계약별 결제 현황' },
     { key: 'logs', label: '결제/취소 내역' },
+    { key: 'orders', label: '주문별 결제 현황' },
   ];
 
   return (

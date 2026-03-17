@@ -157,21 +157,21 @@ export interface ReservationDetail {
   deposit: number;
   finalTotalAmount: number;
   paidAt: string | null;
-  guest: {
+  guest?: {
     id: number;
     name: string;
     nickname: string;
     email: string;
     phoneNumber: string;
   };
-  host: {
+  host?: {
     id: number;
     name: string;
     nickname: string;
     email: string;
     phoneNumber: string;
   };
-  room: {
+  room?: {
     id: number;
     roomName: string;
     address: string;
@@ -183,6 +183,7 @@ export interface ReservationDetail {
     };
   };
   createdAt: string;
+  timeline?: PaymentTimelineEvent[];
 }
 
 // 정산(Settlement) 관련 타입
@@ -232,24 +233,25 @@ export interface PaymentSummaryItem {
   orderId: string;
   contractId: number;
   paidAt: string | null;
-  productType: PaymentProductType;
+  productType: string;
   roomName: string;
   userName: string;
-  userType: 'guest' | 'host';
+  userType: string;
   totalPaidAmount: number;
   totalRefundedAmount: number;
   currentBalance: number;
-  paymentMethod: PaymentMethod;
+  paymentMethod: string;
   contractStatus: string;
+  contractStatusLabel: string;
   guest: {
     id: number;
     name: string;
-    email: string;
+    nickname: string;
   };
   host: {
     id: number;
     name: string;
-    email: string;
+    nickname: string;
   };
 }
 
@@ -338,16 +340,21 @@ export interface PaymentOrderDetail {
 
 // 탭2: 결제/취소 내역 (/admin/payments/logs)
 export interface PaymentLog {
-  id: number;
+  id?: number;
   orderId: string;
   occurredAt: string;
-  transactionType: PaymentTransactionType;
-  paymentMethod: PaymentMethod;
+  transactionType: string;
+  paymentMethod: string;
   productType: string;
   amount: number;
   userName: string;
-  userType: 'guest' | 'host';
+  userType: string;
   roomName: string;
+  contractId?: number;
+  paymentKey?: string;
+  rentalOrderId?: string;
+  refundId?: number;
+  actor?: string;
 }
 
 // 고객 문의(Inquiry) 관련 타입

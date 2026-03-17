@@ -62,7 +62,7 @@ function App() {
 
               {/* 결제 관리 */}
               <Route path="payments" element={<PaymentList />} />
-              <Route path="payments/:contractId" element={<PaymentDetail />} />
+              <Route path="payments/:orderId" element={<PaymentDetail />} />
 
               {/* 정산 관리 */}
               <Route path="settlements" element={<SettlementList />} />

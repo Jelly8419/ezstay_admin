@@ -48,10 +48,13 @@ export const paymentService = {
   },
 
   /**
-   * 계약 기준 결제 통합 상세 조회
+   * 주문번호 기준 결제 상세 조회
    */
-  getPaymentDetail: (contractId: number | string) =>
-    api.get<PaymentOrderDetail>(`/admin/payments/${contractId}`),
+  getPaymentDetail: (orderId: string, type?: string) => {
+    const params: Record<string, string> = {};
+    if (type) params.type = type;
+    return api.get<PaymentOrderDetail>(`/admin/payments/${orderId}`, { params });
+  },
 
   /**
    * 탭2: 결제/취소 내역 (결제/환불 이벤트 로그)

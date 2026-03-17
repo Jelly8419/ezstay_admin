@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import type { ReservationDetail } from '../../types';
+import type { ReservationDetail, PaymentTimelineEvent } from '../../types';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -288,77 +288,123 @@ export default function ContractDetail() {
 
       {/* 게스트 / 호스트 / 방 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <h2 className="text-lg font-semibold mb-4">게스트</h2>
-          <dl className="space-y-2">
-            <div className="flex justify-between">
-              <dt className="text-gray-500">이름</dt>
-              <dd>{detail.guest.name}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">닉네임</dt>
-              <dd>{detail.guest.nickname || '-'}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">이메일</dt>
-              <dd className="text-sm">{detail.guest.email}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">전화번호</dt>
-              <dd>{detail.guest.phoneNumber}</dd>
-            </div>
-          </dl>
-        </Card>
-
-        <Card>
-          <h2 className="text-lg font-semibold mb-4">호스트</h2>
-          <dl className="space-y-2">
-            <div className="flex justify-between">
-              <dt className="text-gray-500">이름</dt>
-              <dd>{detail.host.name}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">닉네임</dt>
-              <dd>{detail.host.nickname || '-'}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">이메일</dt>
-              <dd className="text-sm">{detail.host.email}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">전화번호</dt>
-              <dd>{detail.host.phoneNumber}</dd>
-            </div>
-          </dl>
-        </Card>
-
-        <Card>
-          <h2 className="text-lg font-semibold mb-4">방</h2>
-          <dl className="space-y-2">
-            <div className="flex justify-between">
-              <dt className="text-gray-500">방 이름</dt>
-              <dd>
-                <Link
-                  to={`/rooms/${detail.room.id}`}
-                  className="text-primary-600 hover:underline"
-                >
-                  {detail.room.roomName}
-                </Link>
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">주소</dt>
-              <dd className="text-sm text-right">{detail.room.address}</dd>
-            </div>
-            {detail.room.detailAddress && (
+        {detail.guest && (
+          <Card>
+            <h2 className="text-lg font-semibold mb-4">게스트</h2>
+            <dl className="space-y-2">
               <div className="flex justify-between">
-                <dt className="text-gray-500">상세주소</dt>
-                <dd className="text-sm text-right">{detail.room.detailAddress}</dd>
+                <dt className="text-gray-500">이름</dt>
+                <dd>{detail.guest.name}</dd>
               </div>
-            )}
-          </dl>
-        </Card>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">닉네임</dt>
+                <dd>{detail.guest.nickname || '-'}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">이메일</dt>
+                <dd className="text-sm">{detail.guest.email}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">전화번호</dt>
+                <dd>{detail.guest.phoneNumber}</dd>
+              </div>
+            </dl>
+          </Card>
+        )}
+
+        {detail.host && (
+          <Card>
+            <h2 className="text-lg font-semibold mb-4">호스트</h2>
+            <dl className="space-y-2">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">이름</dt>
+                <dd>{detail.host.name}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">닉네임</dt>
+                <dd>{detail.host.nickname || '-'}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">이메일</dt>
+                <dd className="text-sm">{detail.host.email}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">전화번호</dt>
+                <dd>{detail.host.phoneNumber}</dd>
+              </div>
+            </dl>
+          </Card>
+        )}
+
+        {detail.room && (
+          <Card>
+            <h2 className="text-lg font-semibold mb-4">방</h2>
+            <dl className="space-y-2">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">방 이름</dt>
+                <dd>
+                  <Link
+                    to={`/rooms/${detail.room.id}`}
+                    className="text-primary-600 hover:underline"
+                  >
+                    {detail.room.roomName}
+                  </Link>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">주소</dt>
+                <dd className="text-sm text-right">{detail.room.address}</dd>
+              </div>
+              {detail.room.detailAddress && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">상세주소</dt>
+                  <dd className="text-sm text-right">{detail.room.detailAddress}</dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+        )}
       </div>
+
+      {/* 결제/환불 타임라인 */}
+      {detail.timeline && detail.timeline.length > 0 && (
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">결제/환불 내역</h2>
+          <div className="space-y-4">
+            {detail.timeline.map((event: PaymentTimelineEvent, idx: number) => {
+              const isRefund = ['부분취소', 'PARTIAL_CANCEL', '전체취소', 'FULL_CANCEL'].includes(event.type);
+              return (
+                <div
+                  key={idx}
+                  className={`p-4 rounded-lg border ${
+                    isRefund ? 'border-red-200 bg-red-50/50' : 'border-green-200 bg-green-50/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className={`text-sm font-medium ${isRefund ? 'text-red-600' : 'text-green-700'}`}>
+                      {formatDateTime(event.occurredAt)}
+                    </span>
+                    <span className="text-gray-300">|</span>
+                    <Badge variant={isRefund ? (event.type.includes('부분') || event.type.includes('PARTIAL') ? 'warning' : 'danger') : 'success'}>
+                      {event.type}
+                    </Badge>
+                    <span className="text-gray-300">|</span>
+                    <span className={`font-bold ${isRefund ? 'text-red-600' : ''}`}>
+                      {isRefund ? '-' : '+'}{formatCurrency(Math.abs(event.amount))}
+                    </span>
+                  </div>
+                  {event.description && (
+                    <p className="text-sm text-gray-700">상세: {event.description}</p>
+                  )}
+                  {event.actor && (
+                    <p className="text-sm text-gray-500">처리주체: {event.actor}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* 강제 취소 모달 */}
       {showForceCancelModal && (
