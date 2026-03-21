@@ -302,7 +302,7 @@ export default function DepositHoldList() {
             <Button onClick={loadHolds}>다시 시도</Button>
           </div>
         ) : (
-          <Table columns={columns} data={holds} />
+          <Table<DepositHold> columns={columns} data={holds} />
         )}
       </Card>
 

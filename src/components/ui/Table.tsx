@@ -14,7 +14,7 @@ interface TableProps<T> {
   className?: string;
 }
 
-export function Table<T extends { id?: number | string }>({
+export function Table<T extends Record<string, any>>({
   columns,
   data,
   onRowClick,
