@@ -811,38 +811,63 @@ export interface RejectCancelResponse {
 // 보증금 보류 관련 타입
 // ========================================
 
-export type DepositHoldStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'RELEASED';
+export type DepositHoldStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'HOST_SUBMITTED'
+  | 'AGREED'
+  | 'AUTO_REFUNDED';
 
+// GET /api/admin/deposits 목록 아이템
 export interface DepositHold {
-  id: number;
   contractId: number;
-  holdAmount: number;
-  reason: string;
-  status: DepositHoldStatus;
-  contract?: {
-    id: number;
-    orderId: string;
-    checkInDate: string;
-    checkOutDate: string;
-    guest: { id: number; name: string; email: string; phoneNumber?: string };
-    host: { id: number; name: string; email: string };
-    room: { id: number; roomName: string; address?: string };
-  };
-  adminNotes?: string;
-  rejectionReason?: string;
-  approvedAt: string | null;
-  rejectedAt: string | null;
-  releasedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+  room: { id: number; roomName: string };
+  guest: { id: number; name: string };
+  host: { id: number; name: string };
+  deposit: number;
+  deductRequestAmount: number | null;
+  holdReason: string;
+  holdRequestedAt: string;
+  holdApprovedAt: string | null;
+  holdStatus: DepositHoldStatus;
 }
 
-export interface DepositHoldDetail extends DepositHold {}
+// GET /api/admin/deposits/:contractId 상세
+export interface DepositAgreement {
+  id: number;
+  deductAmount: number;
+  agreementText: string;
+  status: string;
+  submittedAt: string;
+  acceptedAt: string | null;
+}
 
-export interface CreateDepositHoldRequest {
-  contractId: number;
-  holdAmount: number;
+export interface DepositHoldLog {
+  id: number;
+  fromStatus: string;
+  toStatus: string;
+  changedBy: string;
   reason: string;
+  metadata: Record<string, any>;
+  createdAt: string;
+}
+
+export interface DepositHoldDetail {
+  contractId: number;
+  checkInDate: string;
+  checkOutDate: string;
+  guest: { id: number; name: string; email: string; phoneNumber: string };
+  host: { id: number; name: string; email: string; phoneNumber: string };
+  room: { id: number; roomName: string; address: string };
+  deposit: number;
+  holdStatus: DepositHoldStatus;
+  holdReason: string;
+  holdRequestedAt: string;
+  holdApprovedAt: string | null;
+  depositAgreement: DepositAgreement | null;
+  refundableDeposit: number;
+  depositStatus: string;
+  logs: DepositHoldLog[];
 }
 
 // ========================================

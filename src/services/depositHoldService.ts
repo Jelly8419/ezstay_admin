@@ -3,56 +3,51 @@
  */
 
 import { api } from './api';
-import type {
-  DepositHold,
-  Pagination,
-} from '../types';
+import type { DepositHold, DepositHoldDetail, DepositHoldStatus, Pagination } from '../types';
 
 export interface DepositHoldListResponse {
-  depositHolds: DepositHold[];
+  holds: DepositHold[];
   pagination: Pagination;
 }
 
 export interface DepositHoldListParams {
   page?: number;
   limit?: number;
-  status?: string;
+  status?: DepositHoldStatus;
   contractId?: number;
-  sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  hostName?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const depositHoldService = {
   /**
-   * 보류 신청 목록 조회
+   * 보증금 보류 목록 조회
    */
-  getDepositHolds: (params: DepositHoldListParams = {}) => {
-    const queryString = new URLSearchParams(
-      Object.entries(params)
-        .filter(([, value]) => value !== undefined)
-        .map(([key, value]) => [key, String(value)])
-    ).toString();
-
-    return api.get<DepositHoldListResponse>(
-      `/admin/deposits/pending-holds${queryString ? `?${queryString}` : ''}`
-    );
-  },
+  getDepositHolds: (params: DepositHoldListParams = {}) =>
+    api.get<DepositHoldListResponse>('/admin/deposits', { params }),
 
   /**
-   * 보류 승인
+   * 보증금 보류 상세 조회
+   */
+  getDepositHoldDetail: (contractId: number) =>
+    api.get<DepositHoldDetail>(`/admin/deposits/${contractId}`),
+
+  /**
+   * 보류 신청 승인
    */
   approveHold: (contractId: number) =>
     api.post<any>(`/admin/deposits/${contractId}/approve-hold`),
 
   /**
-   * 보류 거절
+   * 보류 신청 반려
    */
-  rejectHold: (contractId: number) =>
-    api.post<any>(`/admin/deposits/${contractId}/reject-hold`),
+  rejectHold: (contractId: number, reason: string) =>
+    api.post<any>(`/admin/deposits/${contractId}/reject-hold`, { reason }),
 
   /**
-   * 강제 반환보류
+   * 강제 반환보류 (관리자 직접 보류)
    */
-  forceHold: (contractId: number) =>
-    api.post<any>(`/admin/deposits/${contractId}/force-hold`),
+  forceHold: (contractId: number, reason: string) =>
+    api.post<any>(`/admin/deposits/${contractId}/force-hold`, { reason }),
 };

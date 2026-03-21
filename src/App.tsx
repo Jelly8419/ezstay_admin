@@ -22,6 +22,7 @@ import NotificationList from './pages/notifications/NotificationList';
 import { ActionLogs } from './pages/admin/ActionLogs';
 import { SupportCenter } from './pages/support/SupportCenter';
 import DepositHoldList from './pages/deposit-holds/DepositHoldList';
+import DepositHoldDetailPage from './pages/deposit-holds/DepositHoldDetail';
 import ReceiptList from './pages/receipts/ReceiptList';
 import AlimtalkManagement from './pages/alimtalk/AlimtalkManagement';
 
@@ -75,6 +76,7 @@ function App() {
 
               {/* 보증금 보류 관리 */}
               <Route path="deposit-holds" element={<DepositHoldList />} />
+              <Route path="deposit-holds/:contractId" element={<DepositHoldDetailPage />} />
 
               {/* 영수증 관리 */}
               <Route path="receipts" element={<ReceiptList />} />
