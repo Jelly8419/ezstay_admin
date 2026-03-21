@@ -92,6 +92,10 @@ export interface PropertyDetail extends Property {
     roomPassword?: string | null;
   };
 
+  // 입실/퇴실 시간
+  checkInTime?: string;
+  checkOutTime?: string;
+
   // 방 소개
   description?: string;
   transportation?: string;

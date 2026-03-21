@@ -18,6 +18,12 @@ import {
 } from 'lucide-react';
 import { propertyService, PropertyDetail } from '../../services/roomService';
 
+const formatTime = (time: string): string => {
+  const hour = parseInt(time, 10);
+  if (isNaN(hour)) return time;
+  return `${String(hour).padStart(2, '0')}:00`;
+};
+
 const getStatusBadgeVariant = (
   status: string
 ): 'warning' | 'success' | 'danger' | 'default' => {
@@ -296,6 +302,22 @@ export const RoomReviewDetail: React.FC = () => {
                 건물 유형
               </label>
               <p className="text-gray-900">{property.buildingType}</p>
+            </div>
+          )}
+          {property.checkInTime && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                입실 시간
+              </label>
+              <p className="text-gray-900">{formatTime(property.checkInTime)}</p>
+            </div>
+          )}
+          {property.checkOutTime && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                퇴실 시간
+              </label>
+              <p className="text-gray-900">{formatTime(property.checkOutTime)}</p>
             </div>
           )}
           {property.entrancePassword && (
