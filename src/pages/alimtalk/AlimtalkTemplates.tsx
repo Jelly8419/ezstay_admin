@@ -145,17 +145,13 @@ export const AlimtalkTemplates: React.FC = () => {
                 <th className="text-left py-3 px-4 font-medium text-gray-600">이벤트명</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-600">템플릿명</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-600">템플릿 코드</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600">승인 상태</th>
+                {/* <th className="text-left py-3 px-4 font-medium text-gray-600">승인 상태</th> */}
                 <th className="text-left py-3 px-4 font-medium text-gray-600">연동</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-600">변수 매핑</th>
               </tr>
             </thead>
             <tbody>
               {filteredTemplates.map((template, idx) => {
-                const inspInfo = template.inspStatus
-                  ? inspStatusMap[template.inspStatus]
-                  : null;
-
                 return (
                   <tr
                     key={template.eventName || template.tplCode || idx}
@@ -181,6 +177,7 @@ export const AlimtalkTemplates: React.FC = () => {
                         <span className="text-gray-400">미등록</span>
                       )}
                     </td>
+                    {/* 승인 상태 컬럼 비노출
                     <td className="py-3 px-4">
                       {inspInfo ? (
                         <Badge variant={inspInfo.variant} size="sm">
@@ -190,6 +187,7 @@ export const AlimtalkTemplates: React.FC = () => {
                         <span className="text-gray-400">-</span>
                       )}
                     </td>
+                    */}
                     <td className="py-3 px-4">
                       <Badge
                         variant={template.isLinked ? 'success' : 'default'}
