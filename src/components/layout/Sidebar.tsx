@@ -6,6 +6,7 @@ import {
   Calendar,
   CreditCard,
   DollarSign,
+  Banknote,
   MessageSquare,
   Bell,
   Settings,
@@ -57,6 +58,11 @@ const navItems: NavItem[] = [
     path: '/settlements',
     label: '정산 관리',
     icon: <DollarSign className="w-5 h-5" />
+  },
+  {
+    path: '/payouts',
+    label: '지급 관리',
+    icon: <Banknote className="w-5 h-5" />
   },
   {
     path: '/deposit-holds',

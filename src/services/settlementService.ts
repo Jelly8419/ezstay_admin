@@ -40,14 +40,20 @@ export const settlementService = {
   /**
    * 정산 완료 처리
    */
-  complete: (contractId: number, note?: string) =>
-    api.patch<any>(`/admin/settlements/${contractId}/complete`, { note }),
+  complete: (settlementId: number, note?: string) =>
+    api.patch<any>(`/admin/settlements/${settlementId}/complete`, { note }),
 
   /**
    * 정산 보류 처리
    */
-  hold: (contractId: number, reason: string) =>
-    api.patch<any>(`/admin/settlements/${contractId}/hold`, { reason }),
+  hold: (settlementId: number, reason: string) =>
+    api.patch<any>(`/admin/settlements/${settlementId}/hold`, { reason }),
+
+  /**
+   * 정산 보류 해제
+   */
+  unhold: (settlementId: number) =>
+    api.patch<any>(`/admin/settlements/${settlementId}/unhold`, {}),
 
   /**
    * 정산 엑셀 내보내기 (파일 다운로드)

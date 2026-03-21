@@ -15,6 +15,8 @@ import ContractDetail from './pages/contracts/ContractDetail';
 import PaymentList from './pages/payments/PaymentList';
 import PaymentDetail from './pages/payments/PaymentDetail';
 import SettlementList from './pages/settlements/SettlementList';
+import PayoutList from './pages/payouts/PayoutList';
+import PayoutDetail from './pages/payouts/PayoutDetail';
 import InquiryList from './pages/inquiries/InquiryList';
 import NotificationList from './pages/notifications/NotificationList';
 import { ActionLogs } from './pages/admin/ActionLogs';
@@ -66,6 +68,10 @@ function App() {
 
               {/* 정산 관리 */}
               <Route path="settlements" element={<SettlementList />} />
+
+              {/* 지급 관리 */}
+              <Route path="payouts" element={<PayoutList />} />
+              <Route path="payouts/:payoutId" element={<PayoutDetail />} />
 
               {/* 보증금 보류 관리 */}
               <Route path="deposit-holds" element={<DepositHoldList />} />

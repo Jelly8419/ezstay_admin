@@ -187,36 +187,34 @@ export interface ReservationDetail {
 }
 
 // 정산(Settlement) 관련 타입
-export type SettlementStatus = 'pending' | 'completed' | 'on_hold';
+export type SettlementStatus = 'PENDING' | 'READY' | 'PROCESSING' | 'COMPLETED' | 'ON_HOLD' | 'FAILED';
 
 export interface Settlement {
+  id: number;
   contractId: number;
-  contractNumber: string;
-  host: {
-    id: number;
-    name: string;
-    email: string;
-  };
-  room: {
-    id: number;
-    roomName: string;
-  };
-  guestName: string;
-  checkInDate: string;
-  checkOutDate: string;
-  rentalDays: number;
-  settlementAmount: number;
-  settlementDate: string;
+  hostId: number;
+  hostName: string;
+  hostEmail: string;
   status: SettlementStatus;
   statusLabel: string;
-  settlementCompletedAt: string | null;
-  settlementNote: string | null;
-  hasRefund: boolean;
-  refundAmount: number;
+  netAmount: number;
+  expectedDate: string;
+  payoutAvailableDate: string | null;
+  checkInDate: string;
+  checkOutDate: string;
+  payout: {
+    id: number;
+    status: string;
+    amount: number;
+    payableAfter: string;
+    processedAt: string | null;
+  } | null;
+  createdAt: string;
 }
 
 export interface SettlementSummary {
   pendingCount: number;
+  readyCount: number;
   completedCount: number;
   onHoldCount: number;
 }
@@ -997,4 +995,92 @@ export interface Pagination {
 export interface PaginatedResponse<T> {
   items: T[];
   pagination: Pagination;
+}
+
+// =====================
+// Payout (지급 관리)
+// =====================
+
+export type PayoutStatus = 'PENDING' | 'PAYABLE' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
+export type PayoutType =
+  | 'CONTRACT_SETTLEMENT'
+  | 'GUEST_PENALTY'
+  | 'DEPOSIT_DEDUCTION'
+  | 'HOST_CANCELLATION_COMPENSATION';
+
+export type RecipientType = 'HOST' | 'GUEST';
+
+export interface PayoutListItem {
+  id: number;
+  contractId: number;
+  payoutType: PayoutType;
+  payoutTypeLabel: string;
+  recipientType: RecipientType;
+  recipientId: number;
+  recipientName: string | null;
+  amount: number;
+  status: PayoutStatus;
+  statusLabel: string;
+  payableAfter: string;
+  processedAt: string | null;
+  createdAt: string;
+}
+
+export interface PayoutDetail {
+  id: number;
+  contractId: number;
+  settlementId: number | null;
+  refundId: number | null;
+  payoutType: PayoutType;
+  payoutTypeLabel: string;
+  recipientType: RecipientType;
+  recipient: {
+    id: number;
+    name: string;
+    nickname: string;
+    phoneNumber: string;
+  };
+  amount: number;
+  status: PayoutStatus;
+  statusLabel: string;
+  payableAfter: string;
+  bankName: string | null;
+  accountNumber: string | null;
+  accountHolder: string | null;
+  adminId: number | null;
+  processedByAdmin: { id: number; name: string } | null;
+  processedAt: string | null;
+  failureReason: string | null;
+  note: string | null;
+  contract: {
+    id: number;
+    checkInDate: string;
+    checkOutDate: string;
+    rentalFee: number;
+    maintenanceFee: number;
+    cleaningFee: number;
+    finalTotalAmount: number;
+  };
+  settlement: {
+    id: number;
+    status: string;
+    netAmount: number;
+    expectedDate: string;
+    payoutAvailableDate: string;
+  } | null;
+  refund: object | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PayoutListParams {
+  page?: number;
+  limit?: number;
+  status?: PayoutStatus;
+  payoutType?: PayoutType;
+  recipientType?: RecipientType;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
 }
