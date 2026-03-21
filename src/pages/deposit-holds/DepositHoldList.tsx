@@ -12,11 +12,12 @@ import { depositHoldService } from '../../services/depositHoldService';
 import { SearchBar } from '../../components/common/SearchBar';
 
 const STATUS_MAP: Record<DepositHoldStatus, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
-  REQUESTED:     { variant: 'warning', label: '보류 신청' },
-  APPROVED:      { variant: 'info',    label: '승인 완료' },
-  HOST_SUBMITTED:{ variant: 'warning', label: '차감 내용 제출' },
-  AGREED:        { variant: 'success', label: '게스트 동의' },
-  AUTO_REFUNDED: { variant: 'default', label: '자동 전액 반환' },
+  REQUESTED:      { variant: 'warning', label: '보류 신청' },
+  APPROVED:       { variant: 'info',    label: '승인 완료' },
+  HOST_SUBMITTED: { variant: 'warning', label: '차감 내용 제출' },
+  AGREED:         { variant: 'success', label: '게스트 동의' },
+  AUTO_REFUNDED:  { variant: 'default', label: '자동 전액 반환' },
+  REFUND_FAILED:  { variant: 'danger',  label: '환불 실패' },
 };
 
 const getStatusBadge = (status: DepositHoldStatus) => {
@@ -25,15 +26,16 @@ const getStatusBadge = (status: DepositHoldStatus) => {
 };
 
 const STATUS_OPTIONS: { value: DepositHoldStatus | 'all'; label: string }[] = [
-  { value: 'all',           label: '전체' },
-  { value: 'REQUESTED',     label: '보류 신청' },
-  { value: 'APPROVED',      label: '승인 완료' },
-  { value: 'HOST_SUBMITTED',label: '차감 내용 제출' },
-  { value: 'AGREED',        label: '게스트 동의' },
-  { value: 'AUTO_REFUNDED', label: '자동 전액 반환' },
+  { value: 'all',            label: '전체' },
+  { value: 'REQUESTED',      label: '보류 신청' },
+  { value: 'APPROVED',       label: '승인 완료' },
+  { value: 'HOST_SUBMITTED', label: '차감 내용 제출' },
+  { value: 'AGREED',         label: '게스트 동의' },
+  { value: 'AUTO_REFUNDED',  label: '자동 전액 반환' },
+  { value: 'REFUND_FAILED',  label: '환불 실패' },
 ];
 
-type ModalType = 'approve' | 'reject' | 'force' | null;
+type ModalType = 'approve' | 'reject' | 'force' | 'retry' | null;
 
 export default function DepositHoldList() {
   const navigate = useNavigate();
@@ -140,6 +142,20 @@ export default function DepositHoldList() {
     }
   };
 
+  const handleRetryRefund = async () => {
+    if (!selectedHold) return;
+    try {
+      setActionLoading(true);
+      await depositHoldService.retryRefund(selectedHold.contractId);
+      closeModal();
+      loadHolds();
+    } catch {
+      alert('환불 재시도에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const columns = [
     {
       key: 'contractId',
@@ -224,6 +240,12 @@ export default function DepositHoldList() {
                 반려
               </Button>
             </>
+          )}
+          {hold.holdStatus === 'REFUND_FAILED' && (
+            <Button size="sm" variant="danger"
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); setSelectedHold(hold); setModalType('retry'); }}>
+              환불 재시도
+            </Button>
           )}
           {!['REQUESTED'].includes(hold.holdStatus) && (
             <Button size="sm" variant="secondary"
@@ -380,6 +402,30 @@ export default function DepositHoldList() {
               placeholder="강제 보류 사유를 입력하세요"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 환불 재시도 모달 */}
+      <Modal
+        isOpen={modalType === 'retry'}
+        onClose={closeModal}
+        title="PG 환불 재시도"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={closeModal}>취소</Button>
+            <Button variant="danger" onClick={handleRetryRefund} disabled={actionLoading}>
+              {actionLoading ? '처리 중...' : '환불 재시도'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            계약 <strong>#{selectedHold?.contractId}</strong>의 보증금 PG 환불이 실패한 상태입니다.
+          </p>
+          <div className="p-3 bg-red-50 rounded-lg text-sm text-red-700">
+            환불을 재시도합니다. 성공 시 정상 상태로 복원되며, 재실패 시 실패 로그가 누적됩니다.
           </div>
         </div>
       </Modal>

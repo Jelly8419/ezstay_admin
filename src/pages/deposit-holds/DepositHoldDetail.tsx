@@ -14,6 +14,7 @@ const STATUS_MAP: Record<DepositHoldStatus, { variant: 'warning' | 'success' | '
   HOST_SUBMITTED: { variant: 'warning', label: '차감 내용 제출' },
   AGREED:         { variant: 'success', label: '게스트 동의' },
   AUTO_REFUNDED:  { variant: 'default', label: '자동 전액 반환' },
+  REFUND_FAILED:  { variant: 'danger',  label: '환불 실패' },
 };
 
 const AGREEMENT_STATUS_MAP: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
@@ -29,7 +30,7 @@ const LOG_ACTOR_LABEL: Record<string, string> = {
   SYSTEM: '시스템',
 };
 
-type ModalType = 'approve' | 'reject' | null;
+type ModalType = 'approve' | 'reject' | 'retry' | null;
 
 export default function DepositHoldDetailPage() {
   const { contractId } = useParams<{ contractId: string }>();
@@ -83,6 +84,20 @@ export default function DepositHoldDetailPage() {
       loadDetail();
     } catch {
       alert('반려 처리에 실패했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRetryRefund = async () => {
+    if (!detail) return;
+    try {
+      setActionLoading(true);
+      await depositHoldService.retryRefund(detail.contractId);
+      setModalType(null);
+      loadDetail();
+    } catch {
+      alert('환불 재시도에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setActionLoading(false);
     }
@@ -214,6 +229,19 @@ export default function DepositHoldDetailPage() {
         </Card>
       )}
 
+      {/* 환불 실패 — 재시도 액션 */}
+      {detail.holdStatus === 'REFUND_FAILED' && (
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">관리자 액션</h2>
+          <div className="p-3 bg-red-50 rounded-lg text-sm text-red-700 mb-4">
+            PG 환불 처리가 실패한 상태입니다. 환불을 재시도하거나, 상세 로그를 확인해 주세요.
+          </div>
+          <div className="flex gap-3">
+            <Button variant="danger" onClick={() => setModalType('retry')}>환불 재시도</Button>
+          </div>
+        </Card>
+      )}
+
       {/* 처리 로그 */}
       {detail.logs && detail.logs.length > 0 && (
         <Card>
@@ -281,6 +309,31 @@ export default function DepositHoldDetailPage() {
               placeholder="반려 사유를 입력하세요"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 환불 재시도 모달 */}
+      <Modal
+        isOpen={modalType === 'retry'}
+        onClose={() => setModalType(null)}
+        title="PG 환불 재시도"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setModalType(null)}>취소</Button>
+            <Button variant="danger" onClick={handleRetryRefund} disabled={actionLoading}>
+              {actionLoading ? '처리 중...' : '환불 재시도'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            계약 <strong>#{detail.contractId}</strong>의 보증금 PG 환불이 실패한 상태입니다.
+          </p>
+          <div className="p-3 bg-red-50 rounded-lg text-sm text-red-700">
+            환불을 재시도합니다. 성공 시 차감 확정(DEDUCTION_CONFIRMED) 또는 반환 확정(RETURN_CONFIRMED) 상태로 복원되며,
+            재실패 시 환불 실패(REFUND_FAILED) 상태가 유지되고 실패 로그가 누적됩니다.
           </div>
         </div>
       </Modal>

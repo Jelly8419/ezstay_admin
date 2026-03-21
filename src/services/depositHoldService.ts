@@ -50,4 +50,10 @@ export const depositHoldService = {
    */
   forceHold: (contractId: number, reason: string) =>
     api.post<any>(`/admin/deposits/${contractId}/force-hold`, { reason }),
+
+  /**
+   * 환불 재시도 (REFUND_FAILED 상태에서 관리자가 PG 환불 재시도)
+   */
+  retryRefund: (contractId: number) =>
+    api.post<any>(`/admin/deposits/${contractId}/retry-refund`),
 };

@@ -816,7 +816,8 @@ export type DepositHoldStatus =
   | 'APPROVED'
   | 'HOST_SUBMITTED'
   | 'AGREED'
-  | 'AUTO_REFUNDED';
+  | 'AUTO_REFUNDED'
+  | 'REFUND_FAILED';
 
 // GET /api/admin/deposits 목록 아이템
 export interface DepositHold {
