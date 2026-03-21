@@ -225,6 +225,9 @@ export type PaymentStatus = 'READY' | 'IN_PROGRESS' | 'DONE' | 'CANCELED' | 'PAR
 export type PaymentProductType = 'contract' | 'rental' | 'contract_rental' | 'penalty' | 'deposit_refund';
 export type PaymentTransactionType = 'PAYMENT_COMPLETED' | 'PARTIAL_CANCEL' | 'FULL_CANCEL';
 
+// 결제 유형
+export type PaymentType = 'CONTRACT' | 'HOST_BURDEN';
+
 // 탭1: 주문별 결제 현황 (/admin/payments/summary)
 export interface PaymentSummaryItem {
   id?: number | string;
@@ -232,6 +235,7 @@ export interface PaymentSummaryItem {
   contractId: number;
   paidAt: string | null;
   productType: string;
+  paymentType?: PaymentType;
   roomName: string;
   userName: string;
   userType: string;
@@ -286,6 +290,8 @@ export interface PaymentContractInfo {
 
 // 결제 상세 - 결제 요약
 export interface PaymentDetailSummary {
+  contractPaidAmount?: number;
+  hostBurdenPaidAmount?: number;
   totalPaidAmount: number;
   totalRefundedAmount: number;
   currentBalance: number;
@@ -344,6 +350,7 @@ export interface PaymentLog {
   transactionType: string;
   paymentMethod: string;
   productType: string;
+  paymentType?: PaymentType;
   amount: number;
   userName: string;
   userType: string;

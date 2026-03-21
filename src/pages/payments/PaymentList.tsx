@@ -55,8 +55,15 @@ const getProductTypeBadge = (type: string) => {
     '계약/렌탈': 'warning',
     '위약금': 'danger',
     '보증금 환급': 'info',
+    '호스트부담금': 'warning',
   };
   return <Badge variant={map[type] || 'default'}>{type}</Badge>;
+};
+
+/** 결제유형 뱃지 (paymentType: CONTRACT | HOST_BURDEN) */
+const getPaymentTypeBadge = (paymentType?: string) => {
+  if (paymentType === 'HOST_BURDEN') return <Badge variant="warning">호스트부담</Badge>;
+  return null;
 };
 
 // ── 탭1: 주문별 결제 현황 ──
@@ -175,14 +182,21 @@ function OrderPaymentTab() {
       width: '8%',
     },
     {
+      key: 'paymentType',
+      title: '결제유형',
+      render: (value: string, record: PaymentSummaryItem) =>
+        getPaymentTypeBadge(value || record.paymentType) || <span className="text-gray-400 text-xs">일반</span>,
+      width: '8%',
+    },
+    {
       key: 'actions',
       title: '',
       render: (_: any, record: PaymentSummaryItem) => (
         <Link to={`/payments/${record.orderId}`}>
-          <Button variant="secondary" size="sm">상세 버튼</Button>
+          <Button variant="secondary" size="sm">상세</Button>
         </Link>
       ),
-      width: '8%',
+      width: '7%',
     },
   ];
 
@@ -336,8 +350,13 @@ function PaymentLogTab() {
     {
       key: 'productType',
       title: '상품 구분',
-      render: (value: string) => getProductTypeBadge(value),
-      width: '12%',
+      render: (value: string, record: PaymentLog) => (
+        <div className="flex items-center gap-1">
+          {getProductTypeBadge(value)}
+          {getPaymentTypeBadge(record.paymentType)}
+        </div>
+      ),
+      width: '14%',
     },
     {
       key: 'amount',

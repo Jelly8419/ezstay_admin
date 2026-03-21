@@ -52,8 +52,20 @@ export const settlementService = {
   /**
    * 정산 보류 해제
    */
-  unhold: (settlementId: number) =>
-    api.patch<any>(`/admin/settlements/${settlementId}/unhold`, {}),
+  unhold: (settlementId: number, note?: string) =>
+    api.patch<any>(`/admin/settlements/${settlementId}/unhold`, { note }),
+
+  /**
+   * 정산 금액 수동 조정
+   */
+  adjust: (settlementId: number, netAmount: number, reason: string) =>
+    api.patch<any>(`/admin/settlements/${settlementId}/adjust`, { netAmount, reason }),
+
+  /**
+   * 정산 메모 수정
+   */
+  updateNote: (settlementId: number, note: string) =>
+    api.patch<any>(`/admin/settlements/${settlementId}/note`, { note }),
 
   /**
    * 정산 엑셀 내보내기 (파일 다운로드)

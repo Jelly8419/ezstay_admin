@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { PayoutListItem, PayoutStatus, PayoutType, RecipientType } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
@@ -48,6 +48,8 @@ const RECIPIENT_TYPE_OPTIONS: { value: RecipientType | 'all'; label: string }[] 
 
 export default function PayoutList() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const [payouts, setPayouts] = useState<PayoutListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,7 +58,9 @@ export default function PayoutList() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<PayoutStatus | 'all'>('all');
-  const [typeFilter, setTypeFilter] = useState<PayoutType | 'all'>('all');
+  const [typeFilter, setTypeFilter] = useState<PayoutType | 'all'>(
+    (searchParams.get('payoutType') as PayoutType) || 'all'
+  );
   const [recipientFilter, setRecipientFilter] = useState<RecipientType | 'all'>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -175,6 +179,16 @@ export default function PayoutList() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">지급 관리</h1>
+        <Button
+          variant={typeFilter === 'HOST_CANCELLATION_COMPENSATION' ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => {
+            setTypeFilter(typeFilter === 'HOST_CANCELLATION_COMPENSATION' ? 'all' : 'HOST_CANCELLATION_COMPENSATION');
+            setCurrentPage(1);
+          }}
+        >
+          호스트 부담금 보기
+        </Button>
       </div>
 
       <Card>

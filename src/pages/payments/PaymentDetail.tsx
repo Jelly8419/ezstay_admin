@@ -26,6 +26,13 @@ export default function PaymentDetail() {
   const navigate = useNavigate();
 
   const [logs, setLogs] = useState<PaymentLog[]>([]);
+  const [summary, setSummary] = useState<{
+    contractPaidAmount?: number;
+    hostBurdenPaidAmount?: number;
+    totalPaidAmount?: number;
+    totalRefundedAmount?: number;
+    currentBalance?: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,9 +42,10 @@ export default function PaymentDetail() {
       setLoading(true);
       setError(null);
       const response = await paymentService.getPaymentDetail(orderId, type);
-      // API 응답이 logs 배열이거나 timeline 배열일 수 있음
-      const timeline = (response as any).logs || (response as any).timeline || [];
+      const data = response as any;
+      const timeline = data.logs || data.timeline || [];
       setLogs(timeline);
+      setSummary(data.summary || null);
     } catch (err) {
       console.error('결제 상세 로드 실패:', err);
       setError('결제 상세 정보를 불러오는데 실패했습니다.');
@@ -50,14 +58,16 @@ export default function PaymentDetail() {
     loadDetail();
   }, [orderId, type]);
 
-  // 금액 합계 계산
-  const totalPaid = logs
+  // API summary 우선, 없으면 로컬 계산
+  const totalPaid = summary?.totalPaidAmount ?? logs
     .filter((l) => !isRefundEvent(l.transactionType))
     .reduce((sum, l) => sum + l.amount, 0);
-  const totalRefunded = logs
+  const totalRefunded = summary?.totalRefundedAmount ?? logs
     .filter((l) => isRefundEvent(l.transactionType))
     .reduce((sum, l) => sum + Math.abs(l.amount), 0);
-  const currentBalance = totalPaid - totalRefunded;
+  const currentBalance = summary?.currentBalance ?? (totalPaid - totalRefunded);
+  const contractPaidAmount = summary?.contractPaidAmount;
+  const hostBurdenPaidAmount = summary?.hostBurdenPaidAmount;
 
   if (loading) {
     return (
@@ -92,7 +102,19 @@ export default function PaymentDetail() {
 
       {/* 결제 요약 */}
       <Card>
-        <div className="grid grid-cols-3 gap-6 p-4 bg-gray-50 rounded-lg">
+        <div className={`grid gap-6 p-4 bg-gray-50 rounded-lg ${contractPaidAmount != null ? 'grid-cols-5' : 'grid-cols-3'}`}>
+          {contractPaidAmount != null && (
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-1">계약 결제금액</p>
+              <p className="text-xl font-bold">{formatCurrency(contractPaidAmount)}</p>
+            </div>
+          )}
+          {hostBurdenPaidAmount != null && hostBurdenPaidAmount > 0 && (
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-1">호스트 부담금</p>
+              <p className="text-xl font-bold text-orange-600">{formatCurrency(hostBurdenPaidAmount)}</p>
+            </div>
+          )}
           <div className="text-center">
             <p className="text-sm text-gray-500 mb-1">총 결제금액</p>
             <p className="text-xl font-bold">{formatCurrency(totalPaid)}</p>
