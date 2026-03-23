@@ -90,7 +90,7 @@ export const RoomReviewDetail: React.FC = () => {
       console.log('📸 사진 데이터:', data.photos);
       if (data.photos && data.photos.length > 0) {
         console.log('🖼️ 첫 번째 사진 URL:', data.photos[0].url);
-        console.log('🌐 완성된 URL:', `http://localhost:8080${data.photos[0].url}`);
+        console.log('🌐 완성된 URL:', data.photos[0].url);
       }
       setProperty(data);
     } catch (err: any) {
@@ -210,7 +210,7 @@ export const RoomReviewDetail: React.FC = () => {
             <>
               <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
                 <img
-                  src={`http://localhost:8080${property.photos[currentPhotoIndex].url}`}
+                  src={property.photos[currentPhotoIndex].url}
                   alt={`방 사진 ${currentPhotoIndex + 1}`}
                   className="w-full h-full object-contain"
                 />
@@ -247,7 +247,7 @@ export const RoomReviewDetail: React.FC = () => {
                     }`}
                   >
                     <img
-                      src={`http://localhost:8080${photo.url}`}
+                      src={photo.url}
                       alt={`썸네일 ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -550,7 +550,7 @@ export const RoomReviewDetail: React.FC = () => {
                   <div className="font-medium">청소 도구 제공</div>
                   {property.ezService.cleaningToolImageUrl && (
                     <img
-                      src={`http://localhost:8080${property.ezService.cleaningToolImageUrl}`}
+                      src={property.ezService.cleaningToolImageUrl}
                       alt="청소도구"
                       className="mt-2 w-32 h-32 object-cover rounded-lg"
                     />
