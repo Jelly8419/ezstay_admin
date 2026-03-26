@@ -6,7 +6,6 @@ import type { RoomManagementData } from '../../types/roomManagement';
 // 컴포넌트 import
 import RoomInfoCard from '../../components/rooms/RoomInfoCard';
 import StatusControl from '../../components/rooms/StatusControl';
-import PasswordManagement from '../../components/rooms/PasswordManagement';
 import ContractHistory from '../../components/rooms/ContractHistory';
 import MemoSection from '../../components/rooms/MemoSection';
 
@@ -91,20 +90,12 @@ export default function RoomManagement() {
       {/* 방 정보 카드 */}
       <RoomInfoCard roomInfo={data.roomInfo} hostInfo={data.hostInfo} />
 
-      {/* 상태 제어 & 비밀번호 관리 (2단 레이아웃) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <StatusControl
-          roomId={Number(roomId)}
-          currentStatus={data.roomInfo.status}
-          onStatusChange={loadRoomData}
-        />
-
-        <PasswordManagement
-          roomId={Number(roomId)}
-          currentPassword={data.roomInfo.entrancePassword}
-          onPasswordChange={loadRoomData}
-        />
-      </div>
+      {/* 상태 제어 */}
+      <StatusControl
+        roomId={Number(roomId)}
+        currentStatus={data.roomInfo.status}
+        onStatusChange={loadRoomData}
+      />
 
       {/* 계약 정보 */}
       <ContractHistory contracts={data.contracts} />

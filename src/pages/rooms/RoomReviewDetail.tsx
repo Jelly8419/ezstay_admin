@@ -17,6 +17,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { propertyService, PropertyDetail } from '../../services/roomService';
+import roomManagementService from '../../services/roomManagementService';
+import type { StatusHistory } from '../../types/roomManagement';
 
 const formatTime = (time: string): string => {
   const hour = parseInt(time, 10);
@@ -66,6 +68,10 @@ export const RoomReviewDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 상태 변경 이력
+  const [statusHistories, setStatusHistories] = useState<StatusHistory[]>([]);
+  const [statusHistoryLoading, setStatusHistoryLoading] = useState(false);
+
   // 사진 갤러리
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
@@ -78,8 +84,21 @@ export const RoomReviewDetail: React.FC = () => {
   useEffect(() => {
     if (id) {
       loadPropertyDetail(Number(id));
+      loadStatusHistory(Number(id));
     }
   }, [id]);
+
+  const loadStatusHistory = async (roomId: number) => {
+    try {
+      setStatusHistoryLoading(true);
+      const data = await roomManagementService.getStatusHistory(roomId);
+      setStatusHistories(data.histories);
+    } catch (err) {
+      console.error('상태 변경 이력 조회 실패:', err);
+    } finally {
+      setStatusHistoryLoading(false);
+    }
+  };
 
   const loadPropertyDetail = async (roomId: number) => {
     try {
@@ -720,6 +739,44 @@ export const RoomReviewDetail: React.FC = () => {
             </div>
           )}
         </div>
+      </Card>
+
+      {/* 상태 변경 이력 */}
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar className="w-5 h-5 text-gray-600" />
+          <h2 className="text-xl font-bold">상태 변경 이력</h2>
+        </div>
+        {statusHistoryLoading ? (
+          <div className="text-center py-6 text-gray-500">불러오는 중...</div>
+        ) : statusHistories.length === 0 ? (
+          <div className="text-center py-6 text-gray-500">변경 이력이 없습니다.</div>
+        ) : (
+          <div className="space-y-3">
+            {statusHistories.map((history) => (
+              <div key={history.id} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <Badge variant={getStatusBadgeVariant(history.previousStatus)}>
+                    {getStatusLabel(history.previousStatus)}
+                  </Badge>
+                  <span className="text-gray-400">→</span>
+                  <Badge variant={getStatusBadgeVariant(history.newStatus)}>
+                    {getStatusLabel(history.newStatus)}
+                  </Badge>
+                </div>
+                <div className="text-right shrink-0">
+                  {history.reason && (
+                    <p className="text-sm text-gray-700 mb-1">{history.reason}</p>
+                  )}
+                  <p className="text-xs text-gray-500">{history.changedBy}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(history.changedAt).toLocaleString('ko-KR')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* 심사 액션 (심사 대기 상태일 때만 표시) */}
