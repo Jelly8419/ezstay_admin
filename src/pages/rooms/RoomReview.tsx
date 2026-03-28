@@ -139,7 +139,7 @@ export const RoomReview: React.FC = () => {
         <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
           {photos && photos.length > 0 ? (
             <img
-              src={`http://localhost:8080${photos[0].url}`}
+              src={`${photos[0].url}`}
               alt="방 썸네일"
               className="w-full h-full object-cover"
             />

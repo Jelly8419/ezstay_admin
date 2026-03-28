@@ -31,7 +31,6 @@ const isAdditionalRental = (type: string | undefined, productType: string) =>
 
 const REFUND_TYPE_LABELS: Record<AdminRefundType, string> = {
   FULL: '전체 환불',
-  PARTIAL_AMOUNT: '금액 직접 입력',
   PARTIAL_ITEMS: '항목별 입력',
 };
 
@@ -75,7 +74,6 @@ export default function PaymentDetail() {
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundType, setRefundType] = useState<AdminRefundType>('FULL');
   const [refundReason, setRefundReason] = useState('');
-  const [refundAmount, setRefundAmount] = useState('');
   // 계약 결제 항목별 금액 (계약/계약+렌탈 타입)
   const [contractItemAmounts, setContractItemAmounts] = useState<
     Partial<Record<keyof Omit<AdminRefundItems, 'rentalItems'>, string>>
@@ -185,7 +183,6 @@ export default function PaymentDetail() {
   const openRefundModal = async () => {
     setRefundType('FULL');
     setRefundReason('');
-    setRefundAmount('');
     setContractItemAmounts({});
     setRentalItemAmounts({});
     setRentalItemEntries([]);
@@ -196,7 +193,6 @@ export default function PaymentDetail() {
 
   const getRefundValidationError = (): string | null => {
     if (!refundReason.trim()) return '환불 사유를 입력해주세요.';
-    if (refundType === 'PARTIAL_AMOUNT' && !(Number(refundAmount) > 0)) return '환불 금액을 입력해주세요.';
     if (refundType === 'PARTIAL_ITEMS') {
       if (isAdditional) {
         if (!Object.values(rentalItemAmounts).some((v) => Number(v) > 0))
@@ -225,7 +221,6 @@ export default function PaymentDetail() {
         const result = await refundService.rentalRefund(rentalOrderId, {
           refundType,
           refundReason: refundReason.trim(),
-          ...(refundType === 'PARTIAL_AMOUNT' && { refundAmount: Number(refundAmount) }),
           ...(refundType === 'PARTIAL_ITEMS' && { items }),
         });
 
@@ -253,7 +248,6 @@ export default function PaymentDetail() {
         const result = await refundService.adminRefund(contractId, {
           refundType,
           refundReason: refundReason.trim(),
-          ...(refundType === 'PARTIAL_AMOUNT' && { refundAmount: Number(refundAmount) }),
           ...(refundType === 'PARTIAL_ITEMS' && { items }),
         });
 
@@ -432,7 +426,6 @@ export default function PaymentDetail() {
                         checked={refundType === t}
                         onChange={() => {
                           setRefundType(t);
-                          setRefundAmount('');
                           setContractItemAmounts({});
                           setRentalItemAmounts({});
                         }}
@@ -447,11 +440,6 @@ export default function PaymentDetail() {
                               : '계약 결제 잔액 전체 + INITIAL 렌탈 활성 아이템 전체 환불'}
                           </p>
                         )}
-                        {t === 'PARTIAL_AMOUNT' && (
-                          <p className="text-xs text-gray-400">
-                            금액 직접 입력 — 아이템 상태 변경 없음
-                          </p>
-                        )}
                         {t === 'PARTIAL_ITEMS' && (
                           <p className="text-xs text-gray-400">
                             {isAdditional
@@ -464,21 +452,6 @@ export default function PaymentDetail() {
                   ))}
                 </div>
               </div>
-
-              {/* PARTIAL_AMOUNT */}
-              {refundType === 'PARTIAL_AMOUNT' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">환불 금액 *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    value={refundAmount}
-                    onChange={(e) => setRefundAmount(e.target.value)}
-                    placeholder="환불할 금액 입력 (원)"
-                  />
-                </div>
-              )}
 
               {/* PARTIAL_ITEMS */}
               {refundType === 'PARTIAL_ITEMS' && (

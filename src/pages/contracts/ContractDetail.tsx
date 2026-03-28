@@ -44,7 +44,6 @@ const ADMIN_REFUND_STATUSES = ['CANCELLED_BY_ADMIN_WITH_REFUND', 'CANCELLED_BY_H
 
 const REFUND_TYPE_LABELS: Record<AdminRefundType, string> = {
   FULL: '전체 환불',
-  PARTIAL_AMOUNT: '금액 직접 입력',
   PARTIAL_ITEMS: '항목별 입력',
 };
 
@@ -81,7 +80,6 @@ export default function ContractDetail() {
   const [showAdminRefundModal, setShowAdminRefundModal] = useState(false);
   const [refundType, setRefundType] = useState<AdminRefundType>('FULL');
   const [refundReason, setRefundReason] = useState('');
-  const [refundAmount, setRefundAmount] = useState('');
   const [contractItemAmounts, setContractItemAmounts] = useState<Partial<Record<keyof Omit<AdminRefundItems, 'rentalItems'>, string>>>({});
   // INITIAL 렌탈 아이템 목록 및 선택한 환불액
   const [initialRentalItems, setInitialRentalItems] = useState<InitialRentalItem[]>([]);
@@ -144,7 +142,6 @@ export default function ContractDetail() {
   const openAdminRefundModal = async () => {
     setRefundType('FULL');
     setRefundReason('');
-    setRefundAmount('');
     setContractItemAmounts({});
     setRentalItemAmounts({});
     setShowAdminRefundModal(true);
@@ -153,7 +150,6 @@ export default function ContractDetail() {
 
   const isAdminRefundSubmittable = () => {
     if (!refundReason.trim()) return false;
-    if (refundType === 'PARTIAL_AMOUNT') return Number(refundAmount) > 0;
     if (refundType === 'PARTIAL_ITEMS') {
       const hasContractItem = CONTRACT_ITEMS_LABELS.some(({ key }) => Number(contractItemAmounts[key] || 0) > 0);
       const hasRentalItem = Object.values(rentalItemAmounts).some((v) => Number(v) > 0);
@@ -182,7 +178,6 @@ export default function ContractDetail() {
       const result = await refundService.adminRefund(contractId, {
         refundType,
         refundReason: refundReason.trim(),
-        ...(refundType === 'PARTIAL_AMOUNT' && { refundAmount: Number(refundAmount) }),
         ...(refundType === 'PARTIAL_ITEMS' && { items }),
       });
 
@@ -646,7 +641,6 @@ export default function ContractDetail() {
                         checked={refundType === type}
                         onChange={() => {
                           setRefundType(type);
-                          setRefundAmount('');
                           setContractItemAmounts({});
                           setRentalItemAmounts({});
                         }}
@@ -657,9 +651,6 @@ export default function ContractDetail() {
                         {type === 'FULL' && (
                           <p className="text-xs text-gray-400">계약 결제 잔액 전체 + INITIAL 렌탈 활성 아이템 전체 환불</p>
                         )}
-                        {type === 'PARTIAL_AMOUNT' && (
-                          <p className="text-xs text-gray-400">금액 직접 입력 — 계약 결제에서만 차감, 렌탈 아이템 상태 변경 없음</p>
-                        )}
                         {type === 'PARTIAL_ITEMS' && (
                           <p className="text-xs text-gray-400">계약 항목별 금액 지정 + INITIAL 렌탈 아이템 개별 지정</p>
                         )}
@@ -668,21 +659,6 @@ export default function ContractDetail() {
                   ))}
                 </div>
               </div>
-
-              {/* PARTIAL_AMOUNT */}
-              {refundType === 'PARTIAL_AMOUNT' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">환불 금액 *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    value={refundAmount}
-                    onChange={(e) => setRefundAmount(e.target.value)}
-                    placeholder="환불할 금액 입력 (원)"
-                  />
-                </div>
-              )}
 
               {/* PARTIAL_ITEMS */}
               {refundType === 'PARTIAL_ITEMS' && (
