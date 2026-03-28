@@ -85,7 +85,6 @@ export const refundService = {
   /**
    * 관리자 직접 환불 처리 (계약 결제 + INITIAL 렌탈 주문)
    * - FULL: 잔액 전체 환불
-   * - PARTIAL_AMOUNT: 금액 직접 입력 (계약 결제에서만 차감)
    * - PARTIAL_ITEMS: 항목별 금액 지정 + INITIAL 렌탈 아이템 ID별 환불 가능
    * 502: DB rollback됨, 재시도 가능
    */

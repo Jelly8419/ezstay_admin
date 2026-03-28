@@ -825,7 +825,7 @@ export interface RejectCancelResponse {
 // 관리자 직접 환불 관련 타입
 // ========================================
 
-export type AdminRefundType = 'FULL' | 'PARTIAL_AMOUNT' | 'PARTIAL_ITEMS';
+export type AdminRefundType = 'FULL' | 'PARTIAL_ITEMS';
 
 export interface AdminRefundRentalItem {
   rentalOrderItemId: number;
@@ -883,6 +883,107 @@ export interface RentalRefundResponse {
   orderStatus: string;
   paymentStatus: string;
   cancelledItems?: Array<{ id: number; name: string; refundAmount: number }>;
+}
+
+// ========================================
+// 옵션상품 환불 요청 관리 (rental-refund-requests)
+// ========================================
+
+export type RetrievalStatus = 'RETRIEVAL_PENDING' | 'IN_RETRIEVAL' | 'RETRIEVED';
+export type RentalRefundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface RentalRefundRequestItem {
+  id: number;
+  name: string;
+  quantity: number;
+  totalPrice: number;
+  status: string;
+}
+
+export interface RentalRefundRequestBase {
+  id: number;
+  status: RentalRefundRequestStatus;
+  statusLabel: string;
+  deliveryStatusSnapshot: string;
+  itemTotalAmount: number;
+  shippingDeduction: number;
+  finalRefundAmount: number;
+  retrievalStatus: RetrievalStatus | null;
+  retrievalStatusLabel: string | null;
+  cancelReason: string;
+  rejectReason: string | null;
+  processedAt: string | null;
+  createdAt: string;
+  rentalOrder: {
+    id: number;
+    orderId: string;
+    status: string;
+    deliveryStatus: string;
+    items: RentalRefundRequestItem[];
+  };
+  contract: {
+    id: number;
+    orderId: string;
+    status: string;
+    guest: {
+      id: number;
+      name: string;
+      nickname: string;
+      phoneNumber: string;
+    };
+  };
+}
+
+export interface RentalRefundRequestDetail extends RentalRefundRequestBase {
+  shippingDeductionWaivable: boolean;
+  retrievalStartedAt: string | null;
+  retrievalCompletedAt: string | null;
+  adminId: number | null;
+  rentalOrder: RentalRefundRequestBase['rentalOrder'] & {
+    totalAmount: number;
+    paidAmount: number;
+    refundedAmount: number;
+    payment: { balanceAmount: number; status: string };
+  };
+  contract: RentalRefundRequestBase['contract'] & {
+    checkInDate: string;
+    checkOutDate: string;
+    guest: RentalRefundRequestBase['contract']['guest'] & { email: string };
+  };
+}
+
+export interface RentalRefundRequestListResponse {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  items: RentalRefundRequestBase[];
+}
+
+export interface RentalRefundApproveResponse {
+  requestId: number;
+  rentalOrderId: number;
+  orderId: string;
+  itemTotalAmount: number;
+  shippingDeduction: number;
+  finalRefundAmount: number;
+  retrievalStatus: RetrievalStatus | null;
+  retrievalStatusLabel: string | null;
+}
+
+export interface RentalRefundRejectResponse {
+  requestId: number;
+  status: 'REJECTED';
+  rejectReason: string;
+  restoredItemCount: number;
+}
+
+export interface RetrievalStatusUpdateResponse {
+  requestId: number;
+  retrievalStatus: RetrievalStatus;
+  retrievalStatusLabel: string;
+  retrievalStartedAt: string | null;
+  retrievalCompletedAt: string | null;
 }
 
 // ========================================

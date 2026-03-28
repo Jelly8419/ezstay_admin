@@ -14,7 +14,8 @@ import {
   FileText,
   ShieldCheck,
   Receipt,
-  Send
+  Send,
+  Package,
 } from 'lucide-react';
 
 interface NavItem {
@@ -68,6 +69,15 @@ const navItems: NavItem[] = [
     path: '/deposit-holds',
     label: '보증금 보류',
     icon: <ShieldCheck className="w-5 h-5" />
+  },
+  {
+    path: '/rental-orders',
+    label: '옵션상품 관리',
+    icon: <Package className="w-5 h-5" />,
+    children: [
+      { path: '/rental-orders',          label: '배송 상태 관리' },
+      { path: '/rental-refund-requests', label: '환불 요청 관리' },
+    ]
   },
   {
     path: '/receipts',
