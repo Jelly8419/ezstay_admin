@@ -228,21 +228,26 @@ export type PaymentTransactionType = 'PAYMENT_COMPLETED' | 'PARTIAL_CANCEL' | 'F
 // 결제 유형
 export type PaymentType = 'CONTRACT' | 'HOST_BURDEN';
 
+// 결제 행 유형 (계약 결제 or 렌탈 추가결제)
+export type PaymentRowType = 'CONTRACT' | 'RENTAL';
+
 // 탭1: 주문별 결제 현황 (/admin/payments/summary)
 export interface PaymentSummaryItem {
-  id?: number | string;
+  rowType: PaymentRowType;
   orderId: string;
   contractId: number;
+  rentalOrderId: string | null;
   paidAt: string | null;
   productType: string;
   paymentType?: PaymentType;
   roomName: string;
   userName: string;
   userType: string;
-  totalPaidAmount: number;
-  totalRefundedAmount: number;
+  paidAmount: number;
+  refundedAmount: number;
   currentBalance: number;
   paymentMethod: string;
+  paymentStatus: string;
   contractStatus: string;
   contractStatusLabel: string;
   guest: {
@@ -573,7 +578,7 @@ export interface FAQFormData {
 // 환불 관련 타입
 // ========================================
 
-export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'REFUND_FAILED';
 export type RefundMethod = 'ORIGINAL' | 'BANK_TRANSFER';
 
 export interface Refund {
@@ -761,6 +766,20 @@ export interface RentalHistory {
   }>;
 }
 
+export interface RentalOrderCancelResponse {
+  rentalOrderId: string;
+  cancelledItems: Array<{
+    id: number;
+    name: string;
+    quantity: number;
+    status: string;
+  }>;
+  orderStatus: string;
+  totalRefunded: number;
+  pgFailure?: boolean;
+  pgFailureMessage?: string;
+}
+
 // ========================================
 // 예약 취소 관련 타입
 // ========================================
@@ -777,8 +796,6 @@ export interface ForceCancelResponse {
   withRefund: boolean;
   cancellationType: CancellationType;
   reason: string;
-  refundId?: number;
-  totalRefundAmount?: number;
 }
 
 export interface ApproveCancelRequest {
@@ -792,9 +809,6 @@ export interface ApproveCancelResponse {
   newStatus: string;
   withRefund: boolean;
   adminNote?: string;
-  refundId?: number;
-  totalRefundAmount?: number;
-  hostBurdenAmount?: number;
 }
 
 export interface RejectCancelRequest {
@@ -805,6 +819,70 @@ export interface RejectCancelResponse {
   contractId: number;
   status: string;
   adminNote?: string;
+}
+
+// ========================================
+// 관리자 직접 환불 관련 타입
+// ========================================
+
+export type AdminRefundType = 'FULL' | 'PARTIAL_AMOUNT' | 'PARTIAL_ITEMS';
+
+export interface AdminRefundRentalItem {
+  rentalOrderItemId: number;
+  refundAmount: number;
+}
+
+export interface AdminRefundItems {
+  rentalFee?: number;
+  maintenanceFee?: number;
+  cleaningFee?: number;
+  platformFee?: number;
+  deposit?: number;
+  rentalItems?: AdminRefundRentalItem[];
+}
+
+export interface AdminRefundRequest {
+  refundType: AdminRefundType;
+  refundReason: string;
+  refundAmount?: number;
+  items?: AdminRefundItems;
+}
+
+export interface AdminRefundResponse {
+  adminRefundId: number;
+  refundType: AdminRefundType;
+  totalRefundAmount: number;
+  paymentStatus: string;
+  pgReceiptUrl?: string;
+  contractItems?: {
+    rentalFee: number;
+    maintenanceFee: number;
+    cleaningFee: number;
+    platformFee: number;
+    deposit: number;
+  };
+  cancelledRentalItems?: Array<{ id: number; name: string; refundAmount: number }>;
+  warning?: string;
+}
+
+// ========================================
+// 렌탈 추가결제 환불 (ADDITIONAL 렌탈 주문 전용)
+// ========================================
+
+export interface RentalRefundRequest {
+  refundType: AdminRefundType;
+  refundReason: string;
+  refundAmount?: number;
+  items?: AdminRefundRentalItem[];
+}
+
+export interface RentalRefundResponse {
+  rentalOrderId: string;
+  refundType: AdminRefundType;
+  refundAmount: number;
+  orderStatus: string;
+  paymentStatus: string;
+  cancelledItems?: Array<{ id: number; name: string; refundAmount: number }>;
 }
 
 // ========================================

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import type {
   PaymentSummaryItem,
   PaymentLog,
@@ -47,12 +47,11 @@ const getUserTypeBadge = (userType: string) => {
   return <Badge variant="success">게스트</Badge>;
 };
 
-/** 상품구분 뱃지 (API가 한글로 내려줌: 계약, 렌탈, 계약/렌탈 등) */
+/** 상품구분 뱃지 (API가 한글로 내려줌: 계약, 렌탈 등) */
 const getProductTypeBadge = (type: string) => {
   const map: Record<string, 'default' | 'info' | 'warning' | 'danger'> = {
     '계약': 'default',
     '렌탈': 'info',
-    '계약/렌탈': 'warning',
     '위약금': 'danger',
     '보증금 환급': 'info',
     '호스트부담금': 'warning',
@@ -148,22 +147,35 @@ function OrderPaymentTab() {
       width: '14%',
     },
     {
-      key: 'totalPaidAmount',
-      title: '총결제금액',
+      key: 'productType',
+      title: '구분',
+      render: (value: string, record: PaymentSummaryItem) => (
+        <div className="flex items-center gap-1">
+          {getProductTypeBadge(value)}
+          {record.rowType === 'RENTAL' && (
+            <Badge variant="info" className="text-xs">추가결제</Badge>
+          )}
+        </div>
+      ),
+      width: '12%',
+    },
+    {
+      key: 'paidAmount',
+      title: '결제금액',
       render: (value: number) => (
         <span className="font-semibold">{formatCurrency(value)}</span>
       ),
-      width: '11%',
+      width: '10%',
     },
     {
-      key: 'totalRefundedAmount',
-      title: '총환불누적금액',
+      key: 'refundedAmount',
+      title: '환불누적금액',
       render: (value: number) => (
         <span className={value > 0 ? 'text-red-600 font-semibold' : ''}>
           {value > 0 ? formatCurrency(value) : '0'}
         </span>
       ),
-      width: '11%',
+      width: '10%',
     },
     {
       key: 'currentBalance',
@@ -173,7 +185,7 @@ function OrderPaymentTab() {
           {formatCurrency(value)}
         </span>
       ),
-      width: '11%',
+      width: '10%',
     },
     {
       key: 'paymentMethod',
@@ -182,20 +194,26 @@ function OrderPaymentTab() {
       width: '8%',
     },
     {
-      key: 'paymentType',
-      title: '결제유형',
-      render: (value: string, record: PaymentSummaryItem) =>
-        getPaymentTypeBadge(value || record.paymentType) || <span className="text-gray-400 text-xs">일반</span>,
+      key: 'paymentStatus',
+      title: '결제상태',
+      render: (value: string) => (
+        <span className="text-xs text-gray-700">{value || '-'}</span>
+      ),
       width: '8%',
     },
     {
       key: 'actions',
       title: '',
-      render: (_: any, record: PaymentSummaryItem) => (
-        <Link to={`/payments/${record.orderId}`}>
-          <Button variant="secondary" size="sm">상세</Button>
-        </Link>
-      ),
+      render: (_: any, record: PaymentSummaryItem) => {
+        const to = record.rowType === 'RENTAL'
+          ? `/payments/${record.rentalOrderId}?type=rental&from=orders`
+          : `/payments/${record.orderId}?type=contract&from=orders`;
+        return (
+          <Link to={to}>
+            <Button variant="secondary" size="sm">상세</Button>
+          </Link>
+        );
+      },
       width: '7%',
     },
   ];
@@ -401,17 +419,6 @@ function PaymentLogTab() {
       ),
       width: '10%',
     },
-    {
-      key: 'actions',
-      title: '',
-      render: (_: any, record: PaymentLog) =>
-        record.orderId ? (
-          <Link to={`/payments/${record.orderId}`}>
-            <Button variant="secondary" size="sm">상세</Button>
-          </Link>
-        ) : null,
-      width: '5%',
-    },
   ];
 
   return (
@@ -512,7 +519,9 @@ function PaymentLogTab() {
 type TabType = 'orders' | 'logs';
 
 export default function PaymentList() {
-  const [activeTab, setActiveTab] = useState<TabType>('logs');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'orders' ? 'orders' : 'logs';
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
 
   const tabs: { key: TabType; label: string }[] = [
     { key: 'logs', label: '결제/취소 내역' },

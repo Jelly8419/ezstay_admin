@@ -41,7 +41,7 @@ export interface RefundRequest {
 
 export const paymentService = {
   /**
-   * 탭1: 주문별 결제 현황 (계약 기준 결제 요약)
+   * 탭1: 주문별 결제 현황 (결제 건/주문 기준 1행)
    */
   getPaymentSummary: (params: PaymentSummaryParams = {}) => {
     return api.get<PaymentSummaryListResponse>('/admin/payments/summary', { params });

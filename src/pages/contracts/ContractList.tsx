@@ -25,7 +25,7 @@ const getStatusBadge = (status: string) => {
     REFUNDED: { variant: 'info', label: '환불' },
     APPROVAL_EXPIRED: { variant: 'default', label: '승인 만료' },
     PAYMENT_EXPIRED: { variant: 'default', label: '결제 만료' },
-    CANCEL_REQUESTED: { variant: 'warning', label: '요청 취소' },
+    CANCEL_REQUESTED: { variant: 'warning', label: '취소 요청' },
   };
   const config = map[status] || { variant: 'default' as const, label: status };
   return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -184,6 +184,7 @@ export default function ContractList() {
               <option value="REJECTED">계약 거절</option>
               <option value="PAYMENT_COMPLETED">결제 완료</option>
               <option value="IN_PROGRESS">임대 중</option>
+              <option value="CANCEL_REQUESTED">취소 요청</option>
               <option value="COMPLETED">계약 종료</option>
               <option value="CANCELLED_BY_GUEST">게스트 취소</option>
               <option value="CANCELLED_BY_HOST">호스트 취소</option>
@@ -192,7 +193,6 @@ export default function ContractList() {
               <option value="REFUNDED">환불</option>
               <option value="APPROVAL_EXPIRED">승인 만료</option>
               <option value="PAYMENT_EXPIRED">결제 만료</option>
-              <option value="CANCEL_REQUESTED">요청 취소</option>
             </select>
           </div>
 

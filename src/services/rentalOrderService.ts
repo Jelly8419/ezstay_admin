@@ -6,6 +6,7 @@ import { api } from './api';
 import type {
   RentalOrder,
   RentalOrderDetail,
+  RentalOrderCancelResponse,
   RentalHistory,
   Pagination,
 } from '../types';
@@ -59,10 +60,12 @@ export const rentalOrderService = {
     api.get<RentalHistory>(`/admin/contracts/${contractId}/rental-history`),
 
   /**
-   * 렌탈 주문 전체 취소 (관리자 강제 취소)
+   * @deprecated API 스펙 2026-03-28 기준 Deprecated.
+   * INITIAL 렌탈 환불: refundService.adminRefund()의 items.rentalItems 사용
+   * ADDITIONAL 렌탈 환불: refundService.rentalRefund() 사용
    */
   cancelRentalOrder: (rentalOrderId: string, reason: string, refundAmount?: number) =>
-    api.post<any>(`/admin/rental-orders/${rentalOrderId}/cancel`, {
+    api.post<RentalOrderCancelResponse>(`/admin/rental-orders/${rentalOrderId}/cancel`, {
       reason,
       ...(refundAmount !== undefined && { refundAmount }),
     }),
