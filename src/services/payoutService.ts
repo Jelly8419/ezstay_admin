@@ -69,4 +69,36 @@ export const payoutService = {
       `/admin/payouts/${payoutId}/note`,
       { note }
     ),
+
+  /**
+   * 지급 목록 CSV 다운로드
+   */
+  exportCsv: async (params: PayoutListParams = {}) => {
+    const queryString = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, value]) => value !== undefined)
+        .map(([key, value]) => [key, String(value)])
+    ).toString();
+
+    const token = localStorage.getItem('accessToken');
+    const baseUrl = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+    const response = await fetch(
+      `${baseUrl}/admin/payouts/export${queryString ? `?${queryString}` : ''}`,
+      {
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      }
+    );
+
+    if (!response.ok) throw new Error('CSV 다운로드 실패');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payouts_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  },
 };

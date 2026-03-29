@@ -212,6 +212,45 @@ export interface Settlement {
   createdAt: string;
 }
 
+export interface SettlementDetail {
+  settlementBreakdown: {
+    rentalFee: number;
+    maintenanceFee: number;
+    cleaningFee: number;
+    hostPlatformFee: number;
+    refundDeduction: number;
+    grossAmount: number;
+    netAmount: number;
+  };
+  contractPaymentDetail: {
+    rentalFee: number;
+    maintenanceFee: number;
+    cleaningFee: number;
+    deposit: number;
+    platformFee: number;
+    finalTotalAmount: number;
+  };
+  rentalOrders: {
+    id: number;
+    orderId: string;
+    orderType: string;
+    orderTypeLabel: string;
+    status: string;
+    totalAmount: number;
+    paidAmount: number;
+    refundedAmount: number;
+    items: {
+      id: number;
+      itemName: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+      status: string;
+    }[];
+  }[];
+  rentalOrdersTotalPaid: number;
+}
+
 export interface SettlementSummary {
   pendingCount: number;
   readyCount: number;
@@ -1282,6 +1321,16 @@ export interface PayoutDetail {
     payoutAvailableDate: string;
   } | null;
   refund: object | null;
+  payoutTypeDescription: string | null;
+  statusHistory: {
+    id: number;
+    fromStatus: string | null;
+    toStatus: string;
+    changedBy: string;
+    adminName: string | null;
+    note: string | null;
+    createdAt: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }

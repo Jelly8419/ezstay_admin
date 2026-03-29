@@ -209,6 +209,9 @@ export default function PayoutDetail() {
           <div>
             <span className="text-gray-500">지급 유형</span>
             <p className="mt-1 font-medium">{payout.payoutTypeLabel}</p>
+            {payout.payoutTypeDescription && (
+              <p className="mt-0.5 text-xs text-gray-400">{payout.payoutTypeDescription}</p>
+            )}
           </div>
           <div>
             <span className="text-gray-500">수령인 유형</span>
@@ -369,6 +372,38 @@ export default function PayoutDetail() {
           {payout.note || <span className="text-gray-400">메모 없음</span>}
         </p>
       </Card>
+
+      {/* 상태 변경 이력 */}
+      {payout.statusHistory && payout.statusHistory.length > 0 && (
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">상태 변경 이력</h2>
+          <div className="space-y-0">
+            {payout.statusHistory.map((h, idx) => (
+              <div key={h.id} className="flex gap-4 text-sm">
+                <div className="flex flex-col items-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary-500 mt-1 flex-shrink-0" />
+                  {idx < payout.statusHistory.length - 1 && (
+                    <div className="w-px flex-1 bg-gray-200 my-1" />
+                  )}
+                </div>
+                <div className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{h.toStatus}</span>
+                    {h.fromStatus && (
+                      <span className="text-xs text-gray-400">← {h.fromStatus}</span>
+                    )}
+                    <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                      {h.changedBy === 'ADMIN' ? `관리자 ${h.adminName ?? ''}` : '시스템'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">{formatDateTime(h.createdAt)}</div>
+                  {h.note && <div className="text-xs text-gray-600 mt-1">{h.note}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* 지급 실행 모달 */}
       <Modal

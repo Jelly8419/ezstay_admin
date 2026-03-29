@@ -3,7 +3,7 @@
  */
 
 import { api } from './api';
-import type { Settlement, SettlementSummary, Pagination } from '../types';
+import type { Settlement, SettlementDetail, SettlementSummary, Pagination } from '../types';
 
 export interface SettlementListParams {
   page?: number;
@@ -34,8 +34,8 @@ export const settlementService = {
   /**
    * 정산 상세 조회
    */
-  getSettlementDetail: (contractId: number) =>
-    api.get<any>(`/admin/settlements/${contractId}`),
+  getSettlementDetail: (settlementId: number) =>
+    api.get<SettlementDetail>(`/admin/settlements/${settlementId}`),
 
   /**
    * 정산 완료 처리

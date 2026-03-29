@@ -353,7 +353,7 @@ export default function SettlementList() {
             <Button onClick={loadSettlements}>다시 시도</Button>
           </div>
         ) : (
-          <Table columns={columns} data={settlements} />
+          <Table columns={columns} data={settlements} onRowClick={(row) => navigate(`/settlements/${row.id}`)} />
         )}
       </Card>
 

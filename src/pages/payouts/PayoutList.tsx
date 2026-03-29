@@ -55,6 +55,7 @@ export default function PayoutList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [csvLoading, setCsvLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<PayoutStatus | 'all'>('all');
@@ -99,6 +100,24 @@ export default function PayoutList() {
   const handleSearch = () => {
     setCurrentPage(1);
     loadPayouts(1);
+  };
+
+  const handleCsvExport = async () => {
+    try {
+      setCsvLoading(true);
+      await payoutService.exportCsv({
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(typeFilter !== 'all' && { payoutType: typeFilter }),
+        ...(recipientFilter !== 'all' && { recipientType: recipientFilter }),
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate }),
+        ...(searchTerm && { search: searchTerm }),
+      });
+    } catch {
+      alert('CSV 다운로드에 실패했습니다.');
+    } finally {
+      setCsvLoading(false);
+    }
   };
 
   const columns = [
@@ -180,14 +199,12 @@ export default function PayoutList() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">지급 관리</h1>
         <Button
-          variant={typeFilter === 'HOST_CANCELLATION_COMPENSATION' ? 'primary' : 'secondary'}
+          variant="secondary"
           size="sm"
-          onClick={() => {
-            setTypeFilter(typeFilter === 'HOST_CANCELLATION_COMPENSATION' ? 'all' : 'HOST_CANCELLATION_COMPENSATION');
-            setCurrentPage(1);
-          }}
+          onClick={handleCsvExport}
+          disabled={csvLoading}
         >
-          호스트 부담금 보기
+          {csvLoading ? 'CSV 다운로드 중...' : 'CSV 다운로드'}
         </Button>
       </div>
 
