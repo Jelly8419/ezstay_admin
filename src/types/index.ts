@@ -1312,7 +1312,7 @@ export interface PayoutDetail {
     maintenanceFee: number;
     cleaningFee: number;
     finalTotalAmount: number;
-  };
+  } | null;
   settlement: {
     id: number;
     status: string;

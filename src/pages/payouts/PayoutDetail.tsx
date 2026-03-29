@@ -296,35 +296,37 @@ export default function PayoutDetail() {
       </Card>
 
       {/* 계약 정보 */}
-      <Card>
-        <h2 className="text-lg font-semibold mb-4">계약 정보 <span className="text-sm text-gray-400 font-normal">#{payout.contractId}</span></h2>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-500">체크인</span>
-            <p className="mt-1">{formatDate(payout.contract.checkInDate)}</p>
+      {payout.contract && (
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">계약 정보 <span className="text-sm text-gray-400 font-normal">#{payout.contractId}</span></h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">체크인</span>
+              <p className="mt-1">{formatDate(payout.contract.checkInDate)}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">체크아웃</span>
+              <p className="mt-1">{formatDate(payout.contract.checkOutDate)}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">임대료</span>
+              <p className="mt-1">{formatCurrency(payout.contract.rentalFee)}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">관리비</span>
+              <p className="mt-1">{formatCurrency(payout.contract.maintenanceFee)}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">청소비</span>
+              <p className="mt-1">{formatCurrency(payout.contract.cleaningFee)}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">최종 합계</span>
+              <p className="mt-1 font-bold">{formatCurrency(payout.contract.finalTotalAmount)}</p>
+            </div>
           </div>
-          <div>
-            <span className="text-gray-500">체크아웃</span>
-            <p className="mt-1">{formatDate(payout.contract.checkOutDate)}</p>
-          </div>
-          <div>
-            <span className="text-gray-500">임대료</span>
-            <p className="mt-1">{formatCurrency(payout.contract.rentalFee)}</p>
-          </div>
-          <div>
-            <span className="text-gray-500">관리비</span>
-            <p className="mt-1">{formatCurrency(payout.contract.maintenanceFee)}</p>
-          </div>
-          <div>
-            <span className="text-gray-500">청소비</span>
-            <p className="mt-1">{formatCurrency(payout.contract.cleaningFee)}</p>
-          </div>
-          <div>
-            <span className="text-gray-500">최종 합계</span>
-            <p className="mt-1 font-bold">{formatCurrency(payout.contract.finalTotalAmount)}</p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* 연관 정산 정보 */}
       {payout.settlement && (
