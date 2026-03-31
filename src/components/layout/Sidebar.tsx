@@ -77,6 +77,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/rental-orders',          label: '배송 상태 관리' },
       { path: '/rental-refund-requests', label: '환불 요청 관리' },
+      { path: '/rental-items',           label: '재고 관리' },
     ]
   },
   {

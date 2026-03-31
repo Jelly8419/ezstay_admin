@@ -226,6 +226,7 @@ export interface SettlementDetail {
     rentalFee: number;
     maintenanceFee: number;
     cleaningFee: number;
+    rentalItemsFee: number;
     deposit: number;
     platformFee: number;
     finalTotalAmount: number;
@@ -239,11 +240,14 @@ export interface SettlementDetail {
     totalAmount: number;
     paidAmount: number;
     refundedAmount: number;
+    paymentMethod: string | null;
+    paidAt: string | null;
     items: {
       id: number;
-      itemName: string;
+      name: string;
+      imageUrl: string | null;
       quantity: number;
-      unitPrice: number;
+      pricePerItem: number;
       totalPrice: number;
       status: string;
     }[];
@@ -1344,4 +1348,60 @@ export interface PayoutListParams {
   startDate?: string;
   endDate?: string;
   search?: string;
+}
+
+// ===== 옵션 상품 재고 관리 =====
+
+export type RentalItemType = 'hair_dryer' | 'bedding_set' | 'amenity_kit' | 'towel_set' | 'other';
+export type SalesType = 'SALE' | 'RENTAL';
+
+export interface RentalItem {
+  id: number;
+  itemType: RentalItemType;
+  itemTypeLabel: string;
+  salesType: SalesType;
+  salesTypeLabel: string;
+  name: string;
+  description: string | null;
+  price: string;
+  totalStock: number;
+  availableStock: number;
+  rentedStock: number;
+  isOutOfStock: boolean;
+  imageUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RentalItemStat {
+  itemType: RentalItemType;
+  itemTypeLabel: string;
+  salesType: SalesType;
+  salesTypeLabel: string;
+  itemCount: number;
+  totalStock: number;
+  availableStock: number;
+  rentedStock: number;
+}
+
+export interface RentalItemCreateRequest {
+  itemType: RentalItemType;
+  salesType: SalesType;
+  name: string;
+  price: number;
+  totalStock: number;
+  description?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+}
+
+export interface RentalItemUpdateRequest {
+  salesType?: SalesType;
+  name?: string;
+  description?: string;
+  price?: number;
+  totalStock?: number;
+  imageUrl?: string;
+  isActive?: boolean;
 }
