@@ -7,7 +7,7 @@ import type {
   RentalItemCreateRequest,
   RentalItemUpdateRequest,
 } from '../../types';
-import { formatCurrency, formatDate } from '../../utils/format';
+import { formatCurrency } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
