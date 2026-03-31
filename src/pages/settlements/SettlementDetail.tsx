@@ -135,6 +135,10 @@ export default function SettlementDetail() {
             <span>{formatCurrency(contractPaymentDetail.cleaningFee)}</span>
           </div>
           <div className="flex justify-between py-1.5 border-b border-gray-100">
+            <span className="text-gray-500">옵션 상품</span>
+            <span>{formatCurrency(contractPaymentDetail.rentalItemsFee)}</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-gray-100">
             <span className="text-gray-500">보증금</span>
             <span>{formatCurrency(contractPaymentDetail.deposit)}</span>
           </div>
@@ -186,9 +190,9 @@ export default function SettlementDetail() {
                   <tbody>
                     {order.items.map((item) => (
                       <tr key={item.id} className="border-b border-gray-50 last:border-0">
-                        <td className="py-1.5">{item.itemName}</td>
+                        <td className="py-1.5">{item.name}</td>
                         <td className="py-1.5 text-right text-gray-600">{item.quantity}</td>
-                        <td className="py-1.5 text-right text-gray-600">{formatCurrency(item.unitPrice)}</td>
+                        <td className="py-1.5 text-right text-gray-600">{formatCurrency(item.pricePerItem)}</td>
                         <td className="py-1.5 text-right">{formatCurrency(item.totalPrice)}</td>
                       </tr>
                     ))}
