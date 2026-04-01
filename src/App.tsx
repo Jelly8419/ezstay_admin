@@ -27,6 +27,7 @@ import DepositHoldDetailPage from './pages/deposit-holds/DepositHoldDetail';
 import RentalRefundList from './pages/rental-refund-requests/RentalRefundList';
 import RentalOrderList from './pages/rental-orders/RentalOrderList';
 import RentalItemList from './pages/rental-items/RentalItemList';
+import ServiceTaskList from './pages/service-tasks/ServiceTaskList';
 import ReceiptList from './pages/receipts/ReceiptList';
 import AlimtalkManagement from './pages/alimtalk/AlimtalkManagement';
 
@@ -87,6 +88,9 @@ function App() {
               <Route path="rental-orders" element={<RentalOrderList />} />
               <Route path="rental-refund-requests" element={<RentalRefundList />} />
               <Route path="rental-items" element={<RentalItemList />} />
+
+              {/* 예약 관리 */}
+              <Route path="service-tasks" element={<ServiceTaskList />} />
 
               {/* 영수증 관리 */}
               <Route path="receipts" element={<ReceiptList />} />

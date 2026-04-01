@@ -16,6 +16,7 @@ import {
   Receipt,
   Send,
   Package,
+  ClipboardList,
 } from 'lucide-react';
 
 interface NavItem {
@@ -81,6 +82,11 @@ const navItems: NavItem[] = [
     ]
   },
   {
+    path: '/service-tasks',
+    label: '예약 관리',
+    icon: <ClipboardList className="w-5 h-5" />
+  },
+  {
     path: '/receipts',
     label: '영수증 관리',
     icon: <Receipt className="w-5 h-5" />
@@ -109,7 +115,7 @@ const navItems: NavItem[] = [
 
 export const Sidebar: React.FC = () => {
   return (
-    <aside className="w-64 bg-gray-900 text-white min-h-screen flex flex-col">
+    <aside className="w-64 bg-gray-900 text-white h-screen flex flex-col sticky top-0 overflow-y-auto">
       {/* Logo */}
       <div className="p-6 border-b border-gray-800">
         <h1 className="text-xl font-bold">EZStay 관리자</h1>

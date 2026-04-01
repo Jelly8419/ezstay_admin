@@ -1405,3 +1405,50 @@ export interface RentalItemUpdateRequest {
   imageUrl?: string;
   isActive?: boolean;
 }
+
+// ========================================
+// 청소·침구류 예약 관리 (Service Tasks)
+// ========================================
+
+export type ServiceTaskType = 'CLEANING' | 'BEDDING_DELIVERY' | 'BEDDING_RETRIEVAL';
+export type ServiceTaskStatus = 'PENDING' | 'RESERVED' | 'COMPLETED' | 'ISSUE';
+
+export interface ServiceTask {
+  id: number;
+  contractId: number;
+  roomName: string;
+  taskType: ServiceTaskType;
+  referenceDate: string;       // YYYY-MM-DD
+  dDay: number;                // 양수=D-n, 0=D-day, 음수=초과
+  quantity: number | null;     // CLEANING은 null
+  status: ServiceTaskStatus;
+  vendorName: string | null;
+  vendorContact: string | null;
+  vendorRefNo: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServiceTaskListParams {
+  tab?: 'pending' | 'all';
+  task_type?: ServiceTaskType;
+  status?: ServiceTaskStatus;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ServiceTaskListResponse {
+  total: number;
+  page: number;
+  limit: number;
+  items: ServiceTask[];
+}
+
+export interface ServiceTaskUpdateRequest {
+  status: ServiceTaskStatus;
+  vendorName?: string;
+  vendorContact?: string;
+  vendorRefNo?: string;
+}

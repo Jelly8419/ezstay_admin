@@ -164,12 +164,12 @@ export default function RentalOrderList() {
       ),
     },
     {
-      key: 'contract' as keyof RentalOrder,
+      key: 'contract_room' as keyof RentalOrder,
       title: '방',
       width: '13%',
-      render: (value: RentalOrder['contract']) => (
-        <span className="text-sm truncate block max-w-[110px]" title={value.room.roomName}>
-          {value.room.roomName}
+      render: (_: any, record: RentalOrder) => (
+        <span className="text-sm truncate block max-w-[110px]" title={record.contract.room.roomName}>
+          {record.contract.room.roomName}
         </span>
       ),
     },
