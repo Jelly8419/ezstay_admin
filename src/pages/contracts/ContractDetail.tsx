@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import type {
   ReservationDetail,
   PaymentTimelineEvent,
+  CheckoutStep,
   AdminRefundType,
   AdminRefundItems,
   AdminRefundRentalItem,
@@ -34,6 +35,46 @@ const getStatusBadge = (status: string) => {
   };
   const config = map[status] || { variant: 'default' as const, label: status };
   return <Badge variant={config.variant}>{config.label}</Badge>;
+};
+
+const CHECKOUT_STATUS_LABELS: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
+  NOT_STARTED:     { variant: 'default',  label: '시작 전' },
+  GUEST_COMPLETED: { variant: 'info',     label: '퇴실 요청 완료' },
+  HOLD_REQUESTED:  { variant: 'warning',  label: '보증금 보류 신청' },
+  HOST_PENDING:    { variant: 'warning',  label: '합의 진행 중' },
+  HOST_CONFIRMED:  { variant: 'success',  label: '퇴실 확인 완료' },
+};
+
+const DEPOSIT_STATUS_LABELS: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
+  HOLDING:             { variant: 'default',  label: '보관 중' },
+  RETURN_PENDING:      { variant: 'info',     label: '반환 대기' },
+  RETURN_HOLD:         { variant: 'warning',  label: '반환 보류' },
+  RETURN_CONFIRMED:    { variant: 'success',  label: '반환 확정' },
+  DEDUCTION_CONFIRMED: { variant: 'warning',  label: '차감 확정' },
+  RETURNED:            { variant: 'success',  label: '반환 완료' },
+  REFUND_FAILED:       { variant: 'danger',   label: '환불 실패' },
+};
+
+const ACTOR_LABELS: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
+  guest:  { variant: 'info',    label: '게스트' },
+  host:   { variant: 'success', label: '호스트' },
+  admin:  { variant: 'warning', label: '관리자' },
+  system: { variant: 'default', label: '시스템' },
+};
+
+const CheckoutStatusBadge = ({ status }: { status: string }) => {
+  const cfg = CHECKOUT_STATUS_LABELS[status] || { variant: 'default' as const, label: status };
+  return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+};
+
+const DepositStatusBadge = ({ status }: { status: string }) => {
+  const cfg = DEPOSIT_STATUS_LABELS[status] || { variant: 'default' as const, label: status };
+  return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+};
+
+const ActorBadge = ({ actor }: { actor: string }) => {
+  const cfg = ACTOR_LABELS[actor] || { variant: 'default' as const, label: actor };
+  return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
 };
 
 const FORCE_CANCEL_STATUSES = [
@@ -101,6 +142,8 @@ export default function ContractDetail() {
       const response = await reservationService.getReservationDetail(contractId) as any;
       const reservation = response.reservation || response;
       if (response.timeline) reservation.timeline = response.timeline;
+      if (response.checkoutTimeline !== undefined) reservation.checkoutTimeline = response.checkoutTimeline;
+      if (response.paymentSummary !== undefined) reservation.paymentSummary = response.paymentSummary;
       setDetail(reservation);
     } catch (err) {
       console.error('예약 상세 로드 실패:', err);
@@ -474,36 +517,94 @@ export default function ContractDetail() {
         )}
       </div>
 
-      {/* 결제/환불 타임라인 */}
-      {detail.timeline && detail.timeline.length > 0 && (
-        <Card>
-          <h2 className="text-lg font-semibold mb-4">결제/환불 내역</h2>
-          <div className="space-y-4">
-            {detail.timeline.map((event: PaymentTimelineEvent, idx: number) => {
-              const isRefund = ['부분취소', 'PARTIAL_CANCEL', '전체취소', 'FULL_CANCEL'].includes(event.type);
-              return (
-                <div key={idx} className={`p-4 rounded-lg border ${isRefund ? 'border-red-200 bg-red-50/50' : 'border-green-200 bg-green-50/50'}`}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`text-sm font-medium ${isRefund ? 'text-red-600' : 'text-green-700'}`}>
-                      {formatDateTime(event.occurredAt)}
-                    </span>
-                    <span className="text-gray-300">|</span>
-                    <Badge variant={isRefund ? (event.type.includes('부분') || event.type.includes('PARTIAL') ? 'warning' : 'danger') : 'success'}>
-                      {event.type}
-                    </Badge>
-                    <span className="text-gray-300">|</span>
-                    <span className={`font-bold ${isRefund ? 'text-red-600' : ''}`}>
-                      {isRefund ? '-' : '+'}{formatCurrency(Math.abs(event.amount))}
-                    </span>
+      {/* 결제/환불 내역 + 퇴실 내역 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 결제/환불 내역 */}
+        {detail.timeline && detail.timeline.length > 0 && (
+          <Card>
+            <h2 className="text-lg font-semibold mb-4">결제/환불 내역</h2>
+            <div className="space-y-3">
+              {detail.timeline.map((event: PaymentTimelineEvent, idx: number) => {
+                const isRefund = ['부분취소', 'PARTIAL_CANCEL', '전체취소', 'FULL_CANCEL'].includes(event.type);
+                return (
+                  <div key={idx} className={`p-3 rounded-lg border ${isRefund ? 'border-red-200 bg-red-50/50' : 'border-green-200 bg-green-50/50'}`}>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`text-xs font-medium ${isRefund ? 'text-red-600' : 'text-green-700'}`}>
+                        {formatDateTime(event.occurredAt)}
+                      </span>
+                      <span className="text-gray-300">|</span>
+                      <Badge variant={isRefund ? (event.type.includes('부분') || event.type.includes('PARTIAL') ? 'warning' : 'danger') : 'success'}>
+                        {event.type}
+                      </Badge>
+                      <span className="text-gray-300">|</span>
+                      <span className={`font-bold text-sm ${isRefund ? 'text-red-600' : ''}`}>
+                        {isRefund ? '-' : '+'}{formatCurrency(Math.abs(event.amount))}
+                      </span>
+                    </div>
+                    {event.description && <p className="text-xs text-gray-700">상세: {event.description}</p>}
+                    {event.actor && <p className="text-xs text-gray-500">처리주체: {event.actor}</p>}
                   </div>
-                  {event.description && <p className="text-sm text-gray-700">상세: {event.description}</p>}
-                  {event.actor && <p className="text-sm text-gray-500">처리주체: {event.actor}</p>}
+                );
+              })}
+            </div>
+          </Card>
+        )}
+
+        {/* 퇴실 내역 */}
+        <Card>
+          <h2 className="text-lg font-semibold mb-4">퇴실 내역</h2>
+          {!detail.checkoutTimeline ? (
+            <p className="text-sm text-gray-400 py-4 text-center">퇴실 프로세스가 시작되지 않았습니다.</p>
+          ) : (
+            <div className="space-y-4">
+              {/* 현재 상태 */}
+              <div className="flex gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 mb-1">퇴실 상태</p>
+                  <CheckoutStatusBadge status={detail.checkoutTimeline.currentCheckoutStatus} />
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 mb-1">보증금 상태</p>
+                  <DepositStatusBadge status={detail.checkoutTimeline.currentDepositStatus} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 mb-1">보증금</p>
+                  <p className="text-sm font-semibold">{formatCurrency(detail.checkoutTimeline.deposit)}</p>
+                  {detail.checkoutTimeline.refundableDeposit !== null && (
+                    <p className="text-xs text-gray-500">환불 예정: {formatCurrency(detail.checkoutTimeline.refundableDeposit!)}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 스텝 타임라인 */}
+              <div className="space-y-0">
+                {detail.checkoutTimeline.steps.map((step: CheckoutStep, idx: number) => (
+                  <div key={idx} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary-500 mt-1 shrink-0" />
+                      {idx < detail.checkoutTimeline!.steps.length - 1 && (
+                        <div className="w-px flex-1 bg-gray-200 my-1" />
+                      )}
+                    </div>
+                    <div className="pb-4 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-800">{step.label}</span>
+                        <ActorBadge actor={step.actor} />
+                        {step.isAuto && <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">자동</span>}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(step.occurredAt)}</p>
+                      {step.holdReason && <p className="text-xs text-gray-600 mt-1">사유: {step.holdReason}</p>}
+                      {step.agreementDeadline && <p className="text-xs text-gray-600 mt-1">합의 기한: {formatDateTime(step.agreementDeadline)}</p>}
+                      {step.deductAmount !== undefined && <p className="text-xs text-gray-600 mt-1">차감액: {formatCurrency(step.deductAmount)}</p>}
+                      {step.agreementText && <p className="text-xs text-gray-600 mt-1">내용: {step.agreementText}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
-      )}
+      </div>
 
       {/* ── 강제 취소 모달 ── */}
       {showForceCancelModal && (

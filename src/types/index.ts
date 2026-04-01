@@ -184,6 +184,63 @@ export interface ReservationDetail {
   };
   createdAt: string;
   timeline?: PaymentTimelineEvent[];
+  checkoutTimeline?: CheckoutTimeline | null;
+  paymentSummary?: PaymentSummary | null;
+}
+
+export interface PaymentSummary {
+  totalPaidAmount: number;
+  totalRefundedAmount: number;
+  currentBalance: number;
+  contractPaidAmount: number;
+  contractRefundTotal: number;
+  rentalPaidTotal: number;
+  rentalRefundTotal: number;
+}
+
+export type CheckoutStatus =
+  | 'NOT_STARTED'
+  | 'GUEST_COMPLETED'
+  | 'HOLD_REQUESTED'
+  | 'HOST_PENDING'
+  | 'HOST_CONFIRMED';
+
+export type DepositStatus =
+  | 'HOLDING'
+  | 'RETURN_PENDING'
+  | 'RETURN_HOLD'
+  | 'RETURN_CONFIRMED'
+  | 'DEDUCTION_CONFIRMED'
+  | 'RETURNED'
+  | 'REFUND_FAILED';
+
+export type CheckoutStepType =
+  | 'CHECKOUT_REQUESTED'
+  | 'CHECKOUT_CONFIRMED'
+  | 'HOLD_REQUESTED'
+  | 'HOLD_APPROVED'
+  | 'AGREEMENT_SUBMITTED'
+  | 'AGREEMENT_ACCEPTED'
+  | 'AUTO_RETURNED';
+
+export interface CheckoutStep {
+  step: CheckoutStepType;
+  label: string;
+  actor: 'guest' | 'host' | 'admin' | 'system';
+  occurredAt: string;
+  isAuto?: boolean;
+  holdReason?: string;
+  agreementDeadline?: string;
+  deductAmount?: number;
+  agreementText?: string;
+}
+
+export interface CheckoutTimeline {
+  currentCheckoutStatus: CheckoutStatus;
+  currentDepositStatus: DepositStatus;
+  deposit: number;
+  refundableDeposit: number | null;
+  steps: CheckoutStep[];
 }
 
 // 정산(Settlement) 관련 타입
