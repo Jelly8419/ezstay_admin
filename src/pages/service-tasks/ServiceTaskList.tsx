@@ -32,7 +32,6 @@ const STATUS_CONFIG: Record<
   ISSUE:     { label: '이슈 발생', variant: 'warning' },
 };
 
-// 현재 상태에서 전환 가능한 상태 목록
 const ALLOWED_TRANSITIONS: Record<ServiceTaskStatus, ServiceTaskStatus[]> = {
   PENDING:   ['RESERVED', 'COMPLETED', 'ISSUE'],
   RESERVED:  ['COMPLETED', 'ISSUE'],
@@ -65,6 +64,87 @@ function formatDDay(dDay: number): string {
 
 function isDDayUrgent(dDay: number): boolean {
   return dDay <= 3;
+}
+
+// ─── 컬럼 정의 ────────────────────────────────────────────────────────────────
+
+function buildColumns(openModal: (task: ServiceTask) => void) {
+  return [
+    {
+      key: 'contractId',
+      title: '계약 ID',
+      render: (_: any, task: ServiceTask) => (
+        <Link
+          to={`/contracts/${task.contractId}`}
+          className="text-primary-600 hover:underline font-medium"
+        >
+          #{task.contractId}
+        </Link>
+      ),
+    },
+    {
+      key: 'roomName',
+      title: '방 이름',
+    },
+    {
+      key: 'taskType',
+      title: '타입',
+      render: (value: ServiceTaskType) => (
+        <Badge variant="default">{TASK_TYPE_LABELS[value]}</Badge>
+      ),
+    },
+    {
+      key: 'referenceDate',
+      title: '기준일',
+      render: (value: string) => formatDate(value),
+    },
+    {
+      key: 'dDay',
+      title: 'D-day',
+      render: (value: number) => (
+        <span className={isDDayUrgent(value) ? 'font-bold text-red-600' : 'text-gray-700'}>
+          {formatDDay(value)}
+        </span>
+      ),
+    },
+    {
+      key: 'quantity',
+      title: '수량',
+      render: (value: number | null) => (value !== null ? value : '-'),
+    },
+    {
+      key: 'status',
+      title: '상태',
+      render: (value: ServiceTaskStatus) => {
+        const cfg = STATUS_CONFIG[value];
+        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+      },
+    },
+    {
+      key: 'vendorName',
+      title: '업체명',
+      render: (value: string | null) => value ?? '-',
+    },
+    {
+      key: 'vendorContact',
+      title: '담당자',
+      render: (value: string | null) => value ?? '-',
+    },
+    {
+      key: 'vendorRefNo',
+      title: '예약번호',
+      render: (value: string | null) => value ?? '-',
+    },
+    {
+      key: 'id',
+      title: '액션',
+      render: (_: any, task: ServiceTask) => (
+        <Button size="sm" variant="secondary" onClick={() => openModal(task)}>
+          상태 변경
+        </Button>
+      ),
+    },
+  ];
 }
 
 // ─── 컴포넌트 ─────────────────────────────────────────────────────────────────
@@ -137,7 +217,6 @@ export default function ServiceTaskList() {
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
     setCurrentPage(1);
-    // 전체 탭 필터 초기화
     setTaskTypeFilter('all');
     setStatusFilter('all');
     setDateFrom('');
@@ -182,81 +261,9 @@ export default function ServiceTaskList() {
     }
   };
 
-  // ── 렌더 ──────────────────────────────────────────────────────────────────
+  const columns = buildColumns(openModal);
 
-  const columns = [
-    {
-      header: '계약 ID',
-      accessor: (task: ServiceTask) => (
-        <Link
-          to={`/contracts/${task.contractId}`}
-          className="text-primary-600 hover:underline font-medium"
-        >
-          #{task.contractId}
-        </Link>
-      ),
-    },
-    {
-      header: '방 이름',
-      accessor: (task: ServiceTask) => task.roomName,
-    },
-    {
-      header: '타입',
-      accessor: (task: ServiceTask) => (
-        <Badge variant="default">{TASK_TYPE_LABELS[task.taskType]}</Badge>
-      ),
-    },
-    {
-      header: '기준일',
-      accessor: (task: ServiceTask) => formatDate(task.referenceDate),
-    },
-    {
-      header: 'D-day',
-      accessor: (task: ServiceTask) => (
-        <span
-          className={
-            isDDayUrgent(task.dDay)
-              ? 'font-bold text-red-600'
-              : 'text-gray-700'
-          }
-        >
-          {formatDDay(task.dDay)}
-        </span>
-      ),
-    },
-    {
-      header: '수량',
-      accessor: (task: ServiceTask) =>
-        task.quantity !== null ? task.quantity : '-',
-    },
-    {
-      header: '상태',
-      accessor: (task: ServiceTask) => {
-        const cfg = STATUS_CONFIG[task.status];
-        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
-      },
-    },
-    {
-      header: '업체명',
-      accessor: (task: ServiceTask) => task.vendorName ?? '-',
-    },
-    {
-      header: '담당자',
-      accessor: (task: ServiceTask) => task.vendorContact ?? '-',
-    },
-    {
-      header: '예약번호',
-      accessor: (task: ServiceTask) => task.vendorRefNo ?? '-',
-    },
-    {
-      header: '액션',
-      accessor: (task: ServiceTask) => (
-        <Button size="sm" variant="outline" onClick={() => openModal(task)}>
-          상태 변경
-        </Button>
-      ),
-    },
-  ];
+  // ── 렌더 ──────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
@@ -358,7 +365,7 @@ export default function ServiceTaskList() {
 
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 setTaskTypeFilter('all');
                 setStatusFilter('all');
@@ -503,7 +510,7 @@ export default function ServiceTaskList() {
 
             {/* 액션 버튼 */}
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={closeModal} disabled={actionLoading}>
+              <Button variant="secondary" onClick={closeModal} disabled={actionLoading}>
                 취소
               </Button>
               <Button
