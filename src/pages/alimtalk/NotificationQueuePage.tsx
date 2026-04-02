@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, Clock, AlertCircle, RefreshCw, Search } from 'lucide-react';
+import { Bell, Clock, AlertCircle, RefreshCw, Search, AlertTriangle } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -10,19 +10,22 @@ import type {
   NotificationQueueContractResponse,
   NotificationQueueJobType,
   NotificationQueueJob,
+  NotificationMissingResponse,
+  NotificationMissingItem,
 } from '../../types';
-import { formatDateTime } from '../../utils/format';
+import { formatDate, formatDateTime } from '../../utils/format';
 
 // ── 유형 메타 ──────────────────────────────────────────────
 const JOB_TYPE_META: Record<
   NotificationQueueJobType,
   { label: string; variant: 'info' | 'warning' | 'danger' | 'default' }
 > = {
-  'checkin-today':      { label: '입주 당일',       variant: 'info' },
-  'option-deadline':    { label: '옵션 마감',        variant: 'warning' },
-  'checkout-reminder':  { label: '퇴실 알림',        variant: 'warning' },
-  'checkout-today':     { label: '퇴실 당일',        variant: 'info' },
-  'payment-pending':    { label: '결제 만료 임박',   variant: 'danger' },
+  'checkin-today':     { label: '입주 당일',      variant: 'info' },
+  'option-deadline':   { label: '옵션 마감',       variant: 'warning' },
+  'checkout-reminder': { label: '퇴실 알림',       variant: 'warning' },
+  'checkout-eve':      { label: '퇴실 전날',       variant: 'warning' },
+  'checkout-today':    { label: '퇴실 당일',       variant: 'info' },
+  'payment-pending':   { label: '결제 만료 임박',  variant: 'danger' },
 };
 
 const JOB_TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -51,6 +54,18 @@ const STATE_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'info' | 
   completed: 'success',
 };
 
+// ── 누락 알림 타입 메타 ────────────────────────────────────
+const MISSING_TYPE_META: Record<
+  string,
+  { label: string; variant: 'info' | 'warning' | 'danger' | 'default' }
+> = {
+  'checkin-today':     { label: '입주 당일',     variant: 'info' },
+  'option-deadline':   { label: '옵션 마감',      variant: 'warning' },
+  'checkout-reminder': { label: '퇴실 알림',      variant: 'warning' },
+  'checkout-eve':      { label: '퇴실 전날',      variant: 'warning' },
+  'checkout-today':    { label: '퇴실 당일',      variant: 'info' },
+};
+
 // ── 메인 컴포넌트 ──────────────────────────────────────────
 export const NotificationQueuePage: React.FC = () => {
   const [stats, setStats] = useState<NotificationQueueStatsResponse | null>(null);
@@ -58,6 +73,12 @@ export const NotificationQueuePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [typeFilter, setTypeFilter] = useState('');
+
+  // 누락 알림
+  const [missing, setMissing] = useState<NotificationMissingResponse | null>(null);
+  const [missingLoading, setMissingLoading] = useState(false);
+  const [missingError, setMissingError] = useState<string | null>(null);
+  const [missingLoaded, setMissingLoaded] = useState(false);
 
   // 계약별 조회
   const [contractInput, setContractInput] = useState('');
@@ -83,6 +104,20 @@ export const NotificationQueuePage: React.FC = () => {
   useEffect(() => {
     loadStats();
   }, [loadStats]);
+
+  const loadMissing = async () => {
+    try {
+      setMissingLoading(true);
+      setMissingError(null);
+      const data = await notificationQueueService.getMissing();
+      setMissing(data);
+      setMissingLoaded(true);
+    } catch {
+      setMissingError('누락 알림 조회에 실패했습니다.');
+    } finally {
+      setMissingLoading(false);
+    }
+  };
 
   const handleContractSearch = async () => {
     const id = parseInt(contractInput.trim(), 10);
@@ -194,6 +229,63 @@ export const NotificationQueuePage: React.FC = () => {
         </div>
       )}
 
+      {/* 누락 알림 조회 */}
+      <Card title="누락 알림 조회">
+        {!missingLoaded ? (
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-gray-500">
+              큐에 등록되지 않은 누락 알림을 DB 기준으로 검사합니다.
+            </p>
+            <Button onClick={loadMissing} disabled={missingLoading}>
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              {missingLoading ? '검사 중...' : '누락 검사'}
+            </Button>
+          </div>
+        ) : missingLoading ? (
+          <div className="flex items-center justify-center h-24">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+          </div>
+        ) : missingError ? (
+          <div className="flex items-center gap-3 text-red-500">
+            <AlertCircle className="w-5 h-5" />
+            <p className="text-sm">{missingError}</p>
+            <Button variant="secondary" size="sm" onClick={loadMissing}>다시 시도</Button>
+          </div>
+        ) : missing && missing.missingCount === 0 ? (
+          <div className="flex items-center gap-3 py-4">
+            <div className="bg-green-100 p-2 rounded-full">
+              <Bell className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-green-700">누락된 알림이 없습니다.</p>
+              <p className="text-xs text-gray-400 mt-0.5">모든 대상 계약에 알림이 정상 등록되어 있습니다.</p>
+            </div>
+            <Button variant="secondary" size="sm" className="ml-auto" onClick={loadMissing}>
+              <RefreshCw className="w-3 h-3 mr-1" />
+              재검사
+            </Button>
+          </div>
+        ) : missing && missing.missingCount > 0 ? (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="bg-red-100 p-1.5 rounded-full">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                </div>
+                <span className="text-sm font-semibold text-red-700">
+                  누락 {missing.missingCount}건 발견
+                </span>
+              </div>
+              <Button variant="secondary" size="sm" onClick={loadMissing}>
+                <RefreshCw className="w-3 h-3 mr-1" />
+                재검사
+              </Button>
+            </div>
+            <MissingTable items={missing.missing} />
+          </div>
+        ) : null}
+      </Card>
+
       {/* 예약된 알림 목록 */}
       <Card title="예약된 알림 목록">
         <div className="mb-4">
@@ -266,10 +358,7 @@ export const NotificationQueuePage: React.FC = () => {
             onKeyDown={(e) => e.key === 'Enter' && handleContractSearch()}
             className="w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
-          <Button
-            onClick={handleContractSearch}
-            disabled={contractLoading}
-          >
+          <Button onClick={handleContractSearch} disabled={contractLoading}>
             <Search className="w-4 h-4 mr-1" />
             {contractLoading ? '조회 중...' : '조회'}
           </Button>
@@ -333,5 +422,42 @@ export const NotificationQueuePage: React.FC = () => {
     </div>
   );
 };
+
+// ── 누락 알림 테이블 서브컴포넌트 ─────────────────────────
+const MissingTable: React.FC<{ items: NotificationMissingItem[] }> = ({ items }) => (
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b border-gray-200">
+          <th className="text-left py-3 px-4 font-medium text-gray-600">계약 ID</th>
+          <th className="text-left py-3 px-4 font-medium text-gray-600">계약 상태</th>
+          <th className="text-left py-3 px-4 font-medium text-gray-600">누락 유형</th>
+          <th className="text-left py-3 px-4 font-medium text-gray-600">입주일</th>
+          <th className="text-left py-3 px-4 font-medium text-gray-600">퇴실일</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item, idx) => {
+          const meta = MISSING_TYPE_META[item.missingType] ?? { label: item.missingType, variant: 'default' as const };
+          return (
+            <tr key={`${item.contractId}-${item.missingType}-${idx}`} className="border-b border-gray-100 hover:bg-red-50">
+              <td className="py-3 px-4 font-medium text-gray-900">{item.contractId}</td>
+              <td className="py-3 px-4">
+                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
+                  {item.status}
+                </span>
+              </td>
+              <td className="py-3 px-4">
+                <Badge variant={meta.variant} size="sm">{meta.label}</Badge>
+              </td>
+              <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkInDate)}</td>
+              <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkOutDate)}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+);
 
 export default NotificationQueuePage;

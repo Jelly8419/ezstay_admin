@@ -1518,6 +1518,7 @@ export type NotificationQueueJobType =
   | 'checkin-today'
   | 'option-deadline'
   | 'checkout-reminder'
+  | 'checkout-eve'
   | 'checkout-today'
   | 'payment-pending';
 
@@ -1562,4 +1563,24 @@ export interface NotificationQueueContractJob {
 export interface NotificationQueueContractResponse {
   contractId: number;
   scheduled: NotificationQueueContractJob[];
+}
+
+export type NotificationMissingType =
+  | 'checkin-today'
+  | 'option-deadline'
+  | 'checkout-reminder'
+  | 'checkout-eve'
+  | 'checkout-today';
+
+export interface NotificationMissingItem {
+  contractId: number;
+  status: string;
+  missingType: NotificationMissingType;
+  checkInDate: string;
+  checkOutDate: string;
+}
+
+export interface NotificationMissingResponse {
+  missingCount: number;
+  missing: NotificationMissingItem[];
 }

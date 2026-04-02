@@ -2,6 +2,7 @@ import { api } from './api';
 import type {
   NotificationQueueStatsResponse,
   NotificationQueueContractResponse,
+  NotificationMissingResponse,
 } from '../types';
 
 export const notificationQueueService = {
@@ -12,4 +13,7 @@ export const notificationQueueService = {
     api.get<NotificationQueueContractResponse>(
       `/admin/notification-queue/contract/${contractId}`
     ),
+
+  getMissing: () =>
+    api.get<NotificationMissingResponse>('/admin/notification-queue/missing'),
 };
