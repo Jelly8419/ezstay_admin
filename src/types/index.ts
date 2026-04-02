@@ -1509,3 +1509,57 @@ export interface ServiceTaskUpdateRequest {
   vendorContact?: string;
   vendorRefNo?: string;
 }
+
+// ========================================
+// 알림 큐 (Notification Queue) 관련 타입
+// ========================================
+
+export type NotificationQueueJobType =
+  | 'checkin-today'
+  | 'option-deadline'
+  | 'checkout-reminder'
+  | 'checkout-today'
+  | 'payment-pending';
+
+export type NotificationQueueJobState =
+  | 'waiting'
+  | 'active'
+  | 'delayed'
+  | 'failed'
+  | 'completed';
+
+export interface NotificationQueueJob {
+  jobId: string;
+  type: NotificationQueueJobType;
+  contractId: number;
+  scheduledAt: string;
+  fireAt: string;
+  remainingMs: number;
+}
+
+export interface NotificationQueueStats {
+  waiting: number;
+  active: number;
+  delayed: number;
+  failed: number;
+  completed: number;
+}
+
+export interface NotificationQueueStatsResponse {
+  stats: NotificationQueueStats;
+  jobs: NotificationQueueJob[];
+  byType: Record<NotificationQueueJobType, NotificationQueueJob[]>;
+}
+
+export interface NotificationQueueContractJob {
+  type: NotificationQueueJobType;
+  jobId: string;
+  delay: number;
+  scheduledAt: string;
+  state: NotificationQueueJobState;
+}
+
+export interface NotificationQueueContractResponse {
+  contractId: number;
+  scheduled: NotificationQueueContractJob[];
+}

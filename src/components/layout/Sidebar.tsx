@@ -104,7 +104,11 @@ const navItems: NavItem[] = [
   {
     path: '/alimtalk',
     label: '알림톡 관리',
-    icon: <Send className="w-5 h-5" />
+    icon: <Send className="w-5 h-5" />,
+    children: [
+      { path: '/alimtalk',       label: '알림톡 관리' },
+      { path: '/alimtalk/queue', label: '알림 큐 현황' },
+    ]
   },
   {
     path: '/admin/action-logs',
