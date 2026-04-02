@@ -1578,6 +1578,7 @@ export interface NotificationMissingItem {
   missingType: NotificationMissingType;
   checkInDate: string;
   checkOutDate: string;
+  fireAt: string;
 }
 
 export interface NotificationMissingResponse {

@@ -432,6 +432,7 @@ const MissingTable: React.FC<{ items: NotificationMissingItem[] }> = ({ items })
           <th className="text-left py-3 px-4 font-medium text-gray-600">계약 ID</th>
           <th className="text-left py-3 px-4 font-medium text-gray-600">계약 상태</th>
           <th className="text-left py-3 px-4 font-medium text-gray-600">누락 유형</th>
+          <th className="text-left py-3 px-4 font-medium text-gray-600">발송 예정</th>
           <th className="text-left py-3 px-4 font-medium text-gray-600">입주일</th>
           <th className="text-left py-3 px-4 font-medium text-gray-600">퇴실일</th>
         </tr>
@@ -450,6 +451,7 @@ const MissingTable: React.FC<{ items: NotificationMissingItem[] }> = ({ items })
               <td className="py-3 px-4">
                 <Badge variant={meta.variant} size="sm">{meta.label}</Badge>
               </td>
+              <td className="py-3 px-4 text-gray-700 text-xs">{formatDateTime(item.fireAt)}</td>
               <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkInDate)}</td>
               <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkOutDate)}</td>
             </tr>
