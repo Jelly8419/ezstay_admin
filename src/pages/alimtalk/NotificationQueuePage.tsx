@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, Clock, AlertCircle, RefreshCw, Search, AlertTriangle } from 'lucide-react';
+import { Bell, Clock, AlertCircle, RefreshCw, Search, AlertTriangle, RotateCcw } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { StatCard } from '../../components/ui/StatCard';
 import { notificationQueueService } from '../../services/notificationQueueService';
+import { useAuth } from '../../contexts/AuthContext';
 import type {
   NotificationQueueStatsResponse,
   NotificationQueueContractResponse,
@@ -12,6 +13,7 @@ import type {
   NotificationQueueJob,
   NotificationMissingResponse,
   NotificationMissingItem,
+  NotificationMissingType,
 } from '../../types';
 import { formatDate, formatDateTime } from '../../utils/format';
 
@@ -68,6 +70,9 @@ const MISSING_TYPE_META: Record<
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────
 export const NotificationQueuePage: React.FC = () => {
+  const { admin } = useAuth();
+  const canRecover = admin?.role === 'super_admin' || admin?.role === 'admin';
+
   const [stats, setStats] = useState<NotificationQueueStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +84,8 @@ export const NotificationQueuePage: React.FC = () => {
   const [missingLoading, setMissingLoading] = useState(false);
   const [missingError, setMissingError] = useState<string | null>(null);
   const [missingLoaded, setMissingLoaded] = useState(false);
+  // 복구 중인 jobKey(contractId-type) 추적
+  const [recoveringKeys, setRecoveringKeys] = useState<Set<string>>(new Set());
 
   // 계약별 조회
   const [contractInput, setContractInput] = useState('');
@@ -116,6 +123,24 @@ export const NotificationQueuePage: React.FC = () => {
       setMissingError('누락 알림 조회에 실패했습니다.');
     } finally {
       setMissingLoading(false);
+    }
+  };
+
+  const handleRecover = async (contractId: number, type: NotificationMissingType) => {
+    const key = `${contractId}-${type}`;
+    setRecoveringKeys((prev) => new Set(prev).add(key));
+    try {
+      await notificationQueueService.recoverJob({ contractId, type });
+      // 성공 후 누락 목록 재조회
+      await loadMissing();
+    } catch (err: any) {
+      alert(err?.message || '큐 적재에 실패했습니다.');
+    } finally {
+      setRecoveringKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
     }
   };
 
@@ -275,13 +300,23 @@ export const NotificationQueuePage: React.FC = () => {
                 <span className="text-sm font-semibold text-red-700">
                   누락 {missing.missingCount}건 발견
                 </span>
+                {canRecover && (
+                  <span className="text-xs text-gray-400">
+                    (발송 예정이 미래인 건만 복구 가능)
+                  </span>
+                )}
               </div>
               <Button variant="secondary" size="sm" onClick={loadMissing}>
                 <RefreshCw className="w-3 h-3 mr-1" />
                 재검사
               </Button>
             </div>
-            <MissingTable items={missing.missing} />
+            <MissingTable
+              items={missing.missing}
+              canRecover={canRecover}
+              recoveringKeys={recoveringKeys}
+              onRecover={handleRecover}
+            />
           </div>
         ) : null}
       </Card>
@@ -424,42 +459,80 @@ export const NotificationQueuePage: React.FC = () => {
 };
 
 // ── 누락 알림 테이블 서브컴포넌트 ─────────────────────────
-const MissingTable: React.FC<{ items: NotificationMissingItem[] }> = ({ items }) => (
-  <div className="overflow-x-auto">
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-gray-200">
-          <th className="text-left py-3 px-4 font-medium text-gray-600">계약 ID</th>
-          <th className="text-left py-3 px-4 font-medium text-gray-600">계약 상태</th>
-          <th className="text-left py-3 px-4 font-medium text-gray-600">누락 유형</th>
-          <th className="text-left py-3 px-4 font-medium text-gray-600">발송 예정</th>
-          <th className="text-left py-3 px-4 font-medium text-gray-600">입주일</th>
-          <th className="text-left py-3 px-4 font-medium text-gray-600">퇴실일</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((item, idx) => {
-          const meta = MISSING_TYPE_META[item.missingType] ?? { label: item.missingType, variant: 'default' as const };
-          return (
-            <tr key={`${item.contractId}-${item.missingType}-${idx}`} className="border-b border-gray-100 hover:bg-red-50">
-              <td className="py-3 px-4 font-medium text-gray-900">{item.contractId}</td>
-              <td className="py-3 px-4">
-                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
-                  {item.status}
-                </span>
-              </td>
-              <td className="py-3 px-4">
-                <Badge variant={meta.variant} size="sm">{meta.label}</Badge>
-              </td>
-              <td className="py-3 px-4 text-gray-700 text-xs">{formatDateTime(item.fireAt)}</td>
-              <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkInDate)}</td>
-              <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkOutDate)}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-);
+interface MissingTableProps {
+  items: NotificationMissingItem[];
+  canRecover: boolean;
+  recoveringKeys: Set<string>;
+  onRecover: (contractId: number, type: NotificationMissingType) => void;
+}
+
+const MissingTable: React.FC<MissingTableProps> = ({ items, canRecover, recoveringKeys, onRecover }) => {
+  const now = Date.now();
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left py-3 px-4 font-medium text-gray-600">계약 ID</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-600">계약 상태</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-600">누락 유형</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-600">발송 예정</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-600">입주일</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-600">퇴실일</th>
+            {canRecover && <th className="text-left py-3 px-4 font-medium text-gray-600">복구</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, idx) => {
+            const meta = MISSING_TYPE_META[item.missingType] ?? { label: item.missingType, variant: 'default' as const };
+            const isFuture = new Date(item.fireAt).getTime() > now;
+            const key = `${item.contractId}-${item.missingType}`;
+            const isRecovering = recoveringKeys.has(key);
+            return (
+              <tr key={`${key}-${idx}`} className="border-b border-gray-100 hover:bg-red-50">
+                <td className="py-3 px-4 font-medium text-gray-900">{item.contractId}</td>
+                <td className="py-3 px-4">
+                  <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
+                    {item.status}
+                  </span>
+                </td>
+                <td className="py-3 px-4">
+                  <Badge variant={meta.variant} size="sm">{meta.label}</Badge>
+                </td>
+                <td className="py-3 px-4 text-xs">
+                  <span className={isFuture ? 'text-gray-700' : 'text-gray-400 line-through'}>
+                    {formatDateTime(item.fireAt)}
+                  </span>
+                  {!isFuture && (
+                    <span className="ml-1 text-xs text-red-400">(지남)</span>
+                  )}
+                </td>
+                <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkInDate)}</td>
+                <td className="py-3 px-4 text-gray-700 text-xs">{formatDate(item.checkOutDate)}</td>
+                {canRecover && (
+                  <td className="py-3 px-4">
+                    {isFuture ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={isRecovering}
+                        onClick={() => onRecover(item.contractId, item.missingType)}
+                      >
+                        <RotateCcw className={`w-3 h-3 mr-1 ${isRecovering ? 'animate-spin' : ''}`} />
+                        {isRecovering ? '적재 중...' : '큐 적재'}
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-gray-400">불가</span>
+                    )}
+                  </td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 export default NotificationQueuePage;

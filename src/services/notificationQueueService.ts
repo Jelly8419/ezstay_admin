@@ -3,6 +3,8 @@ import type {
   NotificationQueueStatsResponse,
   NotificationQueueContractResponse,
   NotificationMissingResponse,
+  NotificationRecoverRequest,
+  NotificationRecoverResponse,
 } from '../types';
 
 export const notificationQueueService = {
@@ -16,4 +18,7 @@ export const notificationQueueService = {
 
   getMissing: () =>
     api.get<NotificationMissingResponse>('/admin/notification-queue/missing'),
+
+  recoverJob: (body: NotificationRecoverRequest) =>
+    api.post<NotificationRecoverResponse>('/admin/notification-queue/recover', body),
 };

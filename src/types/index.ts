@@ -1585,3 +1585,14 @@ export interface NotificationMissingResponse {
   missingCount: number;
   missing: NotificationMissingItem[];
 }
+
+export interface NotificationRecoverRequest {
+  contractId: number;
+  type: NotificationMissingType;
+}
+
+export interface NotificationRecoverResponse {
+  contractId: number;
+  type: NotificationMissingType;
+  fireAt: string;
+}
