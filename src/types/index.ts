@@ -1536,6 +1536,36 @@ export interface ServiceTaskUpdateRequest {
   vendorName?: string;
   vendorContact?: string;
   vendorRefNo?: string;
+  reservedAmount?: number;
+  actualAmount?: number;
+  note?: string;
+  issueNote?: string;
+}
+
+export interface ServiceTaskLog {
+  id: number;
+  fromStatus: ServiceTaskStatus | null;
+  toStatus: ServiceTaskStatus;
+  changedBy: string;
+  adminId: number | null;
+  adminName: string | null;
+  clearedVendorName: string | null;
+  clearedVendorContact: string | null;
+  clearedVendorRefNo: string | null;
+  clearedReservedAmount: number | null;
+  clearedActualAmount: number | null;
+  issueNote: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface ServiceTaskDetail extends ServiceTask {
+  checkInDate: string;
+  checkOutDate: string;
+  reservedAmount: number | null;
+  actualAmount: number | null;
+  issueNote: string | null;
+  logs: ServiceTaskLog[];
 }
 
 // ========================================

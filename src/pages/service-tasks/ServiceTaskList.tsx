@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type {
   ServiceTask,
+  ServiceTaskDetail,
+  ServiceTaskLog,
   ServiceTaskType,
   ServiceTaskStatus,
 } from '../../types';
-import { formatDate } from '../../utils/format';
+import { formatDate, formatDateTime } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
@@ -115,9 +117,18 @@ function buildColumns(openModal: (task: ServiceTask) => void) {
     {
       key: 'status',
       title: '상태',
-      render: (value: ServiceTaskStatus) => {
+      render: (value: ServiceTaskStatus, task: ServiceTask) => {
         const cfg = STATUS_CONFIG[value];
-        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+        const badge = <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+        if (value === 'ISSUE' && (task as any).issueNote) {
+          return (
+            <span title={(task as any).issueNote} className="cursor-help">
+              {badge}
+              <span className="ml-1 text-gray-400 text-xs">ⓘ</span>
+            </span>
+          );
+        }
+        return badge;
       },
     },
     {
@@ -167,10 +178,15 @@ export default function ServiceTaskList() {
 
   // 상태 변경 모달
   const [selectedTask, setSelectedTask] = useState<ServiceTask | null>(null);
+  const [taskDetail, setTaskDetail] = useState<ServiceTaskDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [nextStatus, setNextStatus] = useState<ServiceTaskStatus | null>(null);
   const [vendorName, setVendorName] = useState('');
   const [vendorContact, setVendorContact] = useState('');
   const [vendorRefNo, setVendorRefNo] = useState('');
+  const [reservedAmount, setReservedAmount] = useState('');
+  const [actualAmount, setActualAmount] = useState('');
+  const [issueNote, setIssueNote] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -225,18 +241,32 @@ export default function ServiceTaskList() {
 
   // ── 상태 변경 모달 ────────────────────────────────────────────────────────
 
-  const openModal = (task: ServiceTask) => {
+  const openModal = async (task: ServiceTask) => {
     setSelectedTask(task);
+    setTaskDetail(null);
     setNextStatus(null);
     setVendorName('');
     setVendorContact('');
     setVendorRefNo('');
+    setReservedAmount('');
+    setActualAmount('');
+    setIssueNote('');
     setModalOpen(true);
+    try {
+      setDetailLoading(true);
+      const detail = await serviceTaskService.getTaskDetail(task.id);
+      setTaskDetail(detail);
+    } catch {
+      // 이력 로드 실패 시 모달은 유지
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const closeModal = () => {
     setModalOpen(false);
     setSelectedTask(null);
+    setTaskDetail(null);
     setNextStatus(null);
   };
 
@@ -250,6 +280,13 @@ export default function ServiceTaskList() {
           ...(vendorName.trim() && { vendorName: vendorName.trim() }),
           ...(vendorContact.trim() && { vendorContact: vendorContact.trim() }),
           ...(vendorRefNo.trim() && { vendorRefNo: vendorRefNo.trim() }),
+          ...(reservedAmount.trim() && { reservedAmount: Number(reservedAmount) }),
+        }),
+        ...(nextStatus === 'COMPLETED' && {
+          ...(actualAmount.trim() && { actualAmount: Number(actualAmount) }),
+        }),
+        ...(nextStatus === 'ISSUE' && {
+          ...(issueNote.trim() && { issueNote: issueNote.trim() }),
         }),
       });
       closeModal();
@@ -275,6 +312,16 @@ export default function ServiceTaskList() {
         </p>
       </div>
 
+      {/* D-DAY 정의 안내 */}
+      <div className="inline-block border border-gray-300 rounded-md px-4 py-3 text-sm text-gray-700 bg-white">
+        <p className="font-medium mb-1">D-DAY 정의</p>
+        <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+          <li>침구류 대여 = 입주일</li>
+          <li>침구류 회수 = 퇴실일</li>
+          <li>청소 = 퇴실일</li>
+        </ul>
+      </div>
+
       {/* 탭 */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
@@ -288,7 +335,7 @@ export default function ServiceTaskList() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {tab === 'pending' ? '예약 필요' : '전체 이행 현황'}
+              {tab === 'pending' ? '예약 필요' : '전체 현황'}
             </button>
           ))}
         </nav>
@@ -419,6 +466,40 @@ export default function ServiceTaskList() {
           title="상태 변경"
         >
           <div className="space-y-4">
+            {/* 변경 이력 */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">변경 내역</p>
+              <div className="border border-gray-200 rounded-lg divide-y divide-gray-200 max-h-52 overflow-y-auto">
+                {detailLoading ? (
+                  <div className="flex justify-center py-6">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600" />
+                  </div>
+                ) : taskDetail && taskDetail.logs.length > 0 ? (
+                  taskDetail.logs.map((log: ServiceTaskLog) => (
+                    <div key={log.id} className="px-4 py-3 text-sm space-y-0.5">
+                      <p className="text-gray-500">일시 : {formatDateTime(log.createdAt)}</p>
+                      <p className="text-gray-800">
+                        상태 : {STATUS_CONFIG[log.toStatus]?.label ?? log.toStatus}
+                      </p>
+                      {log.clearedReservedAmount != null && (
+                        <p className="text-gray-800">
+                          금액 : {log.clearedReservedAmount.toLocaleString()}원
+                        </p>
+                      )}
+                      {log.issueNote && (
+                        <p className="text-gray-800">이슈 내용 : {log.issueNote}</p>
+                      )}
+                      {log.note && (
+                        <p className="text-gray-800">내용 : {log.note}</p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="px-4 py-4 text-sm text-gray-400 text-center">변경 이력이 없습니다.</p>
+                )}
+              </div>
+            </div>
+
             {/* 현재 정보 요약 */}
             <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1">
               <div className="flex justify-between">
@@ -439,6 +520,12 @@ export default function ServiceTaskList() {
                   {STATUS_CONFIG[selectedTask.status].label}
                 </Badge>
               </div>
+              {selectedTask.status === 'ISSUE' && taskDetail?.issueNote && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">이슈 내용</span>
+                  <span className="font-medium text-right max-w-[60%]">{taskDetail.issueNote}</span>
+                </div>
+              )}
             </div>
 
             {/* 전환할 상태 선택 */}
@@ -502,6 +589,59 @@ export default function ServiceTaskList() {
                     value={vendorRefNo}
                     onChange={(e) => setVendorRefNo(e.target.value)}
                     placeholder="예: CLN-2026-0401"
+                    className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    견적 금액 (원)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={reservedAmount}
+                    onChange={(e) => setReservedAmount(e.target.value)}
+                    placeholder="예: 150000"
+                    className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* ISSUE: 이슈 내용 */}
+            {nextStatus === 'ISSUE' && (
+              <div className="space-y-3 border-t border-gray-100 pt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    이슈 내용
+                  </label>
+                  <textarea
+                    value={issueNote}
+                    onChange={(e) => setIssueNote(e.target.value)}
+                    placeholder="예: 업체 당일 취소 연락 옴"
+                    rows={3}
+                    className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* COMPLETED: 실제 청구 금액 */}
+            {nextStatus === 'COMPLETED' && (
+              <div className="space-y-3 border-t border-gray-100 pt-4">
+                <p className="text-sm text-gray-500">
+                  실제 청구 금액을 입력하면 함께 저장됩니다. (선택)
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    실제 청구 금액 (원)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={actualAmount}
+                    onChange={(e) => setActualAmount(e.target.value)}
+                    placeholder="예: 150000"
                     className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
