@@ -1422,9 +1422,6 @@ export interface RentalItem {
   description: string | null;
   price: string;
   totalStock: number;
-  availableStock: number;
-  rentedStock: number;
-  isOutOfStock: boolean;
   imageUrl: string | null;
   isActive: boolean;
   createdAt: string;
@@ -1438,8 +1435,35 @@ export interface RentalItemStat {
   salesTypeLabel: string;
   itemCount: number;
   totalStock: number;
-  availableStock: number;
-  rentedStock: number;
+}
+
+export interface RentalCalendarEntry {
+  reservedQuantity: number;
+  availableQuantity: number;
+}
+
+export interface RentalCalendarData {
+  rentalItemId: number;
+  name: string;
+  totalStock: number;
+  year: number;
+  month: number;
+  calendar: Record<string, RentalCalendarEntry>;
+}
+
+export interface RentalCalendarItem {
+  rentalItemId: number;
+  name: string;
+  itemType: RentalItemType;
+  itemTypeLabel: string;
+  totalStock: number;
+  calendar: Record<string, RentalCalendarEntry>;
+}
+
+export interface RentalCalendarBulkData {
+  year: number;
+  month: number;
+  items: RentalCalendarItem[];
 }
 
 export interface RentalItemCreateRequest {

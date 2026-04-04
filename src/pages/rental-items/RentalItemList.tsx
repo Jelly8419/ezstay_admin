@@ -14,6 +14,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { rentalItemService } from '../../services/rentalItemService';
+import RentalCalendarSection from './RentalCalendarSection';
 
 // ─── 상수 ─────────────────────────────────────────────────────────────────────
 
@@ -58,13 +59,12 @@ const DEFAULT_SALES_TYPE: Record<RentalItemType, SalesType> = {
 
 function getStatusBadge(item: RentalItem) {
   if (!item.isActive) return <Badge variant="default">비활성</Badge>;
-  if (item.isOutOfStock) return <Badge variant="danger">품절</Badge>;
   return <Badge variant="success">판매중</Badge>;
 }
 
 // ─── 타입 ─────────────────────────────────────────────────────────────────────
 
-type ModalType = 'create' | 'edit' | 'stock' | 'delete' | null;
+type ModalType = 'create' | 'edit' | 'delete' | null;
 
 // ─── 컴포넌트 ─────────────────────────────────────────────────────────────────
 
@@ -100,8 +100,6 @@ export default function RentalItemList() {
   // 상품 수정 폼
   const [editForm, setEditForm] = useState<RentalItemUpdateRequest>({});
 
-  // 재고 조정 폼
-  const [newAvailableStock, setNewAvailableStock] = useState(0);
 
   // ─── 데이터 로드 ────────────────────────────────────────────────────────────
 
@@ -174,12 +172,6 @@ export default function RentalItemList() {
     setModalType('edit');
   };
 
-  const openStock = (item: RentalItem) => {
-    setSelectedItem(item);
-    setNewAvailableStock(item.availableStock);
-    setModalType('stock');
-  };
-
   const openDelete = (item: RentalItem) => {
     setSelectedItem(item);
     setModalType('delete');
@@ -230,14 +222,6 @@ export default function RentalItemList() {
       alert('가격은 0 이상이어야 합니다.');
       return;
     }
-    if (editForm.totalStock !== undefined) {
-      const rentedStock = selectedItem.rentedStock;
-      if (editForm.totalStock < rentedStock) {
-        alert(`현재 ${rentedStock}개 대여 중입니다. ${rentedStock}개 이상으로만 설정 가능합니다.`);
-        return;
-      }
-    }
-
     setActionLoading(true);
     try {
       const body: RentalItemUpdateRequest = { ...editForm };
@@ -250,25 +234,6 @@ export default function RentalItemList() {
       await loadData();
     } catch {
       alert('상품 수정 중 오류가 발생했습니다.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleAdjustStock = async () => {
-    if (!selectedItem) return;
-    if (newAvailableStock < 0 || newAvailableStock > selectedItem.totalStock) {
-      alert(`가능 수량은 0 이상 총재고(${selectedItem.totalStock})개 이하여야 합니다.`);
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      await rentalItemService.adjustStock(selectedItem.id, newAvailableStock);
-      closeModal();
-      await loadData();
-    } catch {
-      alert('재고 조정 중 오류가 발생했습니다.');
     } finally {
       setActionLoading(false);
     }
@@ -347,25 +312,7 @@ export default function RentalItemList() {
       ),
     },
     {
-      key: 'rentedStock',
-      title: '사용중',
-      render: (_: any, item: RentalItem) => (
-        <span className={`text-sm tabular-nums ${item.rentedStock > 0 ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
-          {item.rentedStock}
-        </span>
-      ),
-    },
-    {
-      key: 'availableStock',
-      title: '가능수량',
-      render: (_: any, item: RentalItem) => (
-        <span className={`text-sm tabular-nums font-medium ${item.availableStock === 0 ? 'text-red-600' : 'text-gray-900'}`}>
-          {item.availableStock}
-        </span>
-      ),
-    },
-    {
-      key: 'isOutOfStock',
+      key: 'isActive',
       title: '상태',
       render: (_: any, item: RentalItem) => getStatusBadge(item),
     },
@@ -392,19 +339,10 @@ export default function RentalItemList() {
       title: '액션',
       render: (_: any, item: RentalItem) => (
         <div className="flex gap-1">
-          <Button size="sm" variant="secondary" onClick={() => openStock(item)}>
-            재고조정
-          </Button>
           <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
             수정
           </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => openDelete(item)}
-            disabled={item.rentedStock > 0}
-            title={item.rentedStock > 0 ? '대여 중인 수량이 있어 삭제 불가' : undefined}
-          >
+          <Button size="sm" variant="danger" onClick={() => openDelete(item)}>
             삭제
           </Button>
         </div>
@@ -423,7 +361,7 @@ export default function RentalItemList() {
 
       {/* 통계 카드 */}
       {stats.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}>
           {stats.map((stat) => (
             <Card key={stat.itemType} className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -441,23 +379,14 @@ export default function RentalItemList() {
                   <span className="text-gray-500">총재고</span>
                   <span className="font-medium">{stat.totalStock}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">사용중</span>
-                  <span className={stat.rentedStock > 0 ? 'text-orange-600 font-medium' : 'text-gray-700'}>
-                    {stat.rentedStock}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">가능</span>
-                  <span className={stat.availableStock === 0 ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
-                    {stat.availableStock}
-                  </span>
-                </div>
               </div>
             </Card>
           ))}
         </div>
       )}
+
+      {/* 렌탈 재고 캘린더 현황 */}
+      <RentalCalendarSection />
 
       {/* 필터 */}
       <Card className="p-4">
@@ -658,15 +587,10 @@ export default function RentalItemList() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  총 재고
-                  <span className="ml-1 text-xs text-orange-500 font-normal">
-                    (현재 대여중: {selectedItem.rentedStock}개)
-                  </span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">총 재고</label>
                 <input
                   type="number"
-                  min={selectedItem.rentedStock}
+                  min={0}
                   value={editForm.totalStock ?? 0}
                   onChange={(e) => setEditForm((f) => ({ ...f, totalStock: Number(e.target.value) }))}
                   className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -711,60 +635,6 @@ export default function RentalItemList() {
         )}
       </Modal>
 
-      {/* ── 재고 조정 모달 ── */}
-      <Modal
-        isOpen={modalType === 'stock'}
-        onClose={closeModal}
-        title="재고 수량 조정"
-      >
-        {selectedItem && (
-          <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-              <div className="font-medium text-gray-800">{selectedItem.name}</div>
-              <div className="grid grid-cols-3 gap-2 text-center mt-2">
-                <div className="bg-white rounded border px-2 py-2">
-                  <div className="text-xs text-gray-400 mb-0.5">총재고</div>
-                  <div className="font-semibold">{selectedItem.totalStock}</div>
-                </div>
-                <div className="bg-white rounded border px-2 py-2">
-                  <div className="text-xs text-gray-400 mb-0.5">사용중</div>
-                  <div className="font-semibold text-orange-600">{selectedItem.rentedStock}</div>
-                </div>
-                <div className="bg-white rounded border px-2 py-2">
-                  <div className="text-xs text-gray-400 mb-0.5">현재 가능</div>
-                  <div className={`font-semibold ${selectedItem.availableStock === 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {selectedItem.availableStock}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-xs text-yellow-700">
-              분실, 파손 등 예외 상황에서 실제 가용 재고를 강제로 맞출 때 사용합니다.
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                새 가용 재고 수량
-                <span className="ml-1 text-xs text-gray-400 font-normal">(0 ~ {selectedItem.totalStock})</span>
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={selectedItem.totalStock}
-                value={newAvailableStock}
-                onChange={(e) => setNewAvailableStock(Number(e.target.value))}
-                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="secondary" onClick={closeModal} disabled={actionLoading}>취소</Button>
-              <Button variant="primary" onClick={handleAdjustStock} disabled={actionLoading}>
-                {actionLoading ? '저장 중...' : '조정 저장'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
       {/* ── 삭제 확인 모달 ── */}
       <Modal
         isOpen={modalType === 'delete'}
@@ -773,33 +643,20 @@ export default function RentalItemList() {
       >
         {selectedItem && (
           <div className="space-y-4">
-            {selectedItem.rentedStock > 0 ? (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-700 space-y-1">
-                <div className="font-semibold">삭제할 수 없습니다</div>
-                <div>현재 <strong>{selectedItem.rentedStock}개</strong>가 대여/판매 중입니다.</div>
-                <div className="text-xs mt-1">게스트 노출만 차단하려면 비활성화를 사용하세요.</div>
-              </div>
-            ) : (
-              <>
-                <div className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-800">{selectedItem.name}</span> 상품을 삭제하시겠습니까?
-                </div>
-                <div className="text-xs text-gray-400">이 작업은 되돌릴 수 없습니다.</div>
-              </>
-            )}
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold text-gray-800">{selectedItem.name}</span> 상품을 삭제하시겠습니까?
+            </div>
+            <div className="text-xs text-gray-400">이 작업은 되돌릴 수 없습니다.</div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="secondary" onClick={closeModal} disabled={actionLoading}>
-                {selectedItem.rentedStock > 0 ? '닫기' : '취소'}
+              <Button variant="secondary" onClick={closeModal} disabled={actionLoading}>취소</Button>
+              <Button variant="danger" onClick={handleDelete} disabled={actionLoading}>
+                {actionLoading ? '삭제 중...' : '삭제'}
               </Button>
-              {selectedItem.rentedStock === 0 && (
-                <Button variant="danger" onClick={handleDelete} disabled={actionLoading}>
-                  {actionLoading ? '삭제 중...' : '삭제'}
-                </Button>
-              )}
             </div>
           </div>
         )}
       </Modal>
+
     </div>
   );
 }
