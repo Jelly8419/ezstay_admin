@@ -16,14 +16,34 @@ import { paymentService } from '../../services/paymentService';
 
 // ── 공통 유틸 ──
 
-/** 결제수단 뱃지 (API가 한글/영문 혼용으로 내려줌) */
-const getMethodBadge = (method: string) => {
-  const label = method.toUpperCase();
-  const isCard = label === 'CARD' || label === 'CREDIT_CARD' || method === '카드';
-  const cls = isCard
+/** 결제수단 한글 변환 (API 가이드 v2 기준) */
+const formatPaymentMethod = (method: string, easyPayProvider?: string | null): string => {
+  if (method === 'EASY_PAY' && easyPayProvider) {
+    const labels: Record<string, string> = { KAKAO: '카카오페이', NAVER: '네이버페이', PAYCO: '페이코' };
+    return labels[easyPayProvider] ?? '간편결제';
+  }
+  const labels: Record<string, string> = {
+    CARD: '신용카드',
+    CREDIT_CARD: '신용카드',
+    VIRTUAL_ACCOUNT: '가상계좌',
+    TRANSFER: '계좌이체',
+    MOBILE: '휴대폰',
+    EASY_PAY: '간편결제',
+    ORIGINAL_PAYMENT: '원결제수단',
+  };
+  return labels[method] ?? method;
+};
+
+/** 결제수단 뱃지 */
+const getMethodBadge = (method: string, easyPayProvider?: string | null) => {
+  const display = formatPaymentMethod(method, easyPayProvider);
+  const isEasyPay = method === 'EASY_PAY';
+  const isCard = method === 'CARD' || method === 'CREDIT_CARD';
+  const cls = isEasyPay
+    ? 'bg-purple-100 text-purple-800'
+    : isCard
     ? 'bg-blue-100 text-blue-800'
     : 'bg-gray-100 text-gray-800';
-  const display = isCard ? '카드' : method;
   return (
     <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${cls}`}>
       {display}
@@ -190,7 +210,7 @@ function OrderPaymentTab() {
     {
       key: 'paymentMethod',
       title: '결제수단',
-      render: (value: string) => getMethodBadge(value),
+      render: (value: string, record: PaymentSummaryItem) => getMethodBadge(value, record.easyPayProvider),
       width: '8%',
     },
     {
@@ -362,7 +382,7 @@ function PaymentLogTab() {
     {
       key: 'paymentMethod',
       title: '결제 수단',
-      render: (value: string) => getMethodBadge(value),
+      render: (value: string, record: PaymentLog) => getMethodBadge(value, record.easyPayProvider),
       width: '9%',
     },
     {

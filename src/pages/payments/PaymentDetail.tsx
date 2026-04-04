@@ -14,6 +14,24 @@ import { paymentService } from '../../services/paymentService';
 import { refundService } from '../../services/refundService';
 import { rentalOrderService } from '../../services/rentalOrderService';
 
+/** 결제수단 한글 변환 (API 가이드 v2 기준) */
+const formatPaymentMethod = (method: string, easyPayProvider?: string | null): string => {
+  if (method === 'EASY_PAY' && easyPayProvider) {
+    const labels: Record<string, string> = { KAKAO: '카카오페이', NAVER: '네이버페이', PAYCO: '페이코' };
+    return labels[easyPayProvider] ?? '간편결제';
+  }
+  const labels: Record<string, string> = {
+    CARD: '신용카드',
+    CREDIT_CARD: '신용카드',
+    VIRTUAL_ACCOUNT: '가상계좌',
+    TRANSFER: '계좌이체',
+    MOBILE: '휴대폰',
+    EASY_PAY: '간편결제',
+    ORIGINAL_PAYMENT: '원결제수단',
+  };
+  return labels[method] ?? method;
+};
+
 const getTransactionTypeBadge = (type: string) => {
   const map: Record<string, 'success' | 'warning' | 'danger'> = {
     '결제완료': 'success',
@@ -96,6 +114,7 @@ export default function PaymentDetail() {
         ...item,
         transactionType: item.transactionType ?? item.type ?? '',
         paymentMethod: item.paymentMethod ?? item.method ?? '',
+        easyPayProvider: item.easyPayProvider ?? null,
       }));
       setLogs(timeline);
 
@@ -382,7 +401,7 @@ export default function PaymentDetail() {
                   </div>
                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
                     <span>상품: {log.productType}</span>
-                    <span>결제수단: {log.paymentMethod}</span>
+                    <span>결제수단: {formatPaymentMethod(log.paymentMethod, log.easyPayProvider)}</span>
                     {log.userName && <span>이용자: {log.userName}</span>}
                     {log.roomName && <span>방: {log.roomName}</span>}
                     {log.actor && <span>처리주체: {log.actor}</span>}

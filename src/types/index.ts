@@ -347,6 +347,7 @@ export interface PaymentSummaryItem {
   refundedAmount: number;
   currentBalance: number;
   paymentMethod: string;
+  easyPayProvider: string | null;
   paymentStatus: string;
   contractStatus: string;
   contractStatusLabel: string;
@@ -373,6 +374,8 @@ export interface PaymentTimelineEvent {
   description: string;
   actor: string;
   pgStatus: string | null;
+  method?: string;
+  easyPayProvider?: string | null;
 }
 
 // 결제 상세 - 계약 정보
@@ -454,6 +457,7 @@ export interface PaymentLog {
   occurredAt: string;
   transactionType: string;
   paymentMethod: string;
+  easyPayProvider?: string | null;
   productType: string;
   paymentType?: PaymentType;
   amount: number;
