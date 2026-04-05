@@ -133,15 +133,6 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          {/* 테스트 계정 정보 */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center mb-2">테스트 계정</p>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p>• admin / admin1234! (슈퍼관리자)</p>
-              <p>• manager / admin1234! (일반관리자)</p>
-              <p>• csadmin / admin1234! (CS관리자)</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
