@@ -1097,6 +1097,7 @@ export interface RetrievalStatusUpdateResponse {
 export type DepositHoldStatus =
   | 'REQUESTED'
   | 'APPROVED'
+  | 'REJECTED'
   | 'HOST_SUBMITTED'
   | 'AGREED'
   | 'AUTO_REFUNDED'
@@ -1114,16 +1115,33 @@ export interface DepositHold {
   holdRequestedAt: string;
   holdApprovedAt: string | null;
   holdStatus: DepositHoldStatus;
+  rejectedReason: string | null;
+  rejectedAt: string | null;
 }
 
 // GET /api/admin/deposits/:contractId 상세
+export type DepositAgreementStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'SUBMITTED'
+  | 'ACCEPTED'
+  | 'AUTO_RETURNED';
+
 export interface DepositAgreement {
   id: number;
-  deductAmount: number;
-  agreementText: string;
-  status: string;
-  submittedAt: string;
+  status: DepositAgreementStatus;
+  statusLabel: string;
+  holdReason: string;
+  requestedAt: string;
+  rejectedAt: string | null;
+  rejectedReason: string | null;
+  adminApprovedAt: string | null;
+  deductAmount: number | null;
+  agreementText: string | null;
+  submittedAt: string | null;
   acceptedAt: string | null;
+  createdAt: string;
 }
 
 export interface DepositHoldLog {
@@ -1148,7 +1166,7 @@ export interface DepositHoldDetail {
   holdReason: string;
   holdRequestedAt: string;
   holdApprovedAt: string | null;
-  depositAgreement: DepositAgreement | null;
+  depositAgreements: DepositAgreement[];
   refundableDeposit: number;
   depositStatus: string;
   logs: DepositHoldLog[];

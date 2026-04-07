@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { DepositHoldDetail, DepositHoldStatus } from '../../types';
+import type { DepositHoldDetail, DepositHoldStatus, DepositAgreement, DepositAgreementStatus } from '../../types';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -11,16 +11,20 @@ import { depositHoldService } from '../../services/depositHoldService';
 const STATUS_MAP: Record<DepositHoldStatus, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
   REQUESTED:      { variant: 'warning', label: '보류 신청' },
   APPROVED:       { variant: 'info',    label: '승인 완료' },
+  REJECTED:       { variant: 'danger',  label: '보류 반려' },
   HOST_SUBMITTED: { variant: 'warning', label: '차감 내용 제출' },
   AGREED:         { variant: 'success', label: '게스트 동의' },
   AUTO_REFUNDED:  { variant: 'default', label: '자동 전액 반환' },
   REFUND_FAILED:  { variant: 'danger',  label: '환불 실패' },
 };
 
-const AGREEMENT_STATUS_MAP: Record<string, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
-  SUBMITTED: { variant: 'warning', label: '제출됨 (게스트 동의 대기)' },
-  ACCEPTED:  { variant: 'success', label: '게스트 동의 완료' },
-  REJECTED:  { variant: 'danger',  label: '게스트 거절' },
+const AGREEMENT_STATUS_MAP: Record<DepositAgreementStatus, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
+  REQUESTED:     { variant: 'warning', label: '관리자 검토 대기' },
+  APPROVED:      { variant: 'info',    label: '관리자 승인' },
+  REJECTED:      { variant: 'danger',  label: '관리자 반려' },
+  SUBMITTED:     { variant: 'warning', label: '제출됨 (게스트 동의 대기)' },
+  ACCEPTED:      { variant: 'success', label: '게스트 동의 완료' },
+  AUTO_RETURNED: { variant: 'default', label: '자동 전액 반환' },
 };
 
 const LOG_ACTOR_LABEL: Record<string, string> = {
@@ -122,6 +126,11 @@ export default function DepositHoldDetailPage() {
 
   const statusCfg = STATUS_MAP[detail.holdStatus];
 
+  // 합의 이력에서 차감 정보가 있는 최신 항목
+  const latestAgreementWithAmount = detail.depositAgreements.find(
+    (a) => a.deductAmount != null
+  );
+
   return (
     <div className="space-y-6">
       {/* 헤더 */}
@@ -174,7 +183,7 @@ export default function DepositHoldDetailPage() {
           <div className="p-3 bg-orange-50 rounded-lg text-center">
             <p className="text-xs text-gray-500 mb-1">차감 요청액</p>
             <p className="text-lg font-bold text-orange-600">
-              {detail.depositAgreement ? formatCurrency(detail.depositAgreement.deductAmount) : '-'}
+              {latestAgreementWithAmount ? formatCurrency(latestAgreementWithAmount.deductAmount!) : '-'}
             </p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg text-center">
@@ -192,33 +201,69 @@ export default function DepositHoldDetailPage() {
         </div>
       </Card>
 
-      {/* 차감 합의 정보 */}
-      {detail.depositAgreement && (
+      {/* 합의 이력 */}
+      {detail.depositAgreements.length > 0 && (
         <Card>
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="text-lg font-semibold">차감 합의 정보</h2>
-            {(() => {
-              const cfg = AGREEMENT_STATUS_MAP[detail.depositAgreement!.status];
-              return cfg ? <Badge variant={cfg.variant}>{cfg.label}</Badge> : null;
-            })()}
-          </div>
-          <div className="space-y-3 text-sm">
-            <div>
-              <span className="text-gray-500">합의 내용:</span>
-              <p className="mt-1 p-3 bg-gray-50 rounded-lg">{detail.depositAgreement.agreementText}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-              <div><span className="text-gray-500">제출일:</span> <span className="ml-2">{formatDateTime(detail.depositAgreement.submittedAt)}</span></div>
-              <div>
-                <span className="text-gray-500">동의일:</span>
-                <span className="ml-2">{detail.depositAgreement.acceptedAt ? formatDateTime(detail.depositAgreement.acceptedAt) : '-'}</span>
-              </div>
-            </div>
+          <h2 className="text-lg font-semibold mb-4">합의 이력</h2>
+          <div className="space-y-4">
+            {detail.depositAgreements.map((agreement: DepositAgreement, index: number) => {
+              const cfg = AGREEMENT_STATUS_MAP[agreement.status];
+              return (
+                <div
+                  key={agreement.id}
+                  className={`border rounded-lg p-4 ${index === 0 ? 'border-gray-300 bg-gray-50' : 'border-gray-200'}`}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    {index === 0 && (
+                      <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-0.5 rounded">최신</span>
+                    )}
+                    <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                    <span className="text-xs text-gray-400 ml-auto">신청: {formatDateTime(agreement.requestedAt)}</span>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div><span className="text-gray-500">보류 사유:</span> <span className="ml-2">{agreement.holdReason}</span></div>
+
+                    {agreement.status === 'REJECTED' && agreement.rejectedReason && (
+                      <div className="p-2.5 bg-red-50 rounded text-red-700">
+                        <span className="font-medium">반려 사유:</span> {agreement.rejectedReason}
+                        {agreement.rejectedAt && (
+                          <span className="block text-xs text-red-500 mt-0.5">반려일시: {formatDateTime(agreement.rejectedAt)}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {agreement.adminApprovedAt && (
+                      <div><span className="text-gray-500">관리자 승인일:</span> <span className="ml-2">{formatDateTime(agreement.adminApprovedAt)}</span></div>
+                    )}
+
+                    {agreement.deductAmount != null && (
+                      <div><span className="text-gray-500">차감 요청액:</span> <span className="ml-2 font-semibold text-orange-600">{formatCurrency(agreement.deductAmount)}</span></div>
+                    )}
+
+                    {agreement.agreementText && (
+                      <div>
+                        <span className="text-gray-500">합의 내용:</span>
+                        <p className="mt-1 p-3 bg-white border border-gray-200 rounded">{agreement.agreementText}</p>
+                      </div>
+                    )}
+
+                    {agreement.submittedAt && (
+                      <div><span className="text-gray-500">제출일:</span> <span className="ml-2">{formatDateTime(agreement.submittedAt)}</span></div>
+                    )}
+
+                    {agreement.acceptedAt && (
+                      <div><span className="text-gray-500">게스트 동의일:</span> <span className="ml-2">{formatDateTime(agreement.acceptedAt)}</span></div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}
 
-      {/* 관리자 액션 */}
+      {/* 관리자 액션 — 보류 신청 대기 */}
       {detail.holdStatus === 'REQUESTED' && (
         <Card>
           <h2 className="text-lg font-semibold mb-4">관리자 액션</h2>
@@ -229,7 +274,27 @@ export default function DepositHoldDetailPage() {
         </Card>
       )}
 
-      {/* 환불 실패 — 재시도 액션 */}
+      {/* 관리자 액션 — 보류 반려됨 */}
+      {detail.holdStatus === 'REJECTED' && (() => {
+        const latest = detail.depositAgreements[0];
+        return (
+          <Card>
+            <h2 className="text-lg font-semibold mb-3">처리 결과</h2>
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800 space-y-1">
+              <p className="font-medium">보류 신청이 반려되었습니다.</p>
+              {latest?.rejectedReason && (
+                <p>반려 사유: {latest.rejectedReason}</p>
+              )}
+              {latest?.rejectedAt && (
+                <p className="text-red-600">반려일시: {formatDateTime(latest.rejectedAt)}</p>
+              )}
+              <p className="text-gray-600 pt-1">호스트가 보류를 재신청할 수 있습니다. 퇴실 확인 카운트다운이 재개됩니다.</p>
+            </div>
+          </Card>
+        );
+      })()}
+
+      {/* 관리자 액션 — 환불 실패 */}
       {detail.holdStatus === 'REFUND_FAILED' && (
         <Card>
           <h2 className="text-lg font-semibold mb-4">관리자 액션</h2>

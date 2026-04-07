@@ -14,6 +14,7 @@ import { SearchBar } from '../../components/common/SearchBar';
 const STATUS_MAP: Record<DepositHoldStatus, { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }> = {
   REQUESTED:      { variant: 'warning', label: '보류 신청' },
   APPROVED:       { variant: 'info',    label: '승인 완료' },
+  REJECTED:       { variant: 'danger',  label: '보류 반려' },
   HOST_SUBMITTED: { variant: 'warning', label: '차감 내용 제출' },
   AGREED:         { variant: 'success', label: '게스트 동의' },
   AUTO_REFUNDED:  { variant: 'default', label: '자동 전액 반환' },
@@ -28,6 +29,7 @@ const getStatusBadge = (status: DepositHoldStatus) => {
 const STATUS_OPTIONS: { value: DepositHoldStatus | 'all'; label: string }[] = [
   { value: 'all',            label: '전체' },
   { value: 'REQUESTED',      label: '보류 신청' },
+  { value: 'REJECTED',       label: '보류 반려' },
   { value: 'APPROVED',       label: '승인 완료' },
   { value: 'HOST_SUBMITTED', label: '차감 내용 제출' },
   { value: 'AGREED',         label: '게스트 동의' },
@@ -207,8 +209,15 @@ export default function DepositHoldList() {
       key: 'holdReason',
       title: '사유',
       width: '16%',
-      render: (value: string) => (
-        <span className="truncate block max-w-[140px]" title={value}>{value}</span>
+      render: (value: string, hold: DepositHold) => (
+        <div className="max-w-[140px]">
+          <span className="truncate block" title={value}>{value}</span>
+          {hold.holdStatus === 'REJECTED' && hold.rejectedReason && (
+            <span className="truncate block text-xs text-red-500 mt-0.5" title={hold.rejectedReason}>
+              반려: {hold.rejectedReason}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -221,7 +230,14 @@ export default function DepositHoldList() {
       key: 'holdRequestedAt',
       title: '신청일',
       width: '9%',
-      render: (value: string) => formatDate(value),
+      render: (value: string, hold: DepositHold) => (
+        <div>
+          <span>{formatDate(value)}</span>
+          {hold.holdStatus === 'REJECTED' && hold.rejectedAt && (
+            <span className="block text-xs text-red-500 mt-0.5">{formatDate(hold.rejectedAt)}</span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'actions',
