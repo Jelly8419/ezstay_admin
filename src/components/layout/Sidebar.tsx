@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   Users,
   Home,
@@ -12,11 +12,12 @@ import {
   Settings,
   LayoutDashboard,
   FileText,
-  ShieldCheck,
   Receipt,
   Send,
   Package,
   ClipboardList,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 
 interface NavItem {
@@ -49,7 +50,11 @@ const navItems: NavItem[] = [
   {
     path: '/contracts',
     label: '계약 관리',
-    icon: <Calendar className="w-5 h-5" />
+    icon: <Calendar className="w-5 h-5" />,
+    children: [
+      { path: '/contracts', label: '계약 목록' },
+      { path: '/contracts/deposits', label: '보증금 관리' },
+    ]
   },
   {
     path: '/payments',
@@ -65,11 +70,6 @@ const navItems: NavItem[] = [
     path: '/payouts',
     label: '지급 관리',
     icon: <Banknote className="w-5 h-5" />
-  },
-  {
-    path: '/deposit-holds',
-    label: '보증금 보류',
-    icon: <ShieldCheck className="w-5 h-5" />
   },
   {
     path: '/rental-orders',
@@ -118,6 +118,44 @@ const navItems: NavItem[] = [
 ];
 
 export const Sidebar: React.FC = () => {
+  const location = useLocation();
+
+  // 현재 경로에 해당하는 부모 메뉴를 기본으로 열어둠
+  const getInitialOpenMenus = () => {
+    const open: Record<string, boolean> = {};
+    navItems.forEach((item) => {
+      if (item.children) {
+        const isChildActive = item.children.some(
+          (child) => location.pathname === child.path || location.pathname.startsWith(child.path + '/')
+        );
+        if (isChildActive) {
+          open[item.path] = true;
+        }
+      }
+    });
+    return open;
+  };
+
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(getInitialOpenMenus);
+
+  // 경로 변경 시 해당 메뉴 자동 열기
+  useEffect(() => {
+    navItems.forEach((item) => {
+      if (item.children) {
+        const isChildActive = item.children.some(
+          (child) => location.pathname === child.path || location.pathname.startsWith(child.path + '/')
+        );
+        if (isChildActive) {
+          setOpenMenus((prev) => ({ ...prev, [item.path]: true }));
+        }
+      }
+    });
+  }, [location.pathname]);
+
+  const toggleMenu = (path: string) => {
+    setOpenMenus((prev) => ({ ...prev, [path]: !prev[path] }));
+  };
+
   return (
     <aside className="w-64 bg-gray-900 text-white h-screen flex flex-col sticky top-0 overflow-y-auto">
       {/* Logo */}
@@ -127,44 +165,76 @@ export const Sidebar: React.FC = () => {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => (
-          <div key={item.path}>
-            <NavLink
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`
-              }
-            >
-              {item.icon}
-              <span className="font-medium">{item.label}</span>
-            </NavLink>
+        {navItems.map((item) => {
+          const isOpen = openMenus[item.path] ?? false;
+          const hasChildren = !!item.children;
 
-            {/* Sub-menu */}
-            {item.children && (
-              <div className="ml-8 mt-1 space-y-1">
-                {item.children.map((child) => (
-                  <NavLink
-                    key={child.path}
-                    to={child.path}
-                    className={({ isActive }) =>
-                      `block px-4 py-2 rounded-lg text-sm transition-colors ${
-                        isActive
-                          ? 'bg-gray-800 text-white'
-                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                      }`
-                    }
-                  >
-                    {child.label}
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+          // 부모 메뉴가 활성 상태인지: 자식 중 하나가 현재 경로일 때
+          const isParentActive = hasChildren
+            ? item.children!.some(
+                (child) => location.pathname === child.path || location.pathname.startsWith(child.path + '/')
+              )
+            : false;
+
+          return (
+            <div key={item.path}>
+              {hasChildren ? (
+                <button
+                  onClick={() => toggleMenu(item.path)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    isParentActive
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
+                >
+                  {item.icon}
+                  <span className="font-medium flex-1 text-left">{item.label}</span>
+                  {isOpen
+                    ? <ChevronDown className="w-4 h-4 text-gray-400" />
+                    : <ChevronRight className="w-4 h-4 text-gray-400" />
+                  }
+                </button>
+              ) : (
+                <NavLink
+                  to={item.path}
+                  end={item.path === '/'}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-primary-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`
+                  }
+                >
+                  {item.icon}
+                  <span className="font-medium">{item.label}</span>
+                </NavLink>
+              )}
+
+              {/* Sub-menu (토글) */}
+              {hasChildren && isOpen && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {item.children!.map((child) => (
+                    <NavLink
+                      key={child.path}
+                      to={child.path}
+                      end
+                      className={({ isActive }) =>
+                        `block px-4 py-2 rounded-lg text-sm transition-colors ${
+                          isActive
+                            ? 'bg-gray-700 text-white'
+                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                        }`
+                      }
+                    >
+                      {child.label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Settings */}

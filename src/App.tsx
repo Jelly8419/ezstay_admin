@@ -68,6 +68,8 @@ function App() {
               {/* 계약 관리 */}
               <Route path="contracts" element={<ContractList />} />
               <Route path="contracts/:id" element={<ContractDetail />} />
+              <Route path="contracts/deposits" element={<DepositHoldList />} />
+              <Route path="contracts/deposits/:contractId" element={<DepositHoldDetailPage />} />
 
               {/* 결제 관리 */}
               <Route path="payments" element={<PaymentList />} />
@@ -80,10 +82,6 @@ function App() {
               {/* 지급 관리 */}
               <Route path="payouts" element={<PayoutList />} />
               <Route path="payouts/:payoutId" element={<PayoutDetail />} />
-
-              {/* 보증금 보류 관리 */}
-              <Route path="deposit-holds" element={<DepositHoldList />} />
-              <Route path="deposit-holds/:contractId" element={<DepositHoldDetailPage />} />
 
               {/* 옵션상품 관리 */}
               <Route path="rental-orders" element={<RentalOrderList />} />
