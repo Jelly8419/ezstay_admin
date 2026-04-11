@@ -24,11 +24,11 @@ const ORDER_STATUS_MAP: Record<
   RentalOrderStatus,
   { variant: 'warning' | 'success' | 'danger' | 'default' | 'info'; label: string }
 > = {
-  PENDING:        { variant: 'default', label: '미결제' },
-  PAID:           { variant: 'success', label: '결제 완료' },
-  PARTIAL_REFUND: { variant: 'info',    label: '부분 환불' },
-  FULL_REFUND:    { variant: 'danger',  label: '전액 환불' },
-  CANCELLED:      { variant: 'danger',  label: '취소' },
+  PENDING:         { variant: 'default', label: '미결제' },
+  PAID:            { variant: 'success', label: '결제 완료' },
+  PARTIAL_REFUND:  { variant: 'info',    label: '부분 환불' },
+  FULLY_REFUNDED:  { variant: 'danger',  label: '전액 환불' },
+  CANCELLED:       { variant: 'danger',  label: '취소' },
 };
 
 const DELIVERY_FILTER_OPTIONS: { value: DeliveryStatus | 'all'; label: string }[] = [
@@ -135,7 +135,7 @@ export default function RentalOrderList() {
 
   const columns = [
     {
-      key: 'rentalOrderId' as keyof RentalOrder,
+      key: 'orderId' as keyof RentalOrder,
       title: '주문번호',
       width: '14%',
       render: (value: string) => (
@@ -324,7 +324,7 @@ export default function RentalOrderList() {
             <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
               <div className="flex justify-between">
                 <span className="text-gray-500">주문번호</span>
-                <span className="font-mono text-xs">{selectedOrder.rentalOrderId}</span>
+                <span className="font-mono text-xs">{selectedOrder.orderId}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">게스트</span>

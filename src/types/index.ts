@@ -756,7 +756,7 @@ export interface RefundDetail {
 // 렌탈 주문 관련 타입
 // ========================================
 
-export type RentalOrderStatus = 'PENDING' | 'PAID' | 'PARTIAL_REFUND' | 'FULL_REFUND' | 'CANCELLED';
+export type RentalOrderStatus = 'PENDING' | 'PAID' | 'PARTIAL_REFUND' | 'FULLY_REFUNDED' | 'CANCELLED';
 export type DeliveryStatus = 'PENDING' | 'IN_TRANSIT' | 'DELIVERED';
 export type RentalItemStatus = 'ACTIVE' | 'CANCELLED';
 
@@ -776,7 +776,7 @@ export interface RentalOrderItem {
 
 export interface RentalOrder {
   id: number;
-  rentalOrderId: string;
+  orderId: string;
   orderType: string;
   status: RentalOrderStatus;
   deliveryStatus: DeliveryStatus;
