@@ -412,8 +412,8 @@ function PaymentLogTab() {
     {
       key: 'orderId',
       title: '주문번호',
-      render: (value: string) => (
-        <span className="font-mono text-sm">{value || '-'}</span>
+      render: (value: string, record: PaymentLog) => (
+        <span className="font-mono text-sm">{record.rentalOrderId || value || '-'}</span>
       ),
       width: '10%',
     },
