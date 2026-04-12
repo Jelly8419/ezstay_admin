@@ -930,13 +930,22 @@ export interface RejectCancelResponse {
 // ========================================
 
 export type RequesterRole = 'HOST' | 'GUEST';
+export type CancelRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface CancelRequestContract {
+  cancelRequestId: number;
   contractId: number;
-  status: 'CANCEL_REQUESTED';
+  contractStatus: string;
+  status: CancelRequestStatus;
   requesterRole: RequesterRole;
   cancelReason: string;
   requestedAt: string;
+  processedAt: string | null;
+  adminNote: string | null;
+  processedBy: {
+    id: number;
+    name: string;
+  } | null;
   checkInDate: string;
   checkOutDate: string;
   finalTotalAmount: number;
@@ -963,6 +972,7 @@ export interface CancelRequestContract {
 export interface CancelRequestListParams {
   page?: number;
   limit?: number;
+  status?: CancelRequestStatus;
   requesterRole?: RequesterRole;
   search?: string;
   startDate?: string;
@@ -971,7 +981,7 @@ export interface CancelRequestListParams {
 }
 
 export interface CancelRequestListResponse {
-  contracts: CancelRequestContract[];
+  cancelRequests: CancelRequestContract[];
   pagination: Pagination;
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { CancelRequestContract, RequesterRole, Pagination as PaginationType } from '../../types';
+import type { CancelRequestContract, CancelRequestStatus, RequesterRole, Pagination as PaginationType } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 import { Table } from '../../components/ui/Table';
@@ -12,10 +12,17 @@ import { reservationService } from '../../services/reservationService';
 
 type ActionType = 'approve' | 'reject' | null;
 
+const STATUS_MAP: Record<CancelRequestStatus, { variant: 'warning' | 'success' | 'danger'; label: string }> = {
+  PENDING:  { variant: 'warning', label: '대기 중' },
+  APPROVED: { variant: 'success', label: '승인됨' },
+  REJECTED: { variant: 'danger',  label: '거절됨' },
+};
+
 export default function CancelRequestList() {
-  const [contracts, setContracts] = useState<CancelRequestContract[]>([]);
+  const [items, setItems] = useState<CancelRequestContract[]>([]);
   const [pagination, setPagination] = useState<PaginationType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CancelRequestStatus | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<RequesterRole | 'all'>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -35,17 +42,18 @@ export default function CancelRequestList() {
       const response = await reservationService.getCancelRequests({
         page: currentPage,
         limit: 20,
+        ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(roleFilter !== 'all' && { requesterRole: roleFilter }),
         ...(searchTerm && { search: searchTerm }),
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
       });
-      setContracts(response.contracts || []);
+      setItems(response.cancelRequests || []);
       setPagination(response.pagination || null);
     } catch (err) {
       console.error('취소 요청 목록 로드 실패:', err);
       setError('취소 요청 목록을 불러오는데 실패했습니다.');
-      setContracts([]);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -53,7 +61,7 @@ export default function CancelRequestList() {
 
   useEffect(() => {
     loadData();
-  }, [currentPage, roleFilter]);
+  }, [currentPage, statusFilter, roleFilter]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -70,7 +78,10 @@ export default function CancelRequestList() {
     if (!selected) return;
     try {
       setActionLoading(true);
-      await reservationService.approveCancelRequest(selected.contractId, { withRefund: false, adminNote: adminNote || undefined });
+      await reservationService.approveCancelRequest(selected.contractId, {
+        withRefund: false,
+        adminNote: adminNote || undefined,
+      });
       closeModal();
       loadData();
     } catch {
@@ -84,7 +95,9 @@ export default function CancelRequestList() {
     if (!selected) return;
     try {
       setActionLoading(true);
-      await reservationService.rejectCancelRequest(selected.contractId, { adminNote: adminNote || undefined });
+      await reservationService.rejectCancelRequest(selected.contractId, {
+        adminNote: adminNote || undefined,
+      });
       closeModal();
       loadData();
     } catch {
@@ -96,17 +109,26 @@ export default function CancelRequestList() {
 
   const columns = [
     {
-      key: 'contractId',
-      title: '계약 ID',
+      key: 'cancelRequestId',
+      title: '요청 ID',
       width: '7%',
       render: (value: number) => (
         <span className="font-mono text-sm text-gray-700">#{value}</span>
       ),
     },
     {
+      key: 'status',
+      title: '처리 상태',
+      width: '8%',
+      render: (value: CancelRequestStatus) => {
+        const cfg = STATUS_MAP[value];
+        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+      },
+    },
+    {
       key: 'requesterRole',
       title: '요청자',
-      width: '8%',
+      width: '7%',
       render: (value: RequesterRole) => (
         <Badge variant={value === 'HOST' ? 'info' : 'success'}>
           {value === 'HOST' ? '호스트' : '게스트'}
@@ -138,9 +160,9 @@ export default function CancelRequestList() {
     {
       key: 'room',
       title: '방',
-      width: '14%',
+      width: '13%',
       render: (value: CancelRequestContract['room']) => (
-        <span className="truncate block max-w-[120px] text-sm" title={value.roomName}>
+        <span className="truncate block max-w-[110px] text-sm" title={value.roomName}>
           {value.roomName}
         </span>
       ),
@@ -148,9 +170,9 @@ export default function CancelRequestList() {
     {
       key: 'cancelReason',
       title: '취소 사유',
-      width: '18%',
+      width: '16%',
       render: (value: string) => (
-        <span className="truncate block max-w-[160px] text-sm text-gray-600" title={value}>
+        <span className="truncate block max-w-[140px] text-sm text-gray-600" title={value}>
           {value}
         </span>
       ),
@@ -158,7 +180,7 @@ export default function CancelRequestList() {
     {
       key: 'finalTotalAmount',
       title: '계약 금액',
-      width: '10%',
+      width: '9%',
       render: (value: number) => (
         <span className="font-semibold text-sm">{formatCurrency(value)}</span>
       ),
@@ -166,7 +188,7 @@ export default function CancelRequestList() {
     {
       key: 'requestedAt',
       title: '요청일',
-      width: '10%',
+      width: '9%',
       render: (value: string) => (
         <span className="text-sm">{formatDate(value)}</span>
       ),
@@ -174,33 +196,42 @@ export default function CancelRequestList() {
     {
       key: 'actions',
       title: '액션',
-      width: '11%',
-      render: (_: unknown, contract: CancelRequestContract) => (
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              setSelected(contract);
-              setActionType('approve');
-            }}
-          >
-            승인
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              setSelected(contract);
-              setActionType('reject');
-            }}
-          >
-            거절
-          </Button>
-        </div>
-      ),
+      width: '9%',
+      render: (_: unknown, item: CancelRequestContract) => {
+        if (item.status !== 'PENDING') {
+          return (
+            <span className="text-xs text-gray-400">
+              {item.processedBy?.name ?? '-'}
+            </span>
+          );
+        }
+        return (
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                setSelected(item);
+                setActionType('approve');
+              }}
+            >
+              승인
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                setSelected(item);
+                setActionType('reject');
+              }}
+            >
+              거절
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -230,6 +261,19 @@ export default function CancelRequestList() {
               />
             </div>
             <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as CancelRequestStatus | 'all');
+                setCurrentPage(1);
+              }}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="all">처리 상태 전체</option>
+              <option value="PENDING">대기 중</option>
+              <option value="APPROVED">승인됨</option>
+              <option value="REJECTED">거절됨</option>
+            </select>
+            <select
               value={roleFilter}
               onChange={(e) => {
                 setRoleFilter(e.target.value as RequesterRole | 'all');
@@ -251,7 +295,7 @@ export default function CancelRequestList() {
             </div>
           </div>
           <div className="text-sm text-gray-600">
-            총 {pagination?.total ?? contracts.length}건
+            총 {pagination?.total ?? items.length}건
           </div>
         </div>
       </Card>
@@ -266,10 +310,10 @@ export default function CancelRequestList() {
             <p className="text-red-500 mb-4">{error}</p>
             <Button onClick={loadData}>다시 시도</Button>
           </div>
-        ) : contracts.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="text-center py-12 text-gray-500">취소 요청 내역이 없습니다.</div>
         ) : (
-          <Table<CancelRequestContract> columns={columns} data={contracts} />
+          <Table<CancelRequestContract> columns={columns} data={items} />
         )}
       </Card>
 
@@ -299,14 +343,13 @@ export default function CancelRequestList() {
           <div className="p-3 bg-yellow-50 rounded-lg text-sm text-yellow-800">
             <strong>주의:</strong> 승인은 상태 변경만 처리합니다. 실제 PG 환불은 관리자가 별도 수동 처리해야 합니다.
           </div>
-          <div>
-            <div className="text-sm text-gray-600 mb-1">
-              계약 <strong>#{selected?.contractId}</strong>의 취소 요청을 승인하시겠습니까?
-            </div>
-            <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-600">
+            <span>요청 ID <strong>#{selected?.cancelRequestId}</strong> · 계약 <strong>#{selected?.contractId}</strong></span>
+            <br />
+            <span className="text-gray-500">
               요청자: {selected?.requesterRole === 'HOST' ? '호스트' : '게스트'} &nbsp;|&nbsp;
               게스트: {selected?.guest.name}
-            </div>
+            </span>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">관리자 메모 (선택)</label>
@@ -337,7 +380,7 @@ export default function CancelRequestList() {
       >
         <div className="space-y-3">
           <div className="text-sm text-gray-600">
-            계약 <strong>#{selected?.contractId}</strong>의 취소 요청을 거절하시겠습니까?
+            <span>요청 ID <strong>#{selected?.cancelRequestId}</strong> · 계약 <strong>#{selected?.contractId}</strong></span>
             <br />
             거절 시 계약 상태는 <strong>IN_PROGRESS(임대 중)</strong>으로 원복됩니다.
           </div>
