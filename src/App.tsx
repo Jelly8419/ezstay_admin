@@ -24,6 +24,7 @@ import { ActionLogs } from './pages/admin/ActionLogs';
 import { SupportCenter } from './pages/support/SupportCenter';
 import DepositHoldList from './pages/deposit-holds/DepositHoldList';
 import DepositHoldDetailPage from './pages/deposit-holds/DepositHoldDetail';
+import CancelRequestList from './pages/contracts/CancelRequestList';
 import RentalRefundList from './pages/rental-refund-requests/RentalRefundList';
 import RentalOrderList from './pages/rental-orders/RentalOrderList';
 import RentalItemList from './pages/rental-items/RentalItemList';
@@ -70,6 +71,7 @@ function App() {
               <Route path="contracts/:id" element={<ContractDetail />} />
               <Route path="contracts/deposits" element={<DepositHoldList />} />
               <Route path="contracts/deposits/:contractId" element={<DepositHoldDetailPage />} />
+              <Route path="contracts/cancel-requests" element={<CancelRequestList />} />
 
               {/* 결제 관리 */}
               <Route path="payments" element={<PaymentList />} />

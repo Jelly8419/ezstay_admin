@@ -54,6 +54,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/contracts', label: '계약 목록' },
       { path: '/contracts/deposits', label: '보증금 관리' },
+      { path: '/contracts/cancel-requests', label: '취소 요청 관리' },
     ]
   },
   {

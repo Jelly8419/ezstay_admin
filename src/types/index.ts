@@ -926,6 +926,56 @@ export interface RejectCancelResponse {
 }
 
 // ========================================
+// 취소 요청 목록 관련 타입
+// ========================================
+
+export type RequesterRole = 'HOST' | 'GUEST';
+
+export interface CancelRequestContract {
+  contractId: number;
+  status: 'CANCEL_REQUESTED';
+  requesterRole: RequesterRole;
+  cancelReason: string;
+  requestedAt: string;
+  checkInDate: string;
+  checkOutDate: string;
+  finalTotalAmount: number;
+  guest: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+    phoneNumber: string;
+  };
+  host: {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+  };
+  room: {
+    id: number;
+    roomName: string;
+    address: string;
+  };
+}
+
+export interface CancelRequestListParams {
+  page?: number;
+  limit?: number;
+  requesterRole?: RequesterRole;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface CancelRequestListResponse {
+  contracts: CancelRequestContract[];
+  pagination: Pagination;
+}
+
+// ========================================
 // 관리자 직접 환불 관련 타입
 // ========================================
 

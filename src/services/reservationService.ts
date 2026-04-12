@@ -13,6 +13,8 @@ import type {
   ApproveCancelResponse,
   RejectCancelRequest,
   RejectCancelResponse,
+  CancelRequestListParams,
+  CancelRequestListResponse,
 } from '../types';
 
 // 예약 목록 응답 타입
@@ -79,4 +81,19 @@ export const reservationService = {
       `/admin/reservations/${contractId}/reject-cancel-request`,
       data
     ),
+
+  /**
+   * 취소 요청 목록 조회
+   */
+  getCancelRequests: (params: CancelRequestListParams = {}) => {
+    const queryString = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, value]) => value !== undefined)
+        .map(([key, value]) => [key, String(value)])
+    ).toString();
+
+    return api.get<CancelRequestListResponse>(
+      `/admin/reservations/cancel-requests${queryString ? `?${queryString}` : ''}`
+    );
+  },
 };
