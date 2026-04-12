@@ -166,7 +166,7 @@ export default function DepositHoldList() {
       render: (value: number) => (
         <button
           className="text-primary-600 hover:underline font-mono text-sm"
-          onClick={(e) => { e.stopPropagation(); navigate(`/deposit-holds/${value}`); }}
+          onClick={(e) => { e.stopPropagation(); navigate(`/contracts/deposits/${value}`); }}
         >
           #{value}
         </button>
@@ -265,7 +265,7 @@ export default function DepositHoldList() {
           )}
           {!['REQUESTED'].includes(hold.holdStatus) && (
             <Button size="sm" variant="secondary"
-              onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(`/deposit-holds/${hold.contractId}`); }}>
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(`/contracts/deposits/${hold.contractId}`); }}>
               상세
             </Button>
           )}
