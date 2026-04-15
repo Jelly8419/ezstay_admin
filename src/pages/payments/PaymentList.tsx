@@ -135,8 +135,13 @@ function OrderPaymentTab() {
     {
       key: 'orderId',
       title: '주문번호',
-      render: (value: string) => (
-        <span className="font-mono text-sm">{value || '-'}</span>
+      render: (value: string, record: PaymentSummaryItem) => (
+        <div className="font-mono text-sm space-y-0.5">
+          <div>{value || '-'}</div>
+          {record.pgOrderNo && (
+            <div className="text-xs text-gray-400">PG: {record.pgOrderNo}</div>
+          )}
+        </div>
       ),
       width: '12%',
     },
@@ -413,7 +418,12 @@ function PaymentLogTab() {
       key: 'orderId',
       title: '주문번호',
       render: (value: string, record: PaymentLog) => (
-        <span className="font-mono text-sm">{record.rentalOrderId || value || '-'}</span>
+        <div className="font-mono text-sm space-y-0.5">
+          <div>{record.rentalOrderId || value || '-'}</div>
+          {record.pgOrderNo && (
+            <div className="text-xs text-gray-400">PG: {record.pgOrderNo}</div>
+          )}
+        </div>
       ),
       width: '10%',
     },

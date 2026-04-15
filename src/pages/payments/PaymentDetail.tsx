@@ -406,8 +406,11 @@ export default function PaymentDetail() {
                     {log.roomName && <span>방: {log.roomName}</span>}
                     {log.actor && <span>처리주체: {log.actor}</span>}
                     {log.rentalOrderId && <span>렌탈주문: {log.rentalOrderId}</span>}
+                    {log.pgOrderNo && (
+                      <span className="font-mono text-xs text-gray-400">PG주문번호: {log.pgOrderNo}</span>
+                    )}
                     {log.paymentKey && (
-                      <span className="font-mono text-xs text-gray-400">PG: {log.paymentKey}</span>
+                      <span className="font-mono text-xs text-gray-400">PG키: {log.paymentKey}</span>
                     )}
                   </div>
                 </div>

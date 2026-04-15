@@ -335,6 +335,7 @@ export type PaymentRowType = 'CONTRACT' | 'RENTAL';
 export interface PaymentSummaryItem {
   rowType: PaymentRowType;
   orderId: string;
+  pgOrderNo: string | null;
   contractId: number;
   rentalOrderId: string | null;
   paidAt: string | null;
@@ -374,6 +375,7 @@ export interface PaymentTimelineEvent {
   description: string;
   actor: string;
   pgStatus: string | null;
+  pgOrderNo?: string | null;
   method?: string;
   easyPayProvider?: string | null;
 }
@@ -454,6 +456,7 @@ export interface PaymentOrderDetail {
 export interface PaymentLog {
   id?: number;
   orderId: string;
+  pgOrderNo?: string | null;
   occurredAt: string;
   transactionType: string;
   paymentMethod: string;
