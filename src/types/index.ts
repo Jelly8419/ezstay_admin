@@ -1296,10 +1296,13 @@ export interface AlimtalkTemplateButton {
   linkPc?: string;
 }
 
+export type AlimtalkTargetRole = 'host' | 'guest' | 'both';
+
 export interface AlimtalkTemplate {
   eventName: string | null;
   tplCode: string | null;
   eventLabel: string | null;
+  targetRole: AlimtalkTargetRole | null;
   varMap: Record<string, string> | null;
   isActive: boolean;
   isLinked: boolean;

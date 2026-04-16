@@ -146,6 +146,7 @@ export const AlimtalkTemplates: React.FC = () => {
                 <th className="text-left py-3 px-4 font-medium text-gray-600">템플릿명</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-600">템플릿 코드</th>
                 {/* <th className="text-left py-3 px-4 font-medium text-gray-600">승인 상태</th> */}
+                <th className="text-left py-3 px-4 font-medium text-gray-600">발송대상</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-600">연동</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-600">변수 매핑</th>
               </tr>
@@ -188,6 +189,18 @@ export const AlimtalkTemplates: React.FC = () => {
                       )}
                     </td>
                     */}
+                    <td className="py-3 px-4">
+                      {template.targetRole ? (
+                        <Badge
+                          variant={template.targetRole === 'host' ? 'primary' : template.targetRole === 'guest' ? 'info' : 'warning'}
+                          size="sm"
+                        >
+                          {template.targetRole === 'host' ? '호스트' : template.targetRole === 'guest' ? '게스트' : '공통'}
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="py-3 px-4">
                       <Badge
                         variant={template.isLinked ? 'success' : 'default'}
@@ -252,6 +265,19 @@ export const AlimtalkTemplates: React.FC = () => {
               <div>
                 <p className="text-gray-500 mb-1">템플릿 코드</p>
                 <p className="font-mono">{selectedTemplate.tplCode || '-'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 mb-1">발송대상</p>
+                {selectedTemplate.targetRole ? (
+                  <Badge
+                    variant={selectedTemplate.targetRole === 'host' ? 'primary' : selectedTemplate.targetRole === 'guest' ? 'info' : 'warning'}
+                    size="sm"
+                  >
+                    {selectedTemplate.targetRole === 'host' ? '호스트' : selectedTemplate.targetRole === 'guest' ? '게스트' : '공통 (게스트+호스트)'}
+                  </Badge>
+                ) : (
+                  <span className="text-gray-400">-</span>
+                )}
               </div>
               <div>
                 <p className="text-gray-500 mb-1">승인 상태</p>
