@@ -541,6 +541,7 @@ export default function ContractDetail() {
                         {isRefund ? '-' : '+'}{formatCurrency(Math.abs(event.amount))}
                       </span>
                     </div>
+                    {event.orderId && <p className="text-xs text-gray-500">주문번호: {event.orderId}</p>}
                     {event.description && <p className="text-xs text-gray-700">상세: {event.description}</p>}
                     {event.actor && <p className="text-xs text-gray-500">처리주체: {event.actor}</p>}
                   </div>

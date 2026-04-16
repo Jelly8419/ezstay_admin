@@ -376,6 +376,7 @@ export interface PaymentTimelineEvent {
   actor: string;
   pgStatus: string | null;
   pgOrderNo?: string | null;
+  orderId?: string | null;
   method?: string;
   easyPayProvider?: string | null;
 }
