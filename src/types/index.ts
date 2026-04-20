@@ -1739,3 +1739,113 @@ export interface NotificationRecoverResponse {
   type: NotificationMissingType;
   fireAt: string;
 }
+
+// ============ 프로모션 이벤트 관리 ============
+export type PromotionTargetRole = 'HOST' | 'GUEST';
+export type PromotionBenefitType = 'HOST_FEE_WAIVER' | 'GUEST_DISCOUNT';
+export type PromotionApplyTrigger = 'CONTRACT' | 'SETTLEMENT';
+export type PromotionBenefitStatus = 'ACTIVE' | 'VOIDED';
+
+export type PromotionVoidedReason =
+  | 'REJECTED'
+  | 'CANCELLED_BY_GUEST'
+  | 'CANCELLED_BY_HOST'
+  | 'CANCELLED_BY_ADMIN_WITH_REFUND'
+  | 'CANCELLED_BY_ADMIN_NO_REFUND'
+  | 'APPROVAL_EXPIRED'
+  | 'PAYMENT_EXPIRED'
+  | 'SETTLEMENT_ON_HOLD';
+
+export interface PromotionStats {
+  participantCount: number;
+  consumedCount: number;
+  activeBenefitCount: number;
+}
+
+export interface PromotionEvent {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  targetRole: PromotionTargetRole;
+  benefitType: PromotionBenefitType;
+  discountAmount: number;
+  participantLimit: number | null;
+  applyTrigger: PromotionApplyTrigger;
+  applyOnce: boolean;
+  startAt: string | null;
+  endAt: string | null;
+  isActive: boolean;
+  stats?: PromotionStats;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PromotionListResponse {
+  events: PromotionEvent[];
+}
+
+export interface PromotionCreateRequest {
+  code: string;
+  name: string;
+  description?: string | null;
+  targetRole: PromotionTargetRole;
+  benefitType: PromotionBenefitType;
+  discountAmount: number;
+  participantLimit?: number | null;
+  applyTrigger: PromotionApplyTrigger;
+  applyOnce?: boolean;
+  startAt?: string | null;
+  endAt?: string | null;
+  isActive?: boolean;
+}
+
+export interface PromotionUpdateRequest {
+  name?: string;
+  description?: string | null;
+  discountAmount?: number;
+  participantLimit?: number | null;
+  applyOnce?: boolean;
+  startAt?: string | null;
+  endAt?: string | null;
+  isActive?: boolean;
+}
+
+export interface PromotionParticipant {
+  id: number;
+  userId: number;
+  userEmail: string;
+  userName: string | null;
+  appliedAt: string;
+  notifiedAt: string | null;
+  consumed: boolean;
+  consumedAt: string | null;
+  consumedContract: {
+    id: number;
+    orderId: string;
+    status: string;
+  } | null;
+}
+
+export interface PromotionParticipantListResponse {
+  participants: PromotionParticipant[];
+}
+
+export interface PromotionContractBenefit {
+  id: number;
+  contractId: number;
+  orderId: string;
+  contractStatus: string;
+  guestId: number;
+  hostId: number;
+  benefitType: PromotionBenefitType;
+  discountAmount: number;
+  status: PromotionBenefitStatus;
+  appliedAt: string;
+  voidedAt: string | null;
+  voidedReason: PromotionVoidedReason | null;
+}
+
+export interface PromotionBenefitListResponse {
+  benefits: PromotionContractBenefit[];
+}

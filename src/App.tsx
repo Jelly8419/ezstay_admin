@@ -32,6 +32,8 @@ import ServiceTaskList from './pages/service-tasks/ServiceTaskList';
 import ReceiptList from './pages/receipts/ReceiptList';
 import AlimtalkManagement from './pages/alimtalk/AlimtalkManagement';
 import NotificationQueuePage from './pages/alimtalk/NotificationQueuePage';
+import PromotionList from './pages/promotions/PromotionList';
+import PromotionDetail from './pages/promotions/PromotionDetail';
 
 function App() {
   // 환경변수로 basename 제어 (개발: /, 테스트/프로덕션: /admin)
@@ -108,6 +110,10 @@ function App() {
               {/* 알림톡 관리 */}
               <Route path="alimtalk" element={<AlimtalkManagement />} />
               <Route path="alimtalk/queue" element={<NotificationQueuePage />} />
+
+              {/* 프로모션 관리 */}
+              <Route path="promotions" element={<PromotionList />} />
+              <Route path="promotions/:id" element={<PromotionDetail />} />
 
               {/* 관리자 액션 로그 */}
               <Route path="admin/action-logs" element={<ActionLogs />} />
