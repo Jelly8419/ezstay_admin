@@ -34,6 +34,10 @@ import AlimtalkManagement from './pages/alimtalk/AlimtalkManagement';
 import NotificationQueuePage from './pages/alimtalk/NotificationQueuePage';
 import PromotionList from './pages/promotions/PromotionList';
 import PromotionDetail from './pages/promotions/PromotionDetail';
+import BrokerList from './pages/brokers/BrokerList';
+import BrokerDetail from './pages/brokers/BrokerDetail';
+import IncentiveMonthlyList from './pages/broker-incentives/IncentiveMonthlyList';
+import IncentiveMonthlyDetail from './pages/broker-incentives/IncentiveMonthlyDetail';
 
 function App() {
   // 환경변수로 basename 제어 (개발: /, 테스트/프로덕션: /admin)
@@ -114,6 +118,14 @@ function App() {
               {/* 프로모션 관리 */}
               <Route path="promotions" element={<PromotionList />} />
               <Route path="promotions/:id" element={<PromotionDetail />} />
+
+              {/* 중개인 관리 */}
+              <Route path="brokers" element={<BrokerList />} />
+              <Route path="brokers/:id" element={<BrokerDetail />} />
+
+              {/* 중개인 인센티브 */}
+              <Route path="broker-incentives" element={<IncentiveMonthlyList />} />
+              <Route path="broker-incentives/:payoutId" element={<IncentiveMonthlyDetail />} />
 
               {/* 관리자 액션 로그 */}
               <Route path="admin/action-logs" element={<ActionLogs />} />

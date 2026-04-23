@@ -17,6 +17,8 @@ import {
   Package,
   ClipboardList,
   Gift,
+  Briefcase,
+  Wallet,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
@@ -116,6 +118,16 @@ const navItems: NavItem[] = [
     path: '/promotions',
     label: '프로모션 관리',
     icon: <Gift className="w-5 h-5" />
+  },
+  {
+    path: '/brokers',
+    label: '중개인 관리',
+    icon: <Briefcase className="w-5 h-5" />
+  },
+  {
+    path: '/broker-incentives',
+    label: '중개인 인센티브',
+    icon: <Wallet className="w-5 h-5" />
   },
   {
     path: '/admin/action-logs',

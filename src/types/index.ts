@@ -1849,3 +1849,185 @@ export interface PromotionContractBenefit {
 export interface PromotionBenefitListResponse {
   benefits: PromotionContractBenefit[];
 }
+
+// ============ 중개인 관리 ============
+export type BrokerType = 'individual' | 'business';
+export type BrokerStatus = 'active' | 'inactive';
+
+export interface Broker {
+  id: number;
+  name: string;
+  phone: string;
+  brokerType: BrokerType;
+  taxId: string | null;
+  bankName: string | null;
+  bankAccount: string | null;
+  bankHolder: string | null;
+  startDate: string;
+  endDate: string;
+  status: BrokerStatus;
+  currentRate: number | null;
+  hostCount: number;
+  memo: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BrokerRate {
+  id: number;
+  rate: number;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  createdAt: string;
+}
+
+export interface BrokerHostMapping {
+  id: number;
+  hostId: number;
+  hostName: string | null;
+  hostNickname: string | null;
+  hostPhone: string | null;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+}
+
+export interface BrokerListResponse {
+  brokers: Broker[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface BrokerDetailResponse {
+  broker: Broker;
+  rates: BrokerRate[];
+  hostMappings: BrokerHostMapping[];
+}
+
+export interface BrokerListParams {
+  page?: number;
+  limit?: number;
+  status?: BrokerStatus;
+  search?: string;
+}
+
+export interface BrokerCreateRequest {
+  name: string;
+  phone: string;
+  brokerType: BrokerType;
+  taxId?: string | null;
+  bankName?: string | null;
+  bankAccount?: string | null;
+  bankHolder?: string | null;
+  startDate: string;
+  endDate: string;
+  status?: BrokerStatus;
+  memo?: string | null;
+  initialRate?: number | null;
+}
+
+export interface BrokerUpdateRequest {
+  name?: string;
+  phone?: string;
+  brokerType?: BrokerType;
+  taxId?: string | null;
+  bankName?: string | null;
+  bankAccount?: string | null;
+  bankHolder?: string | null;
+  startDate?: string;
+  endDate?: string;
+  status?: BrokerStatus;
+  memo?: string | null;
+}
+
+export interface BrokerRateAddRequest {
+  rate: number;
+  effectiveFrom?: string | null;
+}
+
+export interface BrokerHostAddRequest {
+  hostId: number;
+  startDate?: string | null;
+}
+
+// ============ 중개인 인센티브 ============
+export type BrokerIncentiveStatus =
+  | 'PENDING'
+  | 'AGGREGATED'
+  | 'PAID'
+  | 'ON_HOLD'
+  | 'CANCELLED';
+
+export type BrokerPayoutStatus = 'PENDING' | 'PAID';
+
+export interface BrokerIncentivePayout {
+  payoutId: number;
+  brokerId: number;
+  brokerName: string;
+  brokerPhone: string | null;
+  brokerType: BrokerType;
+  settlementMonth: string;
+  contractCount: number;
+  totalGross: number;
+  totalWithholding: number;
+  totalSupply: number;
+  totalVat: number;
+  totalNet: number;
+  status: BrokerPayoutStatus;
+  paidAt: string | null;
+  paidByAdminId: number | null;
+  memo: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BrokerIncentiveItem {
+  id: number;
+  contractId: number;
+  orderId: string;
+  hostId: number;
+  hostName: string | null;
+  hostNickname: string | null;
+  checkInDate: string;
+  paidAt: string;
+  settlementExpectedDate: string;
+  settlementStatus: string;
+  baseFee: number;
+  appliedRate: number;
+  brokerType: BrokerType;
+  grossAmount: number;
+  withholdingAmount: number;
+  supplyAmount: number;
+  vatAmount: number;
+  netAmount: number;
+  status: BrokerIncentiveStatus;
+}
+
+export interface BrokerIncentiveMonthlySummary {
+  totalBrokers: number;
+  totalContracts: number;
+  totalGross: number;
+  totalNet: number;
+  pendingCount: number;
+  paidCount: number;
+}
+
+export interface BrokerIncentiveMonthlyListResponse {
+  month: string;
+  payouts: BrokerIncentivePayout[];
+  summary: BrokerIncentiveMonthlySummary;
+}
+
+export interface BrokerIncentiveMonthlyDetailResponse {
+  payout: BrokerIncentivePayout;
+  incentives: BrokerIncentiveItem[];
+}
+
+export interface BrokerIncentiveMonthlyParams {
+  month: string;
+  status?: BrokerPayoutStatus;
+}
