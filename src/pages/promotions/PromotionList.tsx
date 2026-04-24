@@ -14,6 +14,7 @@ import type {
 import {
   targetRoleLabel,
   benefitTypeLabel,
+  benefitModeLabel,
   formatAmount,
   formatDateTime,
 } from './promotionLabels';
@@ -103,19 +104,31 @@ export const PromotionList: React.FC = () => {
       key: 'benefitType',
       title: '혜택',
       render: (_: any, r: PromotionEvent) => (
-        <span className="text-xs text-gray-600">
-          {benefitTypeLabel[r.benefitType]}
-        </span>
+        <div>
+          <div className="text-xs text-gray-700">
+            {benefitTypeLabel[r.benefitType]}
+          </div>
+          <Badge
+            variant={r.benefitMode === 'FEE_WAIVER_FULL' ? 'warning' : 'default'}
+            size="sm"
+            className="mt-1"
+          >
+            {benefitModeLabel[r.benefitMode]}
+          </Badge>
+        </div>
       ),
     },
     {
       key: 'discountAmount',
       title: '할인',
-      render: (_: any, r: PromotionEvent) => (
-        <span className="font-medium text-gray-900">
-          {formatAmount(r.discountAmount)}
-        </span>
-      ),
+      render: (_: any, r: PromotionEvent) =>
+        r.benefitMode === 'FEE_WAIVER_FULL' ? (
+          <span className="text-xs text-gray-500">동적 (수수료 면제)</span>
+        ) : (
+          <span className="font-medium text-gray-900">
+            {formatAmount(r.discountAmount)}
+          </span>
+        ),
     },
     {
       key: 'participants',

@@ -1743,6 +1743,7 @@ export interface NotificationRecoverResponse {
 // ============ 프로모션 이벤트 관리 ============
 export type PromotionTargetRole = 'HOST' | 'GUEST';
 export type PromotionBenefitType = 'HOST_FEE_WAIVER' | 'GUEST_DISCOUNT';
+export type PromotionBenefitMode = 'FIXED_AMOUNT' | 'FEE_WAIVER_FULL';
 export type PromotionApplyTrigger = 'CONTRACT' | 'SETTLEMENT';
 export type PromotionBenefitStatus = 'ACTIVE' | 'VOIDED';
 
@@ -1769,6 +1770,7 @@ export interface PromotionEvent {
   description: string | null;
   targetRole: PromotionTargetRole;
   benefitType: PromotionBenefitType;
+  benefitMode: PromotionBenefitMode;
   discountAmount: number;
   participantLimit: number | null;
   applyTrigger: PromotionApplyTrigger;
@@ -1791,6 +1793,7 @@ export interface PromotionCreateRequest {
   description?: string | null;
   targetRole: PromotionTargetRole;
   benefitType: PromotionBenefitType;
+  benefitMode?: PromotionBenefitMode;
   discountAmount: number;
   participantLimit?: number | null;
   applyTrigger: PromotionApplyTrigger;
@@ -1803,6 +1806,7 @@ export interface PromotionCreateRequest {
 export interface PromotionUpdateRequest {
   name?: string;
   description?: string | null;
+  benefitMode?: PromotionBenefitMode;
   discountAmount?: number;
   participantLimit?: number | null;
   applyOnce?: boolean;

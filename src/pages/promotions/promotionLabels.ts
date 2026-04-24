@@ -1,6 +1,7 @@
 import type {
   PromotionTargetRole,
   PromotionBenefitType,
+  PromotionBenefitMode,
   PromotionApplyTrigger,
   PromotionVoidedReason,
   PromotionBenefitStatus,
@@ -14,6 +15,11 @@ export const targetRoleLabel: Record<PromotionTargetRole, string> = {
 export const benefitTypeLabel: Record<PromotionBenefitType, string> = {
   HOST_FEE_WAIVER: '호스트 정산 수수료 면제',
   GUEST_DISCOUNT: '게스트 결제 할인',
+};
+
+export const benefitModeLabel: Record<PromotionBenefitMode, string> = {
+  FIXED_AMOUNT: '고정 금액 할인',
+  FEE_WAIVER_FULL: '수수료 전액 면제',
 };
 
 export const applyTriggerLabel: Record<PromotionApplyTrigger, string> = {

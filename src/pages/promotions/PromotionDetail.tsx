@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Gift, Users, CheckCircle2, Ticket, Pencil } from 'lucide-react';
+import { ArrowLeft, Gift, Users, CheckCircle2, Ticket, Pencil, Play } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -17,6 +17,7 @@ import type {
 import {
   targetRoleLabel,
   benefitTypeLabel,
+  benefitModeLabel,
   applyTriggerLabel,
   benefitStatusLabel,
   voidedReasonLabel,
@@ -105,6 +106,27 @@ export const PromotionDetail: React.FC = () => {
     await loadEvent();
   };
 
+  const [opening, setOpening] = useState(false);
+  const handleOpenEvent = async () => {
+    if (!event) return;
+    const endLabel = event.endAt ? formatDateTime(event.endAt) : '무기한';
+    const ok = window.confirm(
+      `이벤트를 지금 오픈하시겠습니까?\n\n마감일: ${endLabel}\n\n오픈 후에는 되돌릴 수 없습니다.`
+    );
+    if (!ok) return;
+    try {
+      setOpening(true);
+      await promotionService.updatePromotion(promotionId, {
+        startAt: new Date().toISOString(),
+      });
+      await loadEvent();
+    } catch (e: any) {
+      alert(e?.message || '이벤트 오픈에 실패했습니다.');
+    } finally {
+      setOpening(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="py-12 text-center text-gray-500">불러오는 중...</div>
@@ -148,10 +170,22 @@ export const PromotionDetail: React.FC = () => {
             <p className="text-xs text-gray-500 font-mono mt-1">{event.code}</p>
           </div>
         </div>
-        <Button onClick={() => setEditOpen(true)}>
-          <Pencil className="w-4 h-4 inline-block mr-1" />
-          수정
-        </Button>
+        <div className="flex gap-2">
+          {event.startAt === null && (
+            <Button
+              variant="success"
+              onClick={handleOpenEvent}
+              disabled={opening}
+            >
+              <Play className="w-4 h-4 inline-block mr-1" />
+              {opening ? '오픈 중...' : '이벤트 오픈'}
+            </Button>
+          )}
+          <Button onClick={() => setEditOpen(true)}>
+            <Pencil className="w-4 h-4 inline-block mr-1" />
+            수정
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -251,11 +285,29 @@ const InfoTab: React.FC<{ event: PromotionEvent }> = ({ event }) => (
       {benefitTypeLabel[event.benefitType]}
       <span className="ml-2 text-xs text-gray-400">(변경 불가)</span>
     </InfoRow>
+    <InfoRow label="할인 방식">
+      <Badge
+        variant={event.benefitMode === 'FEE_WAIVER_FULL' ? 'warning' : 'default'}
+      >
+        {benefitModeLabel[event.benefitMode]}
+      </Badge>
+      {event.benefitMode === 'FEE_WAIVER_FULL' && (
+        <span className="ml-2 text-xs text-gray-500">
+          결제 승인 시점의 플랫폼 수수료 전액 면제
+        </span>
+      )}
+    </InfoRow>
     <InfoRow label="적용 시점">
       {applyTriggerLabel[event.applyTrigger]}
       <span className="ml-2 text-xs text-gray-400">(변경 불가)</span>
     </InfoRow>
-    <InfoRow label="할인 금액">{formatAmount(event.discountAmount)}</InfoRow>
+    <InfoRow label="할인 금액">
+      {event.benefitMode === 'FEE_WAIVER_FULL' ? (
+        <span className="text-gray-500">동적 (계약별 실제 면제 금액)</span>
+      ) : (
+        formatAmount(event.discountAmount)
+      )}
+    </InfoRow>
     <InfoRow label="선착순 제한">
       {event.participantLimit == null ? '무제한' : `${event.participantLimit}명`}
     </InfoRow>
