@@ -3,7 +3,7 @@
  */
 
 import { api } from './api';
-import type { Pagination } from '../types';
+import type { Pagination, PropertySource, MoveInRoomReviewStatus, MoveInStatusHistory } from '../types';
 
 // API 응답 타입 (백엔드 응답 구조)
 export interface Property {
@@ -12,10 +12,11 @@ export interface Property {
   address: string;
   detailAddress?: string;
   area: number;
-  dailyRent: number;
+  dailyRent: number | null;
   status: 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published' | 'hidden_by_admin';
   submittedAt?: string;
   approvedAt?: string;
+  rejectedAt?: string;
   rejectionReason?: string;
   createdAt: string;
   host: {
@@ -30,6 +31,12 @@ export interface Property {
     url: string;
     displayOrder?: number;
   }>;
+
+  // 입주 준비 방 (source=move_in)
+  source?: PropertySource;
+  reviewStatus?: MoveInRoomReviewStatus;
+  dailyRentLabel?: string;
+  areaPyeong?: number;
 }
 
 // 매물 상세 정보 타입 (심사용 - 민감정보 포함)
@@ -123,6 +130,19 @@ export interface PropertyDetail extends Property {
   // 게시 정보
   publishedAt?: string;
   updatedAt?: string;
+
+  // 입주 준비 방 전용 (source=move_in)
+  commonEntrancePassword?: string | null;
+  doorLockPassword?: string | null;
+  bedCount?: number;
+  beds?: Array<{
+    index: number;
+    size: 'SINGLE' | 'SUPER_SINGLE' | 'DOUBLE' | 'QUEEN' | 'KING';
+  }>;
+  cleaningSuppliesAvailable?: boolean;
+  cleaningSuppliesLocation?: string | null;
+  memo?: string | null;
+  statusHistories?: MoveInStatusHistory[];
 }
 
 // 매물 목록 응답 타입
@@ -139,7 +159,17 @@ export interface PropertyListParams {
   status?: string;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
+  source?: PropertySource | 'all';
 }
+
+const sourceQuery = (source?: PropertySource): string =>
+  source ? `source=${source}` : '';
+
+const withSource = (path: string, source?: PropertySource): string => {
+  if (!source) return path;
+  const sep = path.includes('?') ? '&' : '?';
+  return `${path}${sep}source=${source}`;
+};
 
 export const propertyService = {
   /**
@@ -160,29 +190,31 @@ export const propertyService = {
   /**
    * 심사 대기 매물 조회
    */
-  getPendingReviewProperties: (page = 1, limit = 20) => {
+  getPendingReviewProperties: (page = 1, limit = 20, source?: PropertySource) => {
+    const sourcePart = sourceQuery(source);
+    const query = `page=${page}&limit=${limit}${sourcePart ? `&${sourcePart}` : ''}`;
     return api.get<PropertyListResponse>(
-      `/admin/properties/pending-review?page=${page}&limit=${limit}`
+      `/admin/properties/pending-review?${query}`
     );
   },
 
   /**
    * 매물 상세 조회 (심사용 - 민감정보 포함)
    */
-  getPropertyDetail: (roomId: number) =>
-    api.get<PropertyDetail>(`/admin/properties/${roomId}`),
+  getPropertyDetail: (roomId: number, source?: PropertySource) =>
+    api.get<PropertyDetail>(withSource(`/admin/properties/${roomId}`, source)),
 
   /**
    * 매물 승인
    */
-  approveProperty: (roomId: number) =>
-    api.post<Property>(`/admin/properties/${roomId}/approve`),
+  approveProperty: (roomId: number, source?: PropertySource) =>
+    api.post<Property>(withSource(`/admin/properties/${roomId}/approve`, source)),
 
   /**
    * 매물 반려
    */
-  rejectProperty: (roomId: number, rejectionReason: string) =>
-    api.post<Property>(`/admin/properties/${roomId}/reject`, {
+  rejectProperty: (roomId: number, rejectionReason: string, source?: PropertySource) =>
+    api.post<Property>(withSource(`/admin/properties/${roomId}/reject`, source), {
       rejectionReason,
     }),
 };

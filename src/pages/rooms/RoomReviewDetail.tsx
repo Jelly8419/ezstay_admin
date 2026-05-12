@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -15,10 +15,21 @@ import {
   ChevronRight,
   User,
   Calendar,
+  Copy,
 } from 'lucide-react';
 import { propertyService, PropertyDetail } from '../../services/roomService';
 import roomManagementService from '../../services/roomManagementService';
 import type { StatusHistory } from '../../types/roomManagement';
+import type { PropertySource, MoveInStatusHistory } from '../../types';
+import {
+  getStatusBadgeVariant,
+  getStatusLabel,
+  internalStatusBadge,
+  internalStatusLabel,
+  isPending,
+  moveInStatusBadge,
+  moveInStatusLabel,
+} from '../../utils/propertyStatus';
 
 const formatTime = (time: string): string => {
   const hour = parseInt(time, 10);
@@ -26,53 +37,39 @@ const formatTime = (time: string): string => {
   return `${String(hour).padStart(2, '0')}:00`;
 };
 
-const getStatusBadgeVariant = (
-  status: string
-): 'warning' | 'success' | 'danger' | 'default' => {
-  switch (status) {
-    case 'pending_review':
-      return 'warning';
-    case 'approved':
-      return 'success';
-    case 'rejected':
-      return 'danger';
-    case 'published':
-      return 'success';
-    default:
-      return 'default';
-  }
+const BED_SIZE_LABEL: Record<string, string> = {
+  SINGLE: '싱글',
+  SUPER_SINGLE: '슈퍼싱글',
+  DOUBLE: '더블',
+  QUEEN: '퀸',
+  KING: '킹',
 };
 
-const getStatusLabel = (status: string): string => {
-  switch (status) {
-    case 'pending_review':
-      return '심사 대기';
-    case 'approved':
-      return '승인';
-    case 'rejected':
-      return '반려';
-    case 'published':
-      return '게시됨';
-    case 'draft':
-      return '작성중';
-    default:
-      return status;
-  }
+const CHANGED_BY_LABEL: Record<string, string> = {
+  HOST: '호스트',
+  ADMIN: '관리자',
+  SYSTEM: '시스템',
 };
 
 export const RoomReviewDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const sourceParam = searchParams.get('source');
+  const source: PropertySource =
+    sourceParam === 'move_in' ? 'move_in' : 'internal';
+  const isMoveIn = source === 'move_in';
 
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 상태 변경 이력
-  const [statusHistories, setStatusHistories] = useState<StatusHistory[]>([]);
-  const [statusHistoryLoading, setStatusHistoryLoading] = useState(false);
+  // internal 도메인: 별도 statusHistory API 호출
+  const [internalHistories, setInternalHistories] = useState<StatusHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
-  // 사진 갤러리
+  // 사진 갤러리 (internal 전용)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   // 심사 모달
@@ -82,21 +79,22 @@ export const RoomReviewDetail: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      loadPropertyDetail(Number(id));
-      loadStatusHistory(Number(id));
+    if (!id) return;
+    loadPropertyDetail(Number(id));
+    if (!isMoveIn) {
+      loadInternalHistory(Number(id));
     }
-  }, [id]);
+  }, [id, isMoveIn]);
 
-  const loadStatusHistory = async (roomId: number) => {
+  const loadInternalHistory = async (roomId: number) => {
     try {
-      setStatusHistoryLoading(true);
+      setHistoryLoading(true);
       const data = await roomManagementService.getStatusHistory(roomId);
-      setStatusHistories(data.histories);
+      setInternalHistories(data.histories);
     } catch (err) {
       console.error('상태 변경 이력 조회 실패:', err);
     } finally {
-      setStatusHistoryLoading(false);
+      setHistoryLoading(false);
     }
   };
 
@@ -104,13 +102,7 @@ export const RoomReviewDetail: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await propertyService.getPropertyDetail(roomId);
-      console.log('🔍 방 데이터:', data);
-      console.log('📸 사진 데이터:', data.photos);
-      if (data.photos && data.photos.length > 0) {
-        console.log('🖼️ 첫 번째 사진 URL:', data.photos[0].url);
-        console.log('🌐 완성된 URL:', data.photos[0].url);
-      }
+      const data = await propertyService.getPropertyDetail(roomId, source);
       setProperty(data);
     } catch (err: any) {
       console.error('방 상세 조회 실패:', err);
@@ -137,32 +129,50 @@ export const RoomReviewDetail: React.FC = () => {
       setIsSubmitting(true);
 
       if (reviewAction === 'approve') {
-        await propertyService.approveProperty(property.id);
+        await propertyService.approveProperty(property.id, source);
         alert('방이 승인되었습니다.');
       } else {
-        await propertyService.rejectProperty(property.id, rejectionReason);
+        await propertyService.rejectProperty(property.id, rejectionReason, source);
         alert('방이 반려되었습니다.');
       }
 
       setIsReviewModalOpen(false);
       setRejectionReason('');
-      navigate('/rooms/review'); // 목록으로 돌아가기
+      navigate('/rooms/review');
     } catch (err: any) {
       console.error('방 심사 처리 실패:', err);
-      alert(err.message || '방 심사 처리에 실패했습니다.');
+      const code = err?.response?.data?.code ?? err?.code;
+      if (code === 4002) {
+        alert('반려 사유는 필수입니다.');
+      } else if (code === 4301 || code === 4302) {
+        alert('이미 처리된 방입니다. 새로고침합니다.');
+        setIsReviewModalOpen(false);
+        if (id) loadPropertyDetail(Number(id));
+      } else {
+        alert(err.message || '방 심사 처리에 실패했습니다.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert(`${label} 복사됨`);
+    } catch {
+      alert('복사 실패');
+    }
+  };
+
   const nextPhoto = () => {
-    if (property && property.photos && property.photos.length > 0) {
+    if (property?.photos?.length) {
       setCurrentPhotoIndex((prev) => (prev + 1) % property.photos.length);
     }
   };
 
   const prevPhoto = () => {
-    if (property && property.photos && property.photos.length > 0) {
+    if (property?.photos?.length) {
       setCurrentPhotoIndex(
         (prev) => (prev - 1 + property.photos.length) % property.photos.length
       );
@@ -200,6 +210,15 @@ export const RoomReviewDetail: React.FC = () => {
     );
   }
 
+  // 상태/뱃지 row 객체 (source 정보 포함)
+  const statusRow = {
+    source,
+    status: property.status,
+    reviewStatus: property.reviewStatus,
+  };
+
+  const moveInHistories: MoveInStatusHistory[] = property.statusHistories ?? [];
+
   return (
     <div className="space-y-6 pb-8">
       {/* Header */}
@@ -212,77 +231,80 @@ export const RoomReviewDetail: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">방 상세</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isMoveIn ? '입주 준비 방 상세' : '방 상세'}
+            </h1>
             <p className="text-gray-500 mt-1">ID: {property.id}</p>
           </div>
         </div>
-        <Badge variant={getStatusBadgeVariant(property.status)}>
-          {getStatusLabel(property.status)}
+        <Badge variant={getStatusBadgeVariant(statusRow)}>
+          {getStatusLabel(statusRow)}
         </Badge>
       </div>
 
-      {/* 사진 갤러리 */}
-      <Card>
-        <h2 className="text-xl font-bold mb-4">방 사진</h2>
-        <div className="relative">
-          {property.photos && property.photos.length > 0 ? (
-            <>
-              <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
-                <img
-                  src={property.photos[currentPhotoIndex].url}
-                  alt={`방 사진 ${currentPhotoIndex + 1}`}
-                  className="w-full h-full object-contain"
-                />
-                {property.photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevPhoto}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                    >
-                      <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={nextPhoto}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                    >
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                  </>
-                )}
-                <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-                  {currentPhotoIndex + 1} / {property.photos.length}
+      {/* 사진 갤러리 — internal 전용 */}
+      {!isMoveIn && (
+        <Card>
+          <h2 className="text-xl font-bold mb-4">방 사진</h2>
+          <div className="relative">
+            {property.photos && property.photos.length > 0 ? (
+              <>
+                <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
+                  <img
+                    src={property.photos[currentPhotoIndex].url}
+                    alt={`방 사진 ${currentPhotoIndex + 1}`}
+                    className="w-full h-full object-contain"
+                  />
+                  {property.photos.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevPhoto}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={nextPhoto}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    </>
+                  )}
+                  <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                    {currentPhotoIndex + 1} / {property.photos.length}
+                  </div>
                 </div>
+                <div className="mt-4 grid grid-cols-6 gap-2">
+                  {property.photos.map((photo, index) => (
+                    <button
+                      key={photo.id}
+                      onClick={() => setCurrentPhotoIndex(index)}
+                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                        currentPhotoIndex === index
+                          ? 'border-primary-600'
+                          : 'border-transparent hover:border-gray-300'
+                      }`}
+                    >
+                      <img
+                        src={photo.url}
+                        alt={`썸네일 ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">등록된 사진이 없습니다</p>
               </div>
-              {/* 썸네일 */}
-              <div className="mt-4 grid grid-cols-6 gap-2">
-                {property.photos.map((photo, index) => (
-                  <button
-                    key={photo.id}
-                    onClick={() => setCurrentPhotoIndex(index)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                      currentPhotoIndex === index
-                        ? 'border-primary-600'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
-                  >
-                    <img
-                      src={photo.url}
-                      alt={`썸네일 ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">등록된 사진이 없습니다</p>
-            </div>
-          )}
-        </div>
-      </Card>
+            )}
+          </div>
+        </Card>
+      )}
 
-      {/* 기본 정보 */}
+      {/* 기본 정보 (공통) */}
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <Home className="w-5 h-5 text-gray-600" />
@@ -291,7 +313,7 @@ export const RoomReviewDetail: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">방 이름</label>
-            <p className="text-gray-900">{property.roomName}</p>
+            <p className="text-gray-900">{property.roomName || '(이름 없음)'}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">주소</label>
@@ -307,15 +329,21 @@ export const RoomReviewDetail: React.FC = () => {
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">면적</label>
-            <p className="text-gray-900">{property.area}㎡</p>
+            <p className="text-gray-900">
+              {isMoveIn && property.areaPyeong != null
+                ? `${property.areaPyeong}평`
+                : property.area != null
+                ? `${property.area}㎡`
+                : '-'}
+            </p>
           </div>
-          {property.floor && (
+          {!isMoveIn && property.floor && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">층수</label>
               <p className="text-gray-900">{property.floor}</p>
             </div>
           )}
-          {property.buildingType && (
+          {!isMoveIn && property.buildingType && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 건물 유형
@@ -323,7 +351,7 @@ export const RoomReviewDetail: React.FC = () => {
               <p className="text-gray-900">{property.buildingType}</p>
             </div>
           )}
-          {property.checkInTime && (
+          {!isMoveIn && property.checkInTime && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 입실 시간
@@ -331,7 +359,7 @@ export const RoomReviewDetail: React.FC = () => {
               <p className="text-gray-900">{formatTime(property.checkInTime)}</p>
             </div>
           )}
-          {property.checkOutTime && (
+          {!isMoveIn && property.checkOutTime && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 퇴실 시간
@@ -339,7 +367,7 @@ export const RoomReviewDetail: React.FC = () => {
               <p className="text-gray-900">{formatTime(property.checkOutTime)}</p>
             </div>
           )}
-          {property.entrancePassword && (
+          {!isMoveIn && property.entrancePassword && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 출입 비밀번호
@@ -349,7 +377,7 @@ export const RoomReviewDetail: React.FC = () => {
           )}
         </div>
 
-        {/* 방 구조 */}
+        {/* 방 구조 (공통) */}
         <div className="mt-6 pt-6 border-t">
           <h3 className="font-semibold mb-3">방 구조</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -377,7 +405,7 @@ export const RoomReviewDetail: React.FC = () => {
                 <div className="text-sm text-gray-600">거실</div>
               </div>
             )}
-            {property.kitchenCount !== undefined && (
+            {!isMoveIn && property.kitchenCount !== undefined && (
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-primary-600">
                   {property.kitchenCount}
@@ -385,166 +413,265 @@ export const RoomReviewDetail: React.FC = () => {
                 <div className="text-sm text-gray-600">주방</div>
               </div>
             )}
-          </div>
-          <div className="mt-3 flex gap-4">
-            {property.parkingAvailable !== undefined && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">주차:</span>
-                <Badge variant={property.parkingAvailable ? 'success' : 'default'}>
-                  {property.parkingAvailable ? '가능' : '불가'}
-                </Badge>
-                {property.parkingInfo && (
-                  <span className="text-sm text-gray-500">({property.parkingInfo})</span>
-                )}
+            {isMoveIn && property.bedCount !== undefined && (
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-primary-600">
+                  {property.bedCount}
+                </div>
+                <div className="text-sm text-gray-600">침대</div>
               </div>
             )}
-            {property.elevatorAvailable !== undefined && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">엘리베이터:</span>
-                <Badge variant={property.elevatorAvailable ? 'success' : 'default'}>
-                  {property.elevatorAvailable ? '있음' : '없음'}
-                </Badge>
-              </div>
-            )}
-            {property.isDuplex !== undefined && property.isDuplex && (
-              <Badge variant="default">복층</Badge>
-            )}
           </div>
+          {!isMoveIn && (
+            <div className="mt-3 flex gap-4">
+              {property.parkingAvailable !== undefined && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">주차:</span>
+                  <Badge variant={property.parkingAvailable ? 'success' : 'default'}>
+                    {property.parkingAvailable ? '가능' : '불가'}
+                  </Badge>
+                  {property.parkingInfo && (
+                    <span className="text-sm text-gray-500">({property.parkingInfo})</span>
+                  )}
+                </div>
+              )}
+              {property.elevatorAvailable !== undefined && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">엘리베이터:</span>
+                  <Badge variant={property.elevatorAvailable ? 'success' : 'default'}>
+                    {property.elevatorAvailable ? '있음' : '없음'}
+                  </Badge>
+                </div>
+              )}
+              {property.isDuplex && <Badge variant="default">복층</Badge>}
+            </div>
+          )}
+          {isMoveIn && property.beds && property.beds.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">침대 사이즈</h4>
+              <div className="flex flex-wrap gap-2">
+                {property.beds.map((bed) => (
+                  <Badge key={bed.index}>
+                    {BED_SIZE_LABEL[bed.size] ?? bed.size}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
-      {/* 요금 정보 */}
-      <Card>
-        <div className="flex items-center gap-2 mb-4">
-          <DollarSign className="w-5 h-5 text-gray-600" />
-          <h2 className="text-xl font-bold">요금 정보</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              1일 임대료
-            </label>
-            <p className="text-2xl font-bold text-primary-600">
-              ₩{(property.dailyRent ?? 0).toLocaleString()}
-            </p>
+      {/* 비밀번호 영역 — move_in 전용 (관리자 청소 업체 응대용) */}
+      {isMoveIn && (
+        <Card>
+          <h2 className="text-xl font-bold mb-4">비밀번호</h2>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <label className="w-32 text-sm font-medium text-gray-700">공동현관</label>
+              <p className="font-mono text-gray-900 flex-1">
+                {property.commonEntrancePassword ?? '-'}
+              </p>
+              {property.commonEntrancePassword && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    copyToClipboard(property.commonEntrancePassword!, '공동현관 비밀번호')
+                  }
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  복사
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="w-32 text-sm font-medium text-gray-700">도어락</label>
+              <p className="font-mono text-gray-900 flex-1">
+                {property.doorLockPassword ?? '-'}
+              </p>
+              {property.doorLockPassword && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    copyToClipboard(property.doorLockPassword!, '도어락 비밀번호')
+                  }
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  복사
+                </Button>
+              )}
+            </div>
           </div>
-          {property.dailyMaintenanceFee != null && (
+        </Card>
+      )}
+
+      {/* 청소용품 — move_in 전용 */}
+      {isMoveIn && (
+        <Card>
+          <h2 className="text-xl font-bold mb-4">청소용품</h2>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">구비 여부:</span>
+              <Badge variant={property.cleaningSuppliesAvailable ? 'success' : 'default'}>
+                {property.cleaningSuppliesAvailable ? '구비됨' : '없음'}
+              </Badge>
+            </div>
+            {property.cleaningSuppliesLocation && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">위치</label>
+                <p className="text-gray-900">{property.cleaningSuppliesLocation}</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* 메모 — move_in 전용 */}
+      {isMoveIn && property.memo && (
+        <Card>
+          <h2 className="text-xl font-bold mb-4">호스트 메모</h2>
+          <p className="text-gray-900 whitespace-pre-wrap">{property.memo}</p>
+        </Card>
+      )}
+
+      {/* 요금 정보 — internal 전용 */}
+      {!isMoveIn && (
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign className="w-5 h-5 text-gray-600" />
+            <h2 className="text-xl font-bold">요금 정보</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">관리비</label>
-              <p className="text-xl font-semibold text-gray-900">
-                ₩{property.dailyMaintenanceFee.toLocaleString()}
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                1일 임대료
+              </label>
+              <p className="text-2xl font-bold text-primary-600">
+                ₩{(property.dailyRent ?? 0).toLocaleString()}
               </p>
             </div>
-          )}
-          {property.maintenanceDetail && (
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                관리비 포함 내역
-              </label>
-              <p className="text-gray-900">{property.maintenanceDetail}</p>
-            </div>
-          )}
-          {property.cleaningFee != null && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                청소비
-              </label>
-              <p className="text-gray-900">₩{property.cleaningFee.toLocaleString()}</p>
-            </div>
-          )}
-          {property.minContractWeeks !== undefined && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                최소 계약 기간
-              </label>
-              <p className="text-gray-900">{property.minContractWeeks}주</p>
-            </div>
-          )}
-        </div>
+            {property.dailyMaintenanceFee != null && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">관리비</label>
+                <p className="text-xl font-semibold text-gray-900">
+                  ₩{property.dailyMaintenanceFee.toLocaleString()}
+                </p>
+              </div>
+            )}
+            {property.maintenanceDetail && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  관리비 포함 내역
+                </label>
+                <p className="text-gray-900">{property.maintenanceDetail}</p>
+              </div>
+            )}
+            {property.cleaningFee != null && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">청소비</label>
+                <p className="text-gray-900">₩{property.cleaningFee.toLocaleString()}</p>
+              </div>
+            )}
+            {property.minContractWeeks !== undefined && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  최소 계약 기간
+                </label>
+                <p className="text-gray-900">{property.minContractWeeks}주</p>
+              </div>
+            )}
+          </div>
 
-        {/* 할인 정보 */}
-        {(property.longTermDiscount || property.quickMoveInDiscount) && (
-          <div className="mt-6 pt-6 border-t">
-            <h3 className="font-semibold mb-3">할인 정보</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {property.longTermDiscount && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="text-sm text-green-700 font-medium">장기 할인</div>
-                  <div className="text-lg font-bold text-green-900">
-                    {property.longTermWeeks}주 이상 {property.longTermDiscount}% 할인
+          {(property.longTermDiscount || property.quickMoveInDiscount) && (
+            <div className="mt-6 pt-6 border-t">
+              <h3 className="font-semibold mb-3">할인 정보</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {property.longTermDiscount && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="text-sm text-green-700 font-medium">장기 할인</div>
+                    <div className="text-lg font-bold text-green-900">
+                      {property.longTermWeeks}주 이상 {property.longTermDiscount}% 할인
+                    </div>
                   </div>
-                </div>
-              )}
-              {property.quickMoveInDiscount && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-sm text-blue-700 font-medium">즉시 입주 할인</div>
-                  <div className="text-lg font-bold text-blue-900">
-                    {property.quickMoveIn} {property.quickMoveInDiscount}% 할인
+                )}
+                {property.quickMoveInDiscount && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="text-sm text-blue-700 font-medium">즉시 입주 할인</div>
+                    <div className="text-lg font-bold text-blue-900">
+                      {property.quickMoveIn} {property.quickMoveInDiscount}% 할인
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="font-semibold mb-3">요금 포함 항목</h3>
+            <div className="flex flex-wrap gap-2">
+              {property.includeElectricity && <Badge variant="success">전기료</Badge>}
+              {property.includeWater && <Badge variant="success">수도료</Badge>}
+              {property.includeGas && <Badge variant="success">가스비</Badge>}
+              {property.includeInternet && <Badge variant="success">인터넷</Badge>}
             </div>
           </div>
-        )}
 
-        {/* 포함 항목 */}
-        <div className="mt-6 pt-6 border-t">
-          <h3 className="font-semibold mb-3">요금 포함 항목</h3>
-          <div className="flex flex-wrap gap-2">
-            {property.includeElectricity && <Badge variant="success">전기료</Badge>}
-            {property.includeWater && <Badge variant="success">수도료</Badge>}
-            {property.includeGas && <Badge variant="success">가스비</Badge>}
-            {property.includeInternet && <Badge variant="success">인터넷</Badge>}
-          </div>
-        </div>
+          {property.refundPolicy && (
+            <div className="mt-6 pt-6 border-t">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                환불 정책
+              </label>
+              <p className="text-gray-900">{property.refundPolicy}</p>
+            </div>
+          )}
+        </Card>
+      )}
 
-        {property.refundPolicy && (
-          <div className="mt-6 pt-6 border-t">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              환불 정책
-            </label>
-            <p className="text-gray-900">{property.refundPolicy}</p>
-          </div>
-        )}
-      </Card>
-
-      {/* 편의시설 */}
-      {property.amenities && (
+      {/* 편의시설 — internal 전용 */}
+      {!isMoveIn && property.amenities && (
         <Card>
           <h2 className="text-xl font-bold mb-4">편의시설</h2>
 
-          {Array.isArray(property.amenities.basicOptions) && property.amenities.basicOptions.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-semibold mb-3">기본 옵션</h3>
-              <div className="flex flex-wrap gap-2">
-                {property.amenities.basicOptions.map((option) => (
-                  <Badge key={option}>{option}</Badge>
-                ))}
+          {Array.isArray(property.amenities.basicOptions) &&
+            property.amenities.basicOptions.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3">기본 옵션</h3>
+                <div className="flex flex-wrap gap-2">
+                  {property.amenities.basicOptions.map((option) => (
+                    <Badge key={option}>{option}</Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {Array.isArray(property.amenities.additionalOptions) && property.amenities.additionalOptions.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-semibold mb-3">추가 옵션</h3>
-              <div className="flex flex-wrap gap-2">
-                {property.amenities.additionalOptions.map((option) => (
-                  <Badge key={option} variant="success">{option}</Badge>
-                ))}
+          {Array.isArray(property.amenities.additionalOptions) &&
+            property.amenities.additionalOptions.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3">추가 옵션</h3>
+                <div className="flex flex-wrap gap-2">
+                  {property.amenities.additionalOptions.map((option) => (
+                    <Badge key={option} variant="success">
+                      {option}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {Array.isArray(property.amenities.convenienceOptions) && property.amenities.convenienceOptions.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-semibold mb-3">편의 시설</h3>
-              <div className="flex flex-wrap gap-2">
-                {property.amenities.convenienceOptions.map((option) => (
-                  <Badge key={option} variant="success">{option}</Badge>
-                ))}
+          {Array.isArray(property.amenities.convenienceOptions) &&
+            property.amenities.convenienceOptions.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3">편의 시설</h3>
+                <div className="flex flex-wrap gap-2">
+                  {property.amenities.convenienceOptions.map((option) => (
+                    <Badge key={option} variant="success">
+                      {option}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {property.amenities.petsAllowed !== undefined && (
             <div>
@@ -557,8 +684,8 @@ export const RoomReviewDetail: React.FC = () => {
         </Card>
       )}
 
-      {/* 무료 부가서비스 */}
-      {property.ezService && (
+      {/* 무료 부가서비스 — internal 전용 */}
+      {!isMoveIn && property.ezService && (
         <Card>
           <h2 className="text-xl font-bold mb-4">무료 부가서비스</h2>
           <div className="space-y-4">
@@ -590,15 +717,18 @@ export const RoomReviewDetail: React.FC = () => {
                   <div className="font-medium">침구류 제공</div>
                   {property.ezService.bedSizes && (
                     <div className="mt-2 flex gap-3">
-                      {property.ezService.bedSizes.superSingle && property.ezService.bedSizes.superSingle > 0 && (
-                        <Badge>슈퍼싱글 {property.ezService.bedSizes.superSingle}개</Badge>
-                      )}
-                      {property.ezService.bedSizes.queen && property.ezService.bedSizes.queen > 0 && (
-                        <Badge>퀸 {property.ezService.bedSizes.queen}개</Badge>
-                      )}
-                      {property.ezService.bedSizes.king && property.ezService.bedSizes.king > 0 && (
-                        <Badge>킹 {property.ezService.bedSizes.king}개</Badge>
-                      )}
+                      {property.ezService.bedSizes.superSingle &&
+                        property.ezService.bedSizes.superSingle > 0 && (
+                          <Badge>슈퍼싱글 {property.ezService.bedSizes.superSingle}개</Badge>
+                        )}
+                      {property.ezService.bedSizes.queen &&
+                        property.ezService.bedSizes.queen > 0 && (
+                          <Badge>퀸 {property.ezService.bedSizes.queen}개</Badge>
+                        )}
+                      {property.ezService.bedSizes.king &&
+                        property.ezService.bedSizes.king > 0 && (
+                          <Badge>킹 {property.ezService.bedSizes.king}개</Badge>
+                        )}
                     </div>
                   )}
                 </div>
@@ -620,32 +750,37 @@ export const RoomReviewDetail: React.FC = () => {
         </Card>
       )}
 
-      {/* 방 소개 */}
-      <Card>
-        <h2 className="text-xl font-bold mb-4">방 소개</h2>
-        <div className="space-y-4">
-          {property.description && (
-            <div>
-              <h3 className="font-semibold mb-2">방 설명</h3>
-              <p className="text-gray-700 whitespace-pre-wrap">{property.description}</p>
+      {/* 방 소개 — internal 전용 */}
+      {!isMoveIn &&
+        (property.description || property.transportation || property.houseRules) && (
+          <Card>
+            <h2 className="text-xl font-bold mb-4">방 소개</h2>
+            <div className="space-y-4">
+              {property.description && (
+                <div>
+                  <h3 className="font-semibold mb-2">방 설명</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">{property.description}</p>
+                </div>
+              )}
+              {property.transportation && (
+                <div>
+                  <h3 className="font-semibold mb-2">교통편</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {property.transportation}
+                  </p>
+                </div>
+              )}
+              {property.houseRules && (
+                <div>
+                  <h3 className="font-semibold mb-2">하우스 룰</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">{property.houseRules}</p>
+                </div>
+              )}
             </div>
-          )}
-          {property.transportation && (
-            <div>
-              <h3 className="font-semibold mb-2">교통편</h3>
-              <p className="text-gray-700 whitespace-pre-wrap">{property.transportation}</p>
-            </div>
-          )}
-          {property.houseRules && (
-            <div>
-              <h3 className="font-semibold mb-2">하우스 룰</h3>
-              <p className="text-gray-700 whitespace-pre-wrap">{property.houseRules}</p>
-            </div>
-          )}
-        </div>
-      </Card>
+          </Card>
+        )}
 
-      {/* 호스트 정보 */}
+      {/* 호스트 정보 (공통) */}
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <User className="w-5 h-5 text-gray-600" />
@@ -666,30 +801,30 @@ export const RoomReviewDetail: React.FC = () => {
             <p className="text-gray-900">{property.host.email}</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              전화번호
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
             <p className="text-gray-900">{property.host.phoneNumber}</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">인증 상태</label>
-            <div className="flex gap-2">
-              {property.host.phoneVerified !== undefined && (
-                <Badge variant={property.host.phoneVerified ? 'success' : 'danger'}>
-                  {property.host.phoneVerified ? '본인인증 완료' : '미인증'}
-                </Badge>
-              )}
-              {property.host.hasBankAccount !== undefined && (
-                <Badge variant={property.host.hasBankAccount ? 'success' : 'warning'}>
-                  {property.host.hasBankAccount ? '계좌등록 완료' : '계좌 미등록'}
-                </Badge>
-              )}
+          {!isMoveIn && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">인증 상태</label>
+              <div className="flex gap-2">
+                {property.host.phoneVerified !== undefined && (
+                  <Badge variant={property.host.phoneVerified ? 'success' : 'danger'}>
+                    {property.host.phoneVerified ? '본인인증 완료' : '미인증'}
+                  </Badge>
+                )}
+                {property.host.hasBankAccount !== undefined && (
+                  <Badge variant={property.host.hasBankAccount ? 'success' : 'warning'}>
+                    {property.host.hasBankAccount ? '계좌등록 완료' : '계좌 미등록'}
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Card>
 
-      {/* 제출 정보 */}
+      {/* 제출 정보 (공통) */}
       <Card>
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="w-5 h-5 text-gray-600" />
@@ -720,7 +855,15 @@ export const RoomReviewDetail: React.FC = () => {
               </p>
             </div>
           )}
-          {property.publishedAt && (
+          {property.rejectedAt && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">반려일</label>
+              <p className="text-gray-900">
+                {new Date(property.rejectedAt).toLocaleString('ko-KR')}
+              </p>
+            </div>
+          )}
+          {!isMoveIn && property.publishedAt && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">게시일</label>
               <p className="text-gray-900">
@@ -747,21 +890,68 @@ export const RoomReviewDetail: React.FC = () => {
           <Calendar className="w-5 h-5 text-gray-600" />
           <h2 className="text-xl font-bold">상태 변경 이력</h2>
         </div>
-        {statusHistoryLoading ? (
+        {isMoveIn ? (
+          moveInHistories.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">변경 이력이 없습니다.</div>
+          ) : (
+            <div className="space-y-3">
+              {moveInHistories.map((history) => (
+                <div
+                  key={history.id}
+                  className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {history.previousStatus && (
+                      <>
+                        <Badge variant={moveInStatusBadge(history.previousStatus)}>
+                          {moveInStatusLabel(history.previousStatus)}
+                        </Badge>
+                        <span className="text-gray-400">→</span>
+                      </>
+                    )}
+                    <Badge variant={moveInStatusBadge(history.newStatus)}>
+                      {moveInStatusLabel(history.newStatus)}
+                    </Badge>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {history.reason && (
+                      <p className="text-sm text-gray-700 mb-1">{history.reason}</p>
+                    )}
+                    {history.triggeredFields && history.triggeredFields.length > 0 && (
+                      <p className="text-xs text-gray-500 mb-1">
+                        변경 필드: {history.triggeredFields.join(', ')}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      {CHANGED_BY_LABEL[history.changedBy] ?? history.changedBy}
+                      {history.adminName ? ` · ${history.adminName}` : ''}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(history.changedAt).toLocaleString('ko-KR')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : historyLoading ? (
           <div className="text-center py-6 text-gray-500">불러오는 중...</div>
-        ) : statusHistories.length === 0 ? (
+        ) : internalHistories.length === 0 ? (
           <div className="text-center py-6 text-gray-500">변경 이력이 없습니다.</div>
         ) : (
           <div className="space-y-3">
-            {statusHistories.map((history) => (
-              <div key={history.id} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
+            {internalHistories.map((history) => (
+              <div
+                key={history.id}
+                className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <Badge variant={getStatusBadgeVariant(history.previousStatus)}>
-                    {getStatusLabel(history.previousStatus)}
+                  <Badge variant={internalStatusBadge(history.previousStatus)}>
+                    {internalStatusLabel(history.previousStatus)}
                   </Badge>
                   <span className="text-gray-400">→</span>
-                  <Badge variant={getStatusBadgeVariant(history.newStatus)}>
-                    {getStatusLabel(history.newStatus)}
+                  <Badge variant={internalStatusBadge(history.newStatus)}>
+                    {internalStatusLabel(history.newStatus)}
                   </Badge>
                 </div>
                 <div className="text-right shrink-0">
@@ -779,8 +969,8 @@ export const RoomReviewDetail: React.FC = () => {
         )}
       </Card>
 
-      {/* 심사 액션 (심사 대기 상태일 때만 표시) */}
-      {property.status === 'pending_review' && (
+      {/* 심사 액션 */}
+      {isPending(statusRow) && (
         <Card>
           <div className="flex gap-4 justify-center">
             <Button
@@ -842,7 +1032,9 @@ export const RoomReviewDetail: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-gray-900 mb-2">{property.roomName}</h4>
+            <h4 className="font-semibold text-gray-900 mb-2">
+              {property.roomName || '(이름 없음)'}
+            </h4>
             <div className="text-sm text-gray-600 space-y-1">
               <p>위치: {property.address}</p>
               <p>호스트: {property.host.name}</p>
@@ -858,7 +1050,10 @@ export const RoomReviewDetail: React.FC = () => {
           {reviewAction === 'approve' ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm text-green-800">
-                ✓ 이 방을 승인하시겠습니까? 승인 후 호스트가 게시할 수 있습니다.
+                ✓ 이 방을 승인하시겠습니까?
+                {isMoveIn
+                  ? ' 승인 후 호스트가 입주 준비 케이스를 등록할 수 있습니다.'
+                  : ' 승인 후 호스트가 게시할 수 있습니다.'}
               </p>
             </div>
           ) : (
@@ -873,7 +1068,7 @@ export const RoomReviewDetail: React.FC = () => {
                   반려 사유 *
                 </label>
                 <textarea
-                  placeholder="상세한 반려 사유를 입력해주세요 (예: 사진 품질이 낮습니다. 밝고 선명한 사진으로 다시 업로드해주세요.)"
+                  placeholder="상세한 반려 사유를 입력해주세요 (예: 평수 정보가 사실과 다릅니다.)"
                   rows={4}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   value={rejectionReason}

@@ -64,6 +64,26 @@ export interface UserDetail extends User {
 // 매물(Room) 관련 타입
 export type RoomStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published' | 'hidden_by_admin';
 
+// 매물 도메인 (정식 매물 / 입주 준비 방)
+export type PropertySource = 'internal' | 'move_in';
+
+// 입주 준비 방 심사 상태 (대문자 enum)
+export type MoveInRoomReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type MoveInChangedBy = 'HOST' | 'ADMIN' | 'SYSTEM';
+
+export interface MoveInStatusHistory {
+  id: number;
+  changedBy: MoveInChangedBy;
+  previousStatus: MoveInRoomReviewStatus | null;
+  newStatus: MoveInRoomReviewStatus;
+  adminId: number | null;
+  adminName: string | null;
+  reason: string | null;
+  triggeredFields: string[] | null;
+  ipAddress: string | null;
+  changedAt: string;
+}
+
 export interface Room {
   id: number;
   roomName: string;
