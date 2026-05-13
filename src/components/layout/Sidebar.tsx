@@ -16,6 +16,7 @@ import {
   Send,
   Package,
   ClipboardList,
+  Sparkles,
   Gift,
   Briefcase,
   Wallet,
@@ -89,6 +90,11 @@ const navItems: NavItem[] = [
     path: '/service-tasks',
     label: '예약 관리',
     icon: <ClipboardList className="w-5 h-5" />
+  },
+  {
+    path: '/move-in-cases',
+    label: '입주 준비 서비스',
+    icon: <Sparkles className="w-5 h-5" />
   },
   {
     path: '/receipts',

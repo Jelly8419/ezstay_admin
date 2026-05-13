@@ -2055,3 +2055,243 @@ export interface BrokerIncentiveMonthlyParams {
   month: string;
   status?: BrokerPayoutStatus;
 }
+
+// ========================================
+// 입주 준비 케이스 (Move-In Case)
+// ========================================
+
+// 청소 서비스 상태
+export type MoveInCleaningStatus =
+  | 'NOT_REQUESTED'
+  | 'PAYMENT_PENDING'
+  | 'PAID'
+  | 'CANCELLED';
+
+// 그룹별(입주용품/침구류) 결제 상태
+export type MoveInGroupPaymentStatus = 'PAID' | 'PENDING' | null;
+
+// 결제 요청 알림톡 상태
+export type MoveInPaymentRequestStatus =
+  | 'NOT_SENT'
+  | 'SENT'
+  | 'EXPIRED'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+// 입주 준비 옵션 카테고리
+export type MoveInOptionCategory =
+  | 'AMENITY_KIT'
+  | 'HAIR_DRYER'
+  | 'TOWEL_SET'
+  | 'BEDDING_SET'
+  | 'OTHER';
+
+// 케이스 목록 응답 항목
+export interface MoveInCaseListItem {
+  id: number;
+  address: string;
+  detailAddress: string | null;
+  host: {
+    id: number;
+    name: string;
+    phoneNumber: string;
+    email: string;
+  };
+  guest: {
+    name: string;
+    phoneNumber: string;
+    email: string | null;
+    userId: number | null;
+  };
+  checkInDate: string;
+  checkOutDate: string;
+  cleaning: {
+    status: MoveInCleaningStatus;
+    statusLabel: string;
+  };
+  amenity: {
+    status: MoveInGroupPaymentStatus;
+    statusLabel: string | null;
+  };
+  bedding: {
+    status: MoveInGroupPaymentStatus;
+    statusLabel: string | null;
+  };
+  paymentRequest: {
+    status: MoveInPaymentRequestStatus;
+    statusLabel: string;
+    sentAt: string | null;
+    lastResentAt: string | null;
+    resendCount: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MoveInCaseListParams {
+  cleaningStatus?: MoveInCleaningStatus;
+  checkInFrom?: string;
+  checkInTo?: string;
+  checkOutFrom?: string;
+  checkOutTo?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface MoveInCaseListResponse {
+  items: MoveInCaseListItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// 케이스 상세 - 청소 결제 정보
+export interface MoveInCleaningPayment {
+  id: number;
+  orderId: string;
+  amount: number;
+  status: string;
+  pgProvider: string | null;
+  pgMethod: string | null;
+  pgTid: string | null;
+  paidAt: string | null;
+  failedAt: string | null;
+  failureReason: string | null;
+}
+
+// 케이스 상세 - 입주용품/침구류 주문
+export interface MoveInGuestOrderItem {
+  id: number;
+  optionId: number;
+  optionName: string;
+  category: MoveInOptionCategory;
+  categoryLabel: string;
+  quantity: number;
+  pricePerItem: number;
+  totalPrice: number;
+  status: 'ACTIVE' | 'CANCELLED';
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  refundAmount: number | null;
+}
+
+export interface MoveInGuestOrderPayment {
+  id: number;
+  amount: number;
+  status: string;
+  pgProvider: string | null;
+  pgMethod: string | null;
+  pgTid: string | null;
+  paidAt: string | null;
+}
+
+export interface MoveInGuestOrder {
+  id: number;
+  orderId: string;
+  orderType: string;
+  status: string;
+  statusLabel: string;
+  totalAmount: number;
+  paidAmount: number;
+  refundedAmount: number;
+  paymentMethod: string | null;
+  paidAt: string | null;
+  modifiableUntil: string | null;
+  deliveryStatus: string | null;
+  deliveryStatusLabel: string | null;
+  deliveredAt: string | null;
+  items: MoveInGuestOrderItem[];
+  payments: MoveInGuestOrderPayment[];
+  createdAt: string;
+}
+
+// 케이스 상세 응답
+export interface MoveInCaseDetail {
+  id: number;
+  room: {
+    id: number;
+    address: string;
+    detailAddress: string | null;
+    roomName: string | null;
+    areaPyeong: number | null;
+    livingRoomCount: number | null;
+    roomCount: number | null;
+    bathroomCount: number | null;
+    bedCount: number | null;
+    beds: Array<{ size: string }>;
+    cleaningSuppliesAvailable: boolean | null;
+    cleaningSuppliesLocation: string | null;
+    commonEntrancePassword: string | null;
+    doorLockPassword: string | null;
+  };
+  host: {
+    id: number;
+    name: string;
+    phoneNumber: string;
+    email: string;
+  };
+  guest: {
+    name: string;
+    phoneNumber: string;
+    email: string | null;
+    userId: number | null;
+  };
+  period: {
+    checkInDate: string;
+    checkOutDate: string;
+  };
+  requestMemo: string | null;
+  adminMemo: string | null;
+  lastModified: {
+    at: string | null;
+    admin: { id: number; name: string } | null;
+  } | null;
+  cleaning: {
+    status: MoveInCleaningStatus;
+    statusLabel: string;
+    fee: number | null;
+    paidAt: string | null;
+    payment: MoveInCleaningPayment | null;
+  };
+  amenity: {
+    status: MoveInGroupPaymentStatus;
+    statusLabel: string | null;
+    orders: MoveInGuestOrder[];
+  };
+  bedding: {
+    status: MoveInGroupPaymentStatus;
+    statusLabel: string | null;
+    orders: MoveInGuestOrder[];
+  };
+  paymentRequest: {
+    status: MoveInPaymentRequestStatus;
+    statusLabel: string;
+    link: string | null;
+    sentAt: string | null;
+    lastResentAt: string | null;
+    resendCount: number;
+    expiresAt: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// PATCH /cases/:caseId Body
+export interface MoveInCaseUpdateRequest {
+  adminMemo?: string | null;
+}
+
+// 재발송 응답
+export interface MoveInPaymentRequestResendResponse {
+  caseId: number;
+  status: MoveInPaymentRequestStatus;
+  sentAt: string | null;
+  lastResentAt: string | null;
+  resendCount: number;
+  paymentLink: string | null;
+  _note: string | null;
+}

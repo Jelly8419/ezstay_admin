@@ -38,6 +38,8 @@ import BrokerList from './pages/brokers/BrokerList';
 import BrokerDetail from './pages/brokers/BrokerDetail';
 import IncentiveMonthlyList from './pages/broker-incentives/IncentiveMonthlyList';
 import IncentiveMonthlyDetail from './pages/broker-incentives/IncentiveMonthlyDetail';
+import MoveInCaseList from './pages/move-in-cases/MoveInCaseList';
+import MoveInCaseDetail from './pages/move-in-cases/MoveInCaseDetail';
 
 function App() {
   // 환경변수로 basename 제어 (개발: /, 테스트/프로덕션: /admin)
@@ -98,6 +100,10 @@ function App() {
 
               {/* 예약 관리 */}
               <Route path="service-tasks" element={<ServiceTaskList />} />
+
+              {/* 입주 준비 서비스 */}
+              <Route path="move-in-cases" element={<MoveInCaseList />} />
+              <Route path="move-in-cases/:caseId" element={<MoveInCaseDetail />} />
 
               {/* 영수증 관리 */}
               <Route path="receipts" element={<ReceiptList />} />
