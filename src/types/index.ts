@@ -1603,9 +1603,15 @@ export interface RentalItemUpdateRequest {
 export type ServiceTaskType = 'CLEANING' | 'BEDDING_DELIVERY' | 'BEDDING_RETRIEVAL';
 export type ServiceTaskStatus = 'PENDING' | 'RESERVED' | 'COMPLETED' | 'ISSUE';
 
+// 통합 조회 도메인 식별자
+export type ServiceTaskSource = 'internal' | 'move_in';
+export type ServiceTaskSourceFilter = ServiceTaskSource | 'all';
+
 export interface ServiceTask {
+  source: ServiceTaskSource;
   id: number;
-  contractId: number;
+  contractId: number | null;   // move_in 행은 null
+  caseId?: number | null;      // move_in 행만 값 존재
   roomName: string;
   taskType: ServiceTaskType;
   referenceDate: string;       // YYYY-MM-DD
@@ -1615,11 +1621,26 @@ export interface ServiceTask {
   vendorName: string | null;
   vendorContact: string | null;
   vendorRefNo: string | null;
+  issueNote?: string | null;   // move_in 응답은 목록에도 포함
+
+  // move_in 전용 필드 (선택 노출)
+  address?: string;
+  detailAddress?: string | null;
+  areaPyeong?: number | null;
+  cleaningSuppliesLocation?: string | null;
+  reservedAmount?: number | null;
+  actualAmount?: number | null;
+  guestName?: string | null;
+  guestPhone?: string | null;
+  checkInDate?: string;
+  checkOutDate?: string;
+
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ServiceTaskListParams {
+  source?: ServiceTaskSourceFilter;
   tab?: 'pending' | 'all';
   task_type?: ServiceTaskType;
   status?: ServiceTaskStatus;
@@ -1634,6 +1655,7 @@ export interface ServiceTaskListResponse {
   page: number;
   limit: number;
   items: ServiceTask[];
+  breakdown?: { internal: number; move_in: number };
 }
 
 export interface ServiceTaskUpdateRequest {
@@ -1671,6 +1693,10 @@ export interface ServiceTaskDetail extends ServiceTask {
   actualAmount: number | null;
   issueNote: string | null;
   logs: ServiceTaskLog[];
+
+  // source=move_in 단건 응답 전용 (청소 업체 응대용 비밀번호 평문)
+  commonEntrancePassword?: string | null;
+  doorLockPassword?: string | null;
 }
 
 // ========================================

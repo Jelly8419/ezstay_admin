@@ -11,6 +11,7 @@ interface TableProps<T> {
   columns: Column<T>[];
   data: T[];
   onRowClick?: (record: T) => void;
+  rowKey?: (record: T, index: number) => string | number;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ export function Table<T extends Record<string, any>>({
   columns,
   data,
   onRowClick,
+  rowKey,
   className = ''
 }: TableProps<T>) {
   return (
@@ -39,7 +41,7 @@ export function Table<T extends Record<string, any>>({
         <tbody className="bg-white divide-y divide-gray-200">
           {data.map((record, index) => (
             <tr
-              key={record.id ?? index}
+              key={rowKey ? rowKey(record, index) : (record.id ?? index)}
               onClick={() => onRowClick?.(record)}
               className={onRowClick ? 'hover:bg-gray-50 cursor-pointer' : ''}
             >

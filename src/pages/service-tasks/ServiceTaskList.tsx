@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import type {
   ServiceTask,
   ServiceTaskDetail,
   ServiceTaskLog,
+  ServiceTaskSourceFilter,
   ServiceTaskType,
   ServiceTaskStatus,
 } from '../../types';
@@ -56,6 +58,20 @@ const STATUS_OPTIONS: { value: ServiceTaskStatus | 'all'; label: string }[] = [
   { value: 'ISSUE',     label: '이슈 발생' },
 ];
 
+const SOURCE_OPTIONS: { value: ServiceTaskSourceFilter; label: string }[] = [
+  { value: 'all',      label: '전체 도메인' },
+  { value: 'internal', label: '내부 계약' },
+  { value: 'move_in',  label: '입주 준비' },
+];
+
+const SOURCE_BADGE: Record<
+  'internal' | 'move_in',
+  { label: string; variant: 'default' | 'info' }
+> = {
+  internal: { label: '내부 계약', variant: 'default' },
+  move_in:  { label: '입주 준비', variant: 'info' },
+};
+
 // ─── D-day 표시 ───────────────────────────────────────────────────────────────
 
 function formatDDay(dDay: number): string {
@@ -70,23 +86,74 @@ function isDDayUrgent(dDay: number): boolean {
 
 // ─── 컬럼 정의 ────────────────────────────────────────────────────────────────
 
-function buildColumns(openModal: (task: ServiceTask) => void) {
-  return [
+function buildColumns(
+  openModal: (task: ServiceTask) => void,
+  showSourceColumn: boolean
+): any[] {
+  const cols: any[] = [];
+
+  if (showSourceColumn) {
+    cols.push({
+      key: 'source',
+      title: '도메인',
+      render: (_: any, task: ServiceTask) => {
+        const cfg = SOURCE_BADGE[task.source];
+        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+      },
+    });
+  }
+
+  cols.push(
     {
       key: 'contractId',
-      title: '계약 ID',
-      render: (_: any, task: ServiceTask) => (
-        <Link
-          to={`/contracts/${task.contractId}`}
-          className="text-primary-600 hover:underline font-medium"
-        >
-          #{task.contractId}
-        </Link>
-      ),
+      title: '계약 / 케이스',
+      render: (_: any, task: ServiceTask) => {
+        if (task.source === 'move_in') {
+          return (
+            <span className="text-gray-700 font-medium">
+              #케이스-{task.caseId ?? '-'}
+            </span>
+          );
+        }
+        return (
+          <Link
+            to={`/contracts/${task.contractId}`}
+            className="text-primary-600 hover:underline font-medium"
+          >
+            #{task.contractId}
+          </Link>
+        );
+      },
     },
     {
       key: 'roomName',
       title: '방 이름',
+      render: (_: any, task: ServiceTask) => (
+        <div>
+          <div className="text-gray-900">{task.roomName || '-'}</div>
+          {task.source === 'move_in' && task.address && (
+            <div className="text-xs text-gray-500 mt-0.5">
+              {task.address}
+              {task.detailAddress ? ` ${task.detailAddress}` : ''}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'guestName',
+      title: '임차인',
+      render: (_: any, task: ServiceTask) => {
+        if (task.source !== 'move_in') return <span className="text-gray-400">-</span>;
+        return (
+          <div>
+            <div className="text-gray-900">{task.guestName || '-'}</div>
+            {task.guestPhone && (
+              <div className="text-xs text-gray-500 mt-0.5">{task.guestPhone}</div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'taskType',
@@ -154,8 +221,10 @@ function buildColumns(openModal: (task: ServiceTask) => void) {
           상태 변경
         </Button>
       ),
-    },
-  ];
+    }
+  );
+
+  return cols;
 }
 
 // ─── 컴포넌트 ─────────────────────────────────────────────────────────────────
@@ -166,9 +235,13 @@ export default function ServiceTaskList() {
   const [activeTab, setActiveTab] = useState<TabKey>('pending');
   const [tasks, setTasks] = useState<ServiceTask[]>([]);
   const [total, setTotal] = useState(0);
+  const [breakdown, setBreakdown] = useState<{ internal: number; move_in: number } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 도메인 필터 (전 탭 공통)
+  const [sourceFilter, setSourceFilter] = useState<ServiceTaskSourceFilter>('all');
 
   // 전체 탭 전용 필터
   const [taskTypeFilter, setTaskTypeFilter] = useState<ServiceTaskType | 'all'>('all');
@@ -189,6 +262,7 @@ export default function ServiceTaskList() {
   const [issueNote, setIssueNote] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(false);
 
   const itemsPerPage = 20;
   const totalPages = Math.ceil(total / itemsPerPage);
@@ -200,13 +274,17 @@ export default function ServiceTaskList() {
       setLoading(true);
       setError(null);
 
+      const baseParams = {
+        source: sourceFilter,
+        page: currentPage,
+        limit: itemsPerPage,
+      };
       const params =
         activeTab === 'pending'
-          ? { tab: 'pending' as const, page: currentPage, limit: itemsPerPage }
+          ? { ...baseParams, tab: 'pending' as const }
           : {
+              ...baseParams,
               tab: 'all' as const,
-              page: currentPage,
-              limit: itemsPerPage,
               ...(taskTypeFilter !== 'all' && { task_type: taskTypeFilter }),
               ...(statusFilter !== 'all' && { status: statusFilter }),
               ...(dateFrom && { date_from: dateFrom }),
@@ -216,9 +294,11 @@ export default function ServiceTaskList() {
       const res = await serviceTaskService.getTasks(params);
       setTasks(res.items ?? []);
       setTotal(res.total ?? 0);
+      setBreakdown(res.breakdown ?? null);
     } catch {
       setError('목록을 불러오는데 실패했습니다.');
       setTasks([]);
+      setBreakdown(null);
     } finally {
       setLoading(false);
     }
@@ -226,7 +306,7 @@ export default function ServiceTaskList() {
 
   useEffect(() => {
     loadTasks();
-  }, [activeTab, currentPage, taskTypeFilter, statusFilter, dateFrom, dateTo]);
+  }, [activeTab, sourceFilter, currentPage, taskTypeFilter, statusFilter, dateFrom, dateTo]);
 
   // ── 탭 전환 ───────────────────────────────────────────────────────────────
 
@@ -251,10 +331,11 @@ export default function ServiceTaskList() {
     setReservedAmount('');
     setActualAmount('');
     setIssueNote('');
+    setShowPasswords(false);
     setModalOpen(true);
     try {
       setDetailLoading(true);
-      const detail = await serviceTaskService.getTaskDetail(task.id);
+      const detail = await serviceTaskService.getTaskDetail(task.id, task.source);
       setTaskDetail(detail);
     } catch {
       // 이력 로드 실패 시 모달은 유지
@@ -268,27 +349,32 @@ export default function ServiceTaskList() {
     setSelectedTask(null);
     setTaskDetail(null);
     setNextStatus(null);
+    setShowPasswords(false);
   };
 
   const handleStatusUpdate = async () => {
     if (!selectedTask || !nextStatus) return;
     try {
       setActionLoading(true);
-      await serviceTaskService.updateStatus(selectedTask.id, {
-        status: nextStatus,
-        ...(nextStatus === 'RESERVED' && {
-          ...(vendorName.trim() && { vendorName: vendorName.trim() }),
-          ...(vendorContact.trim() && { vendorContact: vendorContact.trim() }),
-          ...(vendorRefNo.trim() && { vendorRefNo: vendorRefNo.trim() }),
-          ...(reservedAmount.trim() && { reservedAmount: Number(reservedAmount) }),
-        }),
-        ...(nextStatus === 'COMPLETED' && {
-          ...(actualAmount.trim() && { actualAmount: Number(actualAmount) }),
-        }),
-        ...(nextStatus === 'ISSUE' && {
-          ...(issueNote.trim() && { issueNote: issueNote.trim() }),
-        }),
-      });
+      await serviceTaskService.updateStatus(
+        selectedTask.id,
+        {
+          status: nextStatus,
+          ...(nextStatus === 'RESERVED' && {
+            ...(vendorName.trim() && { vendorName: vendorName.trim() }),
+            ...(vendorContact.trim() && { vendorContact: vendorContact.trim() }),
+            ...(vendorRefNo.trim() && { vendorRefNo: vendorRefNo.trim() }),
+            ...(reservedAmount.trim() && { reservedAmount: Number(reservedAmount) }),
+          }),
+          ...(nextStatus === 'COMPLETED' && {
+            ...(actualAmount.trim() && { actualAmount: Number(actualAmount) }),
+          }),
+          ...(nextStatus === 'ISSUE' && {
+            ...(issueNote.trim() && { issueNote: issueNote.trim() }),
+          }),
+        },
+        selectedTask.source
+      );
       closeModal();
       loadTasks();
     } catch {
@@ -298,7 +384,8 @@ export default function ServiceTaskList() {
     }
   };
 
-  const columns = buildColumns(openModal);
+  // 도메인 컬럼은 sourceFilter === 'all' 일 때만 노출
+  const columns = buildColumns(openModal, sourceFilter === 'all');
 
   // ── 렌더 ──────────────────────────────────────────────────────────────────
 
@@ -339,6 +426,34 @@ export default function ServiceTaskList() {
             </button>
           ))}
         </nav>
+      </div>
+
+      {/* 도메인 필터 (전 탭 공통) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium text-gray-700">도메인</span>
+        <div className="inline-flex bg-gray-100 rounded-lg p-1">
+          {SOURCE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                setSourceFilter(opt.value);
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                sourceFilter === opt.value
+                  ? 'bg-white shadow text-gray-900 font-medium'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {breakdown && sourceFilter === 'all' && (
+          <span className="text-xs text-gray-500 ml-2">
+            내부 {breakdown.internal} · 입주 {breakdown.move_in}
+          </span>
+        )}
       </div>
 
       {/* 전체 탭 전용 필터 */}
@@ -444,7 +559,11 @@ export default function ServiceTaskList() {
             <div className="px-4 py-3 border-b border-gray-100 text-sm text-gray-500">
               총 <span className="font-semibold text-gray-900">{total}</span>건
             </div>
-            <Table columns={columns} data={tasks} />
+            <Table
+              columns={columns}
+              data={tasks}
+              rowKey={(r) => `${r.source}-${r.id}`}
+            />
             {totalPages > 1 && (
               <div className="px-4 py-4 border-t border-gray-100">
                 <Pagination
@@ -503,9 +622,39 @@ export default function ServiceTaskList() {
             {/* 현재 정보 요약 */}
             <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1">
               <div className="flex justify-between">
+                <span className="text-gray-500">도메인</span>
+                <Badge variant={SOURCE_BADGE[selectedTask.source].variant}>
+                  {SOURCE_BADGE[selectedTask.source].label}
+                </Badge>
+              </div>
+              {selectedTask.source === 'move_in' && selectedTask.caseId != null && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">케이스 ID</span>
+                  <span className="font-medium">#{selectedTask.caseId}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
                 <span className="text-gray-500">방 이름</span>
                 <span className="font-medium">{selectedTask.roomName}</span>
               </div>
+              {selectedTask.source === 'move_in' && selectedTask.address && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">주소</span>
+                  <span className="font-medium text-right max-w-[60%]">
+                    {selectedTask.address}
+                    {selectedTask.detailAddress ? ` ${selectedTask.detailAddress}` : ''}
+                  </span>
+                </div>
+              )}
+              {selectedTask.source === 'move_in' && selectedTask.guestName && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">임차인</span>
+                  <span className="font-medium">
+                    {selectedTask.guestName}
+                    {selectedTask.guestPhone ? ` (${selectedTask.guestPhone})` : ''}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-500">타입</span>
                 <span className="font-medium">{TASK_TYPE_LABELS[selectedTask.taskType]}</span>
@@ -527,6 +676,56 @@ export default function ServiceTaskList() {
                 </div>
               )}
             </div>
+
+            {/* 입주 준비 청소: 공동현관 / 도어락 비밀번호 */}
+            {selectedTask.source === 'move_in' &&
+              taskDetail &&
+              (taskDetail.commonEntrancePassword || taskDetail.doorLockPassword) && (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-gray-800">출입 비밀번호</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords((v) => !v)}
+                      className="inline-flex items-center text-xs text-gray-600 hover:text-gray-900"
+                    >
+                      {showPasswords ? (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5 mr-1" />
+                          숨기기
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          표시
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">공동현관</span>
+                    <span className="font-mono">
+                      {showPasswords
+                        ? taskDetail.commonEntrancePassword || '-'
+                        : '••••••'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">도어락</span>
+                    <span className="font-mono">
+                      {showPasswords ? taskDetail.doorLockPassword || '-' : '••••••'}
+                    </span>
+                  </div>
+                  {taskDetail.cleaningSuppliesLocation && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">청소도구 위치</span>
+                      <span className="text-gray-800 text-right max-w-[60%]">
+                        {taskDetail.cleaningSuppliesLocation}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
             {/* 전환할 상태 선택 */}
             <div>
