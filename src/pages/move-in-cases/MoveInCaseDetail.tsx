@@ -387,6 +387,30 @@ export default function MoveInCaseDetail() {
         </div>
         <PaymentInfoRow label="신청 상태" value={cleaningCfg.label} />
         <PaymentInfoRow label="청소 금액" value={formatCurrency(data.cleaning.fee)} />
+        <PaymentInfoRow
+          label="희망 일자"
+          value={
+            data.cleaning.desiredDate
+              ? formatDate(data.cleaning.desiredDate)
+              : '-'
+          }
+        />
+        <PaymentInfoRow
+          label="희망 시간"
+          value={
+            data.cleaning.desiredTime
+              ? data.cleaning.desiredTime.slice(0, 5)
+              : '-'
+          }
+        />
+        <PaymentInfoRow
+          label="결제 마감"
+          value={
+            data.cleaning.paymentDeadline
+              ? formatDateTime(data.cleaning.paymentDeadline)
+              : '-'
+          }
+        />
         {data.cleaning.payment && (
           <>
             <PaymentInfoRow
@@ -437,6 +461,14 @@ export default function MoveInCaseDetail() {
               label="금액"
               value={formatCurrency(sumOrderAmounts(data.amenity.orders))}
             />
+            <PaymentInfoRow
+              label="결제 마감"
+              value={
+                data.amenity.paymentDeadline
+                  ? formatDateTime(data.amenity.paymentDeadline)
+                  : '-'
+              }
+            />
             {amenityRep && (
               <>
                 <PaymentInfoRow
@@ -486,6 +518,14 @@ export default function MoveInCaseDetail() {
             <PaymentInfoRow
               label="금액"
               value={formatCurrency(sumOrderAmounts(data.bedding.orders))}
+            />
+            <PaymentInfoRow
+              label="결제 마감"
+              value={
+                data.bedding.paymentDeadline
+                  ? formatDateTime(data.bedding.paymentDeadline)
+                  : '-'
+              }
             />
             {beddingRep && (
               <>

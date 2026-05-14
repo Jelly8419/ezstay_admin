@@ -2281,16 +2281,21 @@ export interface MoveInCaseDetail {
     statusLabel: string;
     fee: number | null;
     paidAt: string | null;
+    desiredDate: string | null;
+    desiredTime: string | null;
+    paymentDeadline: string | null;
     payment: MoveInCleaningPayment | null;
   };
   amenity: {
     status: MoveInGroupPaymentStatus;
     statusLabel: string | null;
+    paymentDeadline: string | null;
     orders: MoveInGuestOrder[];
   };
   bedding: {
     status: MoveInGroupPaymentStatus;
     statusLabel: string | null;
+    paymentDeadline: string | null;
     orders: MoveInGuestOrder[];
   };
   paymentRequest: {
