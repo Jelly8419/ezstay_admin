@@ -210,15 +210,10 @@ export default function MoveInCaseList() {
   ];
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">입주 준비 서비스</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            총 {total.toLocaleString('ko-KR')}건의 케이스
-          </p>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500">
+        총 {total.toLocaleString('ko-KR')}건의 케이스
+      </p>
 
       {/* 검색바 */}
       <Card className="p-4">

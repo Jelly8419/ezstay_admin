@@ -2199,7 +2199,7 @@ export interface MoveInGuestOrderItem {
   quantity: number;
   pricePerItem: number;
   totalPrice: number;
-  status: 'ACTIVE' | 'CANCELLED';
+  status: 'ACTIVE' | 'CANCELLED' | 'RETURN_REQUESTED';
   cancelledAt: string | null;
   cancelReason: string | null;
   refundAmount: number | null;
@@ -2307,6 +2307,7 @@ export interface MoveInCaseDetail {
     resendCount: number;
     expiresAt: string | null;
   };
+  refundRequests: MoveInRefundRequest[];
   createdAt: string;
   updatedAt: string;
 }
@@ -2314,6 +2315,197 @@ export interface MoveInCaseDetail {
 // PATCH /cases/:caseId Body
 export interface MoveInCaseUpdateRequest {
   adminMemo?: string | null;
+}
+
+// ── 임차인 반품 요청 (2026-05-16) ──
+export type MoveInRefundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+// 케이스 상세 동봉 (B) — 요약 형태
+export interface MoveInRefundRequest {
+  id: number;
+  guestOrderId: number;
+  status: MoveInRefundRequestStatus;
+  statusLabel: string;
+  returnReason: string | null;
+  rejectReason: string | null;
+  deliveryStatusSnapshot: string | null;
+  itemTotalAmount: number;
+  shippingDeduction: number;
+  finalRefundAmount: number;
+  requesterName: string | null;
+  adminName: string | null;
+  processedAt: string | null;
+  createdAt: string;
+}
+
+// 목록 항목 — 케이스 동봉 + 목록 전용 필드
+export interface MoveInRefundRequestListItem extends MoveInRefundRequest {
+  caseId: number;
+  requestedBy: number | null;
+  adminId: number | null;
+  updatedAt: string;
+  order: {
+    orderDbId: number;
+    orderId: string;
+    orderType: string;
+    status: string;
+    totalAmount: number;
+    deliveryStatus: string | null;
+  };
+  case: {
+    caseId: number;
+    guestName: string;
+    guestPhone: string;
+    checkInDate: string;
+    checkOutDate: string;
+  };
+}
+
+export interface MoveInRefundRequestListParams {
+  status?: MoveInRefundRequestStatus;
+  caseId?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface MoveInRefundRequestListResponse {
+  items: MoveInRefundRequestListItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// PATCH .../approve 응답
+export interface MoveInRefundApproveResponse {
+  refundRequestId: number;
+  orderDbId: number;
+  orderId: string;
+  status: MoveInRefundRequestStatus;
+  itemTotalAmount: number;
+  shippingDeduction: number;
+  finalRefundAmount: number;
+}
+
+// PATCH .../reject 응답
+export interface MoveInRefundRejectResponse {
+  refundRequestId: number;
+  status: MoveInRefundRequestStatus;
+}
+
+// ── 게스트 주문 모니터링 (입주 준비 옵션 주문) ──
+export type MoveInGuestOrderStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'PARTIAL_REFUND'
+  | 'FULLY_REFUNDED'
+  | 'CANCELLED';
+
+export type MoveInGuestOrderDeliveryStatus =
+  | 'PENDING'
+  | 'IN_TRANSIT'
+  | 'DELIVERED';
+
+export type MoveInGuestOrderType = 'INITIAL' | 'ADDITIONAL';
+
+// 목록/단건 공통 주문 항목 (케이스 상세 동봉 MoveInGuestOrder 와 별개 — 모니터링 전용)
+export interface MoveInGuestOrderMonitorItem {
+  id: number;
+  orderId: string;
+  orderType: MoveInGuestOrderType;
+  status: MoveInGuestOrderStatus;
+  statusLabel: string;
+  deliveryStatus: MoveInGuestOrderDeliveryStatus | null;
+  deliveryStatusLabel: string | null;
+  totalAmount: number;
+  paidAmount: number;
+  refundedAmount: number;
+  paidAt: string | null;
+  deliveredAt: string | null;
+  modifiableUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+  case: {
+    caseId: number;
+    hostId: number;
+    checkInDate: string;
+    checkOutDate: string;
+    guestName: string;
+    guestPhone: string;
+  };
+  guest: {
+    userId: number | null;
+    name: string;
+    email: string | null;
+  };
+  items: Array<{
+    id: number;
+    optionId: number;
+    optionName: string;
+    quantity: number;
+    pricePerItem: number;
+    totalPrice: number;
+    status: string;
+    cancelledAt: string | null;
+  }>;
+  payments: Array<{
+    id: number;
+    orderId: string;
+    amount: number;
+    status: string;
+    pgProvider: string | null;
+    pgMethod: string | null;
+    pgTid: string | null;
+    paidAt: string | null;
+    failedAt: string | null;
+    failureReason: string | null;
+  }>;
+}
+
+export interface MoveInGuestOrderLog {
+  id: number;
+  actor: 'GUEST' | 'ADMIN' | 'SYSTEM';
+  actorId: number | null;
+  action: string;
+  amountChange: number;
+  balanceAfter: number;
+  description: string | null;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
+// 단건 상세 = 목록 항목 + logs[]
+export interface MoveInGuestOrderDetail extends MoveInGuestOrderMonitorItem {
+  logs: MoveInGuestOrderLog[];
+}
+
+export interface MoveInGuestOrderListParams {
+  status?: MoveInGuestOrderStatus;
+  deliveryStatus?: MoveInGuestOrderDeliveryStatus;
+  orderType?: MoveInGuestOrderType;
+  caseId?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface MoveInGuestOrderListResponse {
+  items: MoveInGuestOrderMonitorItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// PATCH /guest-orders/:orderId/delivery Body
+export interface MoveInGuestOrderDeliveryUpdateRequest {
+  deliveryStatus: MoveInGuestOrderDeliveryStatus;
+  note?: string;
 }
 
 // 재발송 응답

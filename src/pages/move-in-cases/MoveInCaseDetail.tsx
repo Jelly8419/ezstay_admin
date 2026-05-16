@@ -7,6 +7,7 @@ import {
   EyeOff,
   FileText,
   Home,
+  RotateCcw,
   Send,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
@@ -21,6 +22,7 @@ import type {
 import {
   CLEANING_STATUS_CONFIG,
   PAYMENT_REQUEST_STATUS_CONFIG,
+  REFUND_REQUEST_STATUS_CONFIG,
   getGroupStatusBadge,
 } from './moveInCaseLabels';
 
@@ -93,6 +95,11 @@ export default function MoveInCaseDetail() {
 
   // 비밀번호 표시 토글
   const [showPasswords, setShowPasswords] = useState(false);
+
+  // 반품 처리 중인 요청 id (버튼 중복 클릭 방지)
+  const [refundProcessingId, setRefundProcessingId] = useState<number | null>(
+    null
+  );
 
   const load = useCallback(async () => {
     if (!caseId) return;
@@ -170,6 +177,52 @@ export default function MoveInCaseDetail() {
       alert('결제 링크가 복사되었습니다.');
     } catch {
       alert('복사에 실패했습니다.');
+    }
+  };
+
+  const handleApproveRefund = async (requestId: number) => {
+    if (
+      !window.confirm(
+        '반품 요청을 승인하시겠습니까?\n승인 시 왕복배송비 7,000원 차감 후 환불 처리됩니다.'
+      )
+    )
+      return;
+    setRefundProcessingId(requestId);
+    try {
+      const res = await moveInCaseService.approveRefundRequest(requestId);
+      alert(
+        `반품이 승인되었습니다.\n` +
+          `항목 합계 ${formatCurrency(res.itemTotalAmount)} − ` +
+          `수거비 ${formatCurrency(res.shippingDeduction)} = ` +
+          `환불 ${formatCurrency(res.finalRefundAmount)}`
+      );
+      await load();
+    } catch (e: any) {
+      alert(e?.message || '반품 승인에 실패했습니다.');
+    } finally {
+      setRefundProcessingId(null);
+    }
+  };
+
+  const handleRejectRefund = async (requestId: number) => {
+    const reason = window.prompt(
+      '반품 요청을 거절합니다. 거절 사유를 입력하세요 (선택, 비워도 됨).'
+    );
+    // prompt 취소 시 null → 처리 중단. 빈 문자열은 사유 없이 진행 허용.
+    if (reason === null) return;
+    setRefundProcessingId(requestId);
+    try {
+      const trimmed = reason.trim();
+      await moveInCaseService.rejectRefundRequest(
+        requestId,
+        trimmed === '' ? undefined : trimmed
+      );
+      alert('반품 요청이 거절되었습니다.');
+      await load();
+    } catch (e: any) {
+      alert(e?.message || '반품 거절에 실패했습니다.');
+    } finally {
+      setRefundProcessingId(null);
     }
   };
 
@@ -623,6 +676,105 @@ export default function MoveInCaseDetail() {
           />
         )}
       </Card>
+
+      {/* 반품 요청 */}
+      {data.refundRequests.length > 0 && (
+        <Card>
+          <div className="flex items-center gap-2 mb-3">
+            <RotateCcw className="w-5 h-5 text-gray-500" />
+            <div className="text-base font-semibold text-gray-900">
+              반품 요청
+            </div>
+            <span className="text-xs text-gray-400">
+              ({data.refundRequests.length}건)
+            </span>
+          </div>
+          <div className="space-y-3">
+            {data.refundRequests.map((rr) => {
+              const cfg = REFUND_REQUEST_STATUS_CONFIG[rr.status];
+              const isProcessing = refundProcessingId === rr.id;
+              return (
+                <div
+                  key={rr.id}
+                  className="border border-gray-200 rounded-lg p-3"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                      <span className="text-xs text-gray-500">
+                        주문 #{rr.guestOrderId}
+                      </span>
+                    </div>
+                    {rr.status === 'PENDING' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleApproveRefund(rr.id)}
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? '처리 중...' : '승인'}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleRejectRefund(rr.id)}
+                          disabled={isProcessing}
+                        >
+                          거절
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <PaymentInfoRow
+                    label="반품 사유"
+                    value={rr.returnReason || '-'}
+                  />
+                  <PaymentInfoRow
+                    label="항목 합계"
+                    value={formatCurrency(rr.itemTotalAmount)}
+                  />
+                  <PaymentInfoRow
+                    label="수거비 차감"
+                    value={
+                      rr.shippingDeduction > 0
+                        ? `- ${formatCurrency(rr.shippingDeduction)}`
+                        : '-'
+                    }
+                  />
+                  <PaymentInfoRow
+                    label="환불 예상액"
+                    value={
+                      rr.status === 'PENDING'
+                        ? `${formatCurrency(
+                            Math.max(rr.itemTotalAmount - 7000, 0)
+                          )} (예상)`
+                        : formatCurrency(rr.finalRefundAmount)
+                    }
+                  />
+                  {rr.rejectReason && (
+                    <PaymentInfoRow
+                      label="거절 사유"
+                      value={rr.rejectReason}
+                    />
+                  )}
+                  <PaymentInfoRow
+                    label="요청일"
+                    value={formatDateTime(rr.createdAt)}
+                  />
+                  {rr.processedAt && (
+                    <PaymentInfoRow
+                      label="처리"
+                      value={`${formatDateTime(rr.processedAt)}${
+                        rr.adminName ? ` · ${rr.adminName}` : ''
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* 메모 */}
       <Card>

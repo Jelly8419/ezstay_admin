@@ -5,6 +5,14 @@ import type {
   MoveInCaseListResponse,
   MoveInCaseUpdateRequest,
   MoveInPaymentRequestResendResponse,
+  MoveInRefundApproveResponse,
+  MoveInRefundRejectResponse,
+  MoveInRefundRequestListParams,
+  MoveInRefundRequestListResponse,
+  MoveInGuestOrderListParams,
+  MoveInGuestOrderListResponse,
+  MoveInGuestOrderDetail,
+  MoveInGuestOrderDeliveryUpdateRequest,
 } from '../types';
 
 export const moveInCaseService = {
@@ -25,5 +33,51 @@ export const moveInCaseService = {
   ): Promise<MoveInPaymentRequestResendResponse> =>
     api.post<MoveInPaymentRequestResendResponse>(
       `/admin/move-in/cases/${caseId}/payment-request/resend`
+    ),
+
+  // ── 임차인 반품 요청 ──
+
+  getRefundRequests: (
+    params?: MoveInRefundRequestListParams
+  ): Promise<MoveInRefundRequestListResponse> =>
+    api.get<MoveInRefundRequestListResponse>('/admin/move-in/refund-requests', {
+      params,
+    }),
+
+  approveRefundRequest: (
+    requestId: number
+  ): Promise<MoveInRefundApproveResponse> =>
+    api.patch<MoveInRefundApproveResponse>(
+      `/admin/move-in/refund-requests/${requestId}/approve`
+    ),
+
+  rejectRefundRequest: (
+    requestId: number,
+    rejectReason?: string
+  ): Promise<MoveInRefundRejectResponse> =>
+    api.patch<MoveInRefundRejectResponse>(
+      `/admin/move-in/refund-requests/${requestId}/reject`,
+      rejectReason ? { rejectReason } : {}
+    ),
+
+  // ── 게스트 주문 모니터링 ──
+
+  getGuestOrders: (
+    params?: MoveInGuestOrderListParams
+  ): Promise<MoveInGuestOrderListResponse> =>
+    api.get<MoveInGuestOrderListResponse>('/admin/move-in/guest-orders', {
+      params,
+    }),
+
+  getGuestOrderDetail: (orderId: number): Promise<MoveInGuestOrderDetail> =>
+    api.get<MoveInGuestOrderDetail>(`/admin/move-in/guest-orders/${orderId}`),
+
+  updateGuestOrderDelivery: (
+    orderId: number,
+    body: MoveInGuestOrderDeliveryUpdateRequest
+  ): Promise<MoveInGuestOrderDetail> =>
+    api.patch<MoveInGuestOrderDetail>(
+      `/admin/move-in/guest-orders/${orderId}/delivery`,
+      body
     ),
 };

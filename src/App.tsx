@@ -38,7 +38,7 @@ import BrokerList from './pages/brokers/BrokerList';
 import BrokerDetail from './pages/brokers/BrokerDetail';
 import IncentiveMonthlyList from './pages/broker-incentives/IncentiveMonthlyList';
 import IncentiveMonthlyDetail from './pages/broker-incentives/IncentiveMonthlyDetail';
-import MoveInCaseList from './pages/move-in-cases/MoveInCaseList';
+import MoveInServicePage from './pages/move-in-cases/MoveInServicePage';
 import MoveInCaseDetail from './pages/move-in-cases/MoveInCaseDetail';
 
 function App() {
@@ -102,7 +102,7 @@ function App() {
               <Route path="service-tasks" element={<ServiceTaskList />} />
 
               {/* 입주 준비 서비스 */}
-              <Route path="move-in-cases" element={<MoveInCaseList />} />
+              <Route path="move-in-cases" element={<MoveInServicePage />} />
               <Route path="move-in-cases/:caseId" element={<MoveInCaseDetail />} />
 
               {/* 영수증 관리 */}
