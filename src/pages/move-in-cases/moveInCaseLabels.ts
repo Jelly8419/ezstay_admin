@@ -6,6 +6,8 @@ import type {
   MoveInGuestOrderStatus,
   MoveInGuestOrderDeliveryStatus,
   MoveInGuestOrderType,
+  MoveInPaymentType,
+  MoveInPaymentStatus,
 } from '../../types';
 
 type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'default';
@@ -132,3 +134,42 @@ export const GUEST_ORDER_DELIVERY_TRANSITIONS: Record<
   IN_TRANSIT: ['DELIVERED', 'PENDING'],
   DELIVERED: ['IN_TRANSIT'],
 };
+
+// ── 결제 통합 내역 ──
+
+export const PAYMENT_TYPE_LABEL: Record<MoveInPaymentType, string> = {
+  cleaning: '청소 결제',
+  guest_option: '옵션 결제',
+};
+
+export const PAYMENT_TYPE_OPTIONS: {
+  value: MoveInPaymentType | 'all';
+  label: string;
+}[] = [
+  { value: 'all', label: '전체' },
+  { value: 'cleaning', label: '청소 결제' },
+  { value: 'guest_option', label: '옵션 결제' },
+];
+
+export const PAYMENT_STATUS_CONFIG: Record<
+  MoveInPaymentStatus,
+  { label: string; variant: BadgeVariant }
+> = {
+  PENDING: { label: '결제 대기', variant: 'warning' },
+  PAID: { label: '결제 완료', variant: 'success' },
+  FAILED: { label: '결제 실패', variant: 'danger' },
+  CANCELLED: { label: '취소됨', variant: 'default' },
+  REFUNDED: { label: '환불됨', variant: 'info' },
+};
+
+export const PAYMENT_STATUS_OPTIONS: {
+  value: MoveInPaymentStatus | 'all';
+  label: string;
+}[] = [
+  { value: 'all', label: '전체' },
+  { value: 'PENDING', label: '결제 대기' },
+  { value: 'PAID', label: '결제 완료' },
+  { value: 'FAILED', label: '결제 실패' },
+  { value: 'CANCELLED', label: '취소됨' },
+  { value: 'REFUNDED', label: '환불됨' },
+];

@@ -2320,6 +2320,14 @@ export interface MoveInCaseUpdateRequest {
 // ── 임차인 반품 요청 (2026-05-16) ──
 export type MoveInRefundRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
+// 부분 반품 대상 라인 스냅샷 (2026-05-19). null 이면 전체 반품 (구버전 폴백)
+export interface MoveInRefundRequestTargetItem {
+  itemId: number;
+  optionId: number;
+  quantity: number;
+  pricePerItem: number;
+}
+
 // 케이스 상세 동봉 (B) — 요약 형태
 export interface MoveInRefundRequest {
   id: number;
@@ -2332,6 +2340,7 @@ export interface MoveInRefundRequest {
   itemTotalAmount: number;
   shippingDeduction: number;
   finalRefundAmount: number;
+  targetItems: MoveInRefundRequestTargetItem[] | null;
   requesterName: string | null;
   adminName: string | null;
   processedAt: string | null;
@@ -2506,6 +2515,71 @@ export interface MoveInGuestOrderListResponse {
 export interface MoveInGuestOrderDeliveryUpdateRequest {
   deliveryStatus: MoveInGuestOrderDeliveryStatus;
   note?: string;
+}
+
+// ── 결제 통합 내역 조회 (2026-05-19) ──
+// 임대인 청소결제 + 임차인 옵션결제를 결제 트랜잭션 단위로 통합. 환불은 별도 행이 아니라 status로 표현.
+export type MoveInPaymentType = 'cleaning' | 'guest_option';
+
+export type MoveInPaymentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
+export interface MoveInPaymentItem {
+  type: MoveInPaymentType;
+  paymentId: number;
+  orderId: string;
+  caseId: number;
+  guestOrderId: number | null;
+  amount: number;
+  status: MoveInPaymentStatus;
+  statusLabel: string;
+  pgProvider: string | null;
+  pgMethod: string | null;
+  pgTid: string | null;
+  paidAt: string | null;
+  failedAt: string | null;
+  failureReason: string | null;
+  payer: {
+    role: 'host' | 'guest';
+    name: string;
+    phone: string;
+  };
+  case: {
+    caseId: number;
+    address: string;
+    detailAddress: string | null;
+    guestName: string;
+    guestPhone: string;
+  };
+  createdAt: string;
+}
+
+export interface MoveInPaymentListParams {
+  type?: MoveInPaymentType;
+  status?: MoveInPaymentStatus;
+  paidFrom?: string;
+  paidTo?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface MoveInPaymentListResponse {
+  items: MoveInPaymentItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  breakdown: {
+    cleaning: number;
+    guest_option: number;
+  };
 }
 
 // 재발송 응답

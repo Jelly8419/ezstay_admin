@@ -730,27 +730,50 @@ export default function MoveInCaseDetail() {
                     value={rr.returnReason || '-'}
                   />
                   <PaymentInfoRow
+                    label="반품 대상"
+                    value={
+                      rr.targetItems && rr.targetItems.length > 0
+                        ? rr.targetItems
+                            .map(
+                              (t) => `옵션 #${t.optionId} × ${t.quantity}개`
+                            )
+                            .join(', ')
+                        : '전체 반품'
+                    }
+                  />
+                  <PaymentInfoRow
                     label="항목 합계"
                     value={formatCurrency(rr.itemTotalAmount)}
                   />
-                  <PaymentInfoRow
-                    label="수거비 차감"
-                    value={
-                      rr.shippingDeduction > 0
-                        ? `- ${formatCurrency(rr.shippingDeduction)}`
-                        : '-'
-                    }
-                  />
-                  <PaymentInfoRow
-                    label="환불 예상액"
-                    value={
-                      rr.status === 'PENDING'
-                        ? `${formatCurrency(
-                            Math.max(rr.itemTotalAmount - 7000, 0)
-                          )} (예상)`
-                        : formatCurrency(rr.finalRefundAmount)
-                    }
-                  />
+                  {rr.status === 'PENDING' ? (
+                    <PaymentInfoRow
+                      label="환불 예상액"
+                      value={
+                        <span>
+                          최대 {formatCurrency(rr.itemTotalAmount)}
+                          <span className="text-xs text-gray-500">
+                            {' '}
+                            (수거비 차감 전, 승인 시 확정)
+                          </span>
+                        </span>
+                      }
+                    />
+                  ) : (
+                    <>
+                      <PaymentInfoRow
+                        label="수거비 차감"
+                        value={
+                          rr.shippingDeduction > 0
+                            ? `- ${formatCurrency(rr.shippingDeduction)}`
+                            : '면제 (0원)'
+                        }
+                      />
+                      <PaymentInfoRow
+                        label="환불 확정액"
+                        value={formatCurrency(rr.finalRefundAmount)}
+                      />
+                    </>
+                  )}
                   {rr.rejectReason && (
                     <PaymentInfoRow
                       label="거절 사유"

@@ -13,6 +13,8 @@ import type {
   MoveInGuestOrderListResponse,
   MoveInGuestOrderDetail,
   MoveInGuestOrderDeliveryUpdateRequest,
+  MoveInPaymentListParams,
+  MoveInPaymentListResponse,
 } from '../types';
 
 export const moveInCaseService = {
@@ -80,4 +82,11 @@ export const moveInCaseService = {
       `/admin/move-in/guest-orders/${orderId}/delivery`,
       body
     ),
+
+  // ── 결제 통합 내역 ──
+
+  getPayments: (
+    params?: MoveInPaymentListParams
+  ): Promise<MoveInPaymentListResponse> =>
+    api.get<MoveInPaymentListResponse>('/admin/move-in/payments', { params }),
 };

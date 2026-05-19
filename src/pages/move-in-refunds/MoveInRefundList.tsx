@@ -178,8 +178,17 @@ export default function MoveInRefundList() {
     {
       key: 'returnReason',
       title: '반품 사유',
-      render: (value: string | null) => (
-        <span className="text-sm text-gray-700">{value || '-'}</span>
+      render: (_: any, r: MoveInRefundRequestListItem) => (
+        <div>
+          <div className="text-sm text-gray-700">
+            {r.returnReason || '-'}
+          </div>
+          <div className="text-xs text-gray-400 mt-0.5">
+            {r.targetItems && r.targetItems.length > 0
+              ? `부분 반품 ${r.targetItems.length}건`
+              : '전체 반품'}
+          </div>
+        </div>
       ),
     },
     {
@@ -189,8 +198,11 @@ export default function MoveInRefundList() {
         <div className="text-sm">
           {r.status === 'PENDING' ? (
             <span className="text-gray-700">
-              {formatCurrency(Math.max(r.itemTotalAmount - 7000, 0))}
-              <span className="text-xs text-gray-400"> (예상)</span>
+              최대 {formatCurrency(r.itemTotalAmount)}
+              <span className="text-xs text-gray-400">
+                {' '}
+                (승인 시 확정)
+              </span>
             </span>
           ) : (
             <span className="text-gray-900">
