@@ -36,9 +36,17 @@
       "Bash(npm install:*)",
       "Bash(echo:*)",
       "Bash(c:studyadmin-dashboard.env.production)",
-      "Bash(c:studyadmin-dashboard.env.test)"
+      "Bash(c:studyadmin-dashboard.env.test)",
+      "mcp__serena__think_about_collected_information",
+      "Bash(del \"c:\\\\study\\\\admin-dashboard\\\\src\\\\services\\\\contractService.ts\")",
+      "Bash(wc -l /c/study/admin-dashboard/src/services/*.ts)",
+      "Bash(find /c/study/admin-dashboard/src/services -name *rental* -type f)",
+      "Bash(grep -E \"\\\\.ts$\")"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "C:\\Users\\user\\.claude\\projects\\c--study-admin-dashboard"
+    ]
   }
 }
