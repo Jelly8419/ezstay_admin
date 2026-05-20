@@ -367,6 +367,8 @@ export interface PaymentSummaryItem {
   rentalOrderId: string | null;
   /** 입주 준비 행(MOVE_IN_CLEANING / MOVE_IN_GUEST_ORDER)에만 채워짐 */
   moveInCaseId?: number | null;
+  /** MOVE_IN_GUEST_ORDER 행에만 채워짐 — 게스트 주문 DB PK (상세 라우팅용) */
+  moveInGuestOrderId?: number | null;
   paidAt: string | null;
   productType: string;
   paymentType?: PaymentType;
@@ -504,6 +506,8 @@ export interface PaymentLog {
   actor?: string;
   /** 입주 준비 행(MOVE_IN_CLEANING / MOVE_IN_GUEST_ORDER)에만 채워짐 */
   moveInCaseId?: number | null;
+  /** MOVE_IN_GUEST_ORDER 행에만 채워짐 — 게스트 주문 DB PK */
+  moveInGuestOrderId?: number | null;
 }
 
 // ──────────────────────────────────────────────────────────

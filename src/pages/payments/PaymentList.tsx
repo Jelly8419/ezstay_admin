@@ -153,7 +153,13 @@ function inferRowTypeFromLog(record: PaymentLog): string {
  * 필요한 식별자가 응답에 없으면 null 반환 (호출부에서 상세 버튼 숨김).
  */
 function buildDetailLink(
-  row: { rowType?: string; orderId?: string; rentalOrderId?: string | null; moveInCaseId?: number | null },
+  row: {
+    rowType?: string;
+    orderId?: string;
+    rentalOrderId?: string | null;
+    moveInCaseId?: number | null;
+    moveInGuestOrderId?: number | null;
+  },
   from: 'orders' | 'logs'
 ): string | null {
   switch (row.rowType) {
@@ -166,8 +172,8 @@ function buildDetailLink(
         ? `/payments/move-in-cleaning/${row.moveInCaseId}?from=${from}`
         : null;
     case 'MOVE_IN_GUEST_ORDER':
-      return row.orderId
-        ? `/rental-orders?domain=move-in&openOrder=${encodeURIComponent(row.orderId)}`
+      return row.moveInGuestOrderId != null
+        ? `/payments/move-in-guest-order/${row.moveInGuestOrderId}?from=${from}`
         : null;
     case 'CONTRACT':
     default:
@@ -536,6 +542,7 @@ function PaymentLogTab({ source }: SubTabProps) {
             orderId: value,
             rentalOrderId: record.rentalOrderId,
             moveInCaseId: record.moveInCaseId,
+            moveInGuestOrderId: record.moveInGuestOrderId,
           },
           'logs'
         );

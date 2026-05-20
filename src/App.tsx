@@ -15,6 +15,7 @@ import ContractDetail from './pages/contracts/ContractDetail';
 import PaymentList from './pages/payments/PaymentList';
 import PaymentDetail from './pages/payments/PaymentDetail';
 import CleaningPaymentDetail from './pages/payments/CleaningPaymentDetail';
+import GuestOrderPaymentDetail from './pages/payments/GuestOrderPaymentDetail';
 import SettlementList from './pages/settlements/SettlementList';
 import SettlementDetail from './pages/settlements/SettlementDetail';
 import PayoutList from './pages/payouts/PayoutList';
@@ -85,6 +86,10 @@ function App() {
               <Route
                 path="payments/move-in-cleaning/:caseId"
                 element={<CleaningPaymentDetail />}
+              />
+              <Route
+                path="payments/move-in-guest-order/:orderDbId"
+                element={<GuestOrderPaymentDetail />}
               />
               <Route path="payments/:orderId" element={<PaymentDetail />} />
 
