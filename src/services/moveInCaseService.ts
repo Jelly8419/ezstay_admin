@@ -1,5 +1,6 @@
 import { api } from './api';
 import type {
+  CleaningPaymentDetail,
   MoveInCaseDetail,
   MoveInCaseListParams,
   MoveInCaseListResponse,
@@ -23,6 +24,11 @@ export const moveInCaseService = {
 
   getCaseDetail: (caseId: number): Promise<MoveInCaseDetail> =>
     api.get<MoveInCaseDetail>(`/admin/move-in/cases/${caseId}`),
+
+  getCleaningPaymentDetail: (caseId: number): Promise<CleaningPaymentDetail> =>
+    api.get<CleaningPaymentDetail>(
+      `/admin/move-in/cases/${caseId}/cleaning-payment`
+    ),
 
   updateCase: (
     caseId: number,

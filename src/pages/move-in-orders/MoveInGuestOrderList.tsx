@@ -43,7 +43,17 @@ function InfoRow({
   );
 }
 
-export default function MoveInGuestOrderList() {
+interface MoveInGuestOrderListProps {
+  /** 진입 시 자동으로 해당 orderId 검색·상세 모달 오픈 */
+  initialOrderId?: string;
+  /** 자동 오픈 후 부모에게 1회 처리 완료를 알림 (deep-link 쿼리 제거용) */
+  onInitialOrderHandled?: () => void;
+}
+
+export default function MoveInGuestOrderList({
+  initialOrderId,
+  onInitialOrderHandled,
+}: MoveInGuestOrderListProps = {}) {
   const navigate = useNavigate();
 
   const [items, setItems] = useState<MoveInGuestOrderMonitorItem[]>([]);
@@ -60,14 +70,17 @@ export default function MoveInGuestOrderList() {
   const [orderType, setOrderType] = useState<MoveInGuestOrderType | 'all'>(
     'all'
   );
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(initialOrderId ?? '');
+  const [search, setSearch] = useState(initialOrderId ?? '');
   const [page, setPage] = useState(1);
 
   // 상세 모달
   const [detail, setDetail] = useState<MoveInGuestOrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+
+  // deep-link 자동 오픈 처리 여부 (1회만 발동)
+  const [autoOpenHandled, setAutoOpenHandled] = useState(false);
 
   // 배송 갱신
   const [deliverySaving, setDeliverySaving] = useState(false);
@@ -134,6 +147,18 @@ export default function MoveInGuestOrderList() {
     setDetailError(null);
     setDetailLoading(false);
   };
+
+  // deep-link 자동 오픈: 목록 로드 후 initialOrderId 와 일치하는 항목의 상세 모달 자동 오픈
+  useEffect(() => {
+    if (autoOpenHandled) return;
+    if (!initialOrderId) return;
+    if (loading) return;
+    const target = items.find((it) => it.orderId === initialOrderId);
+    if (!target) return;
+    setAutoOpenHandled(true);
+    openDetail(target.id);
+    onInitialOrderHandled?.();
+  }, [autoOpenHandled, initialOrderId, items, loading, onInitialOrderHandled]);
 
   const handleUpdateDelivery = async (
     next: MoveInGuestOrderDeliveryStatus

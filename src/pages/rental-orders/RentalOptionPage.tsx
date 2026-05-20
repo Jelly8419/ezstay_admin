@@ -74,6 +74,13 @@ export default function RentalOptionPage() {
       : MOVE_IN_TABS.map((t) => ({ key: t.key, label: t.label }));
   const activeTabKey = domain === 'internal' ? internalTab : moveInTab;
 
+  const openOrderParam = searchParams.get('openOrder') || undefined;
+  const handleInitialOrderHandled = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('openOrder');
+    setSearchParams(params, { replace: true });
+  };
+
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-2xl font-bold text-gray-900">옵션상품 관리</h1>
@@ -118,7 +125,12 @@ export default function RentalOptionPage() {
       {domain === 'internal' && internalTab === 'orders'  && <RentalOrderList />}
       {domain === 'internal' && internalTab === 'refunds' && <RentalRefundList />}
       {domain === 'internal' && internalTab === 'items'   && <RentalItemList />}
-      {domain === 'move-in'  && moveInTab === 'orders'    && <MoveInGuestOrderList />}
+      {domain === 'move-in'  && moveInTab === 'orders'    && (
+        <MoveInGuestOrderList
+          initialOrderId={openOrderParam}
+          onInitialOrderHandled={handleInitialOrderHandled}
+        />
+      )}
       {domain === 'move-in'  && moveInTab === 'refunds'   && <MoveInRefundList />}
     </div>
   );

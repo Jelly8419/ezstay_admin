@@ -128,6 +128,55 @@ const getPaymentTypeBadge = (paymentType?: string) => {
   return null;
 };
 
+/**
+ * 결제/취소 내역(logs) 행의 productType 으로부터 rowType 추정.
+ * logs 응답은 rowType 필드가 없으므로 한글 productType 으로 분기.
+ */
+function inferRowTypeFromLog(record: PaymentLog): string {
+  if (record.productType === '청소') return 'MOVE_IN_CLEANING';
+  if (
+    record.productType === '입주용품' ||
+    record.productType === '침구류대여' ||
+    record.productType === '입주용품+침구류'
+  ) {
+    return 'MOVE_IN_GUEST_ORDER';
+  }
+  return 'CONTRACT';
+}
+
+/**
+ * rowType 별 상세 페이지 링크 생성.
+ * - CONTRACT          → /payments/:orderId?type=contract
+ * - RENTAL            → /payments/:rentalOrderId?type=rental
+ * - MOVE_IN_CLEANING  → /payments/move-in-cleaning/:moveInCaseId
+ * - MOVE_IN_GUEST_ORDER → /rental-orders?domain=move-in&openOrder=:orderId
+ * 필요한 식별자가 응답에 없으면 null 반환 (호출부에서 상세 버튼 숨김).
+ */
+function buildDetailLink(
+  row: { rowType?: string; orderId?: string; rentalOrderId?: string | null; moveInCaseId?: number | null },
+  from: 'orders' | 'logs'
+): string | null {
+  switch (row.rowType) {
+    case 'RENTAL':
+      return row.rentalOrderId
+        ? `/payments/${row.rentalOrderId}?type=rental&from=${from}`
+        : null;
+    case 'MOVE_IN_CLEANING':
+      return row.moveInCaseId != null
+        ? `/payments/move-in-cleaning/${row.moveInCaseId}?from=${from}`
+        : null;
+    case 'MOVE_IN_GUEST_ORDER':
+      return row.orderId
+        ? `/rental-orders?domain=move-in&openOrder=${encodeURIComponent(row.orderId)}`
+        : null;
+    case 'CONTRACT':
+    default:
+      return row.orderId
+        ? `/payments/${row.orderId}?type=contract&from=${from}`
+        : null;
+  }
+}
+
 // ── 탭1: 주문별 결제 현황 ──
 
 interface SubTabProps {
@@ -284,9 +333,10 @@ function OrderPaymentTab({ source }: SubTabProps) {
       key: 'actions',
       title: '',
       render: (_: any, record: PaymentSummaryItem) => {
-        const to = record.rowType === 'RENTAL'
-          ? `/payments/${record.rentalOrderId}?type=rental&from=orders`
-          : `/payments/${record.orderId}?type=contract&from=orders`;
+        const to = buildDetailLink(record, 'orders');
+        if (!to) {
+          return <span className="text-xs text-gray-400">-</span>;
+        }
         return (
           <Link to={to}>
             <Button variant="secondary" size="sm">상세</Button>
@@ -478,14 +528,30 @@ function PaymentLogTab({ source }: SubTabProps) {
     {
       key: 'orderId',
       title: '주문번호',
-      render: (value: string, record: PaymentLog) => (
-        <div className="font-mono text-sm space-y-0.5">
-          <div>{record.rentalOrderId || value || '-'}</div>
-          {record.pgOrderNo && (
-            <div className="text-xs text-gray-400">PG: {record.pgOrderNo}</div>
-          )}
-        </div>
-      ),
+      render: (value: string, record: PaymentLog) => {
+        const display = record.rentalOrderId || value || '-';
+        const to = buildDetailLink(
+          {
+            rowType: record.rentalOrderId ? 'RENTAL' : inferRowTypeFromLog(record),
+            orderId: value,
+            rentalOrderId: record.rentalOrderId,
+            moveInCaseId: record.moveInCaseId,
+          },
+          'logs'
+        );
+        return (
+          <div className="font-mono text-sm space-y-0.5">
+            {to ? (
+              <Link to={to} className="text-primary-600 hover:underline">{display}</Link>
+            ) : (
+              <div>{display}</div>
+            )}
+            {record.pgOrderNo && (
+              <div className="text-xs text-gray-400">PG: {record.pgOrderNo}</div>
+            )}
+          </div>
+        );
+      },
       width: '10%',
     },
     {

@@ -365,6 +365,8 @@ export interface PaymentSummaryItem {
   pgOrderNo: string | null;
   contractId: number;
   rentalOrderId: string | null;
+  /** 입주 준비 행(MOVE_IN_CLEANING / MOVE_IN_GUEST_ORDER)에만 채워짐 */
+  moveInCaseId?: number | null;
   paidAt: string | null;
   productType: string;
   paymentType?: PaymentType;
@@ -500,6 +502,71 @@ export interface PaymentLog {
   rentalOrderId?: string;
   refundId?: number;
   actor?: string;
+  /** 입주 준비 행(MOVE_IN_CLEANING / MOVE_IN_GUEST_ORDER)에만 채워짐 */
+  moveInCaseId?: number | null;
+}
+
+// ──────────────────────────────────────────────────────────
+// 청소 결제 상세 (GET /admin/move-in/cases/:caseId/cleaning-payment)
+// ──────────────────────────────────────────────────────────
+
+export interface CleaningPaymentDetailCase {
+  id: number;
+  moveInRoomId: number;
+  checkInDate: string;
+  checkOutDate: string;
+  cleaningStatus: string;
+  cleaningFee: number;
+  cleaningPaidAt: string | null;
+  cleaningDate: string | null;
+  cleaningTime: string | null;
+  host: { id: number; name: string; phone: string };
+  guest: { id: number; name: string; phone: string };
+  room: { id: number; address: string; detailAddress: string };
+  roomSnapshot: Record<string, unknown> | null;
+  adminMemo: string | null;
+}
+
+export interface CleaningPaymentAttempt {
+  paymentId: number;
+  orderId: string;
+  amount: number;
+  status: string;
+  statusLabel: string;
+  pgProvider: string | null;
+  pgMethod: string | null;
+  pgTid: string | null;
+  easyPayProvider: string | null;
+  paidAt: string | null;
+  refundedAt: string | null;
+  refundReason: string | null;
+  failedAt: string | null;
+  failureReason: string | null;
+  createdAt: string;
+}
+
+export interface CleaningRefundPolicy {
+  canRefund: boolean;
+  refundAmount: number;
+  deduction: number;
+  reason: string | null;
+}
+
+export interface CleaningServiceTaskRef {
+  id: number;
+  taskType: string;
+  status: string;
+  referenceDate: string;
+  quantity: number;
+  issueNote: string | null;
+  createdAt: string;
+}
+
+export interface CleaningPaymentDetail {
+  case: CleaningPaymentDetailCase;
+  payments: CleaningPaymentAttempt[];
+  cleaningRefund: CleaningRefundPolicy;
+  serviceTasks: CleaningServiceTaskRef[];
 }
 
 // 고객 문의(Inquiry) 관련 타입

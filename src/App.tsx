@@ -14,6 +14,7 @@ import ContractList from './pages/contracts/ContractList';
 import ContractDetail from './pages/contracts/ContractDetail';
 import PaymentList from './pages/payments/PaymentList';
 import PaymentDetail from './pages/payments/PaymentDetail';
+import CleaningPaymentDetail from './pages/payments/CleaningPaymentDetail';
 import SettlementList from './pages/settlements/SettlementList';
 import SettlementDetail from './pages/settlements/SettlementDetail';
 import PayoutList from './pages/payouts/PayoutList';
@@ -81,6 +82,10 @@ function App() {
 
               {/* 결제 관리 */}
               <Route path="payments" element={<PaymentList />} />
+              <Route
+                path="payments/move-in-cleaning/:caseId"
+                element={<CleaningPaymentDetail />}
+              />
               <Route path="payments/:orderId" element={<PaymentDetail />} />
 
               {/* 정산 관리 */}
