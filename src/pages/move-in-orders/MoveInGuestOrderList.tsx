@@ -146,11 +146,14 @@ export default function MoveInGuestOrderList() {
     setDeliverySaving(true);
     try {
       const trimmed = note.trim();
-      const res = await moveInCaseService.updateGuestOrderDelivery(detail.id, {
+      const orderId = detail.id;
+      await moveInCaseService.updateGuestOrderDelivery(orderId, {
         deliveryStatus: next,
         ...(trimmed === '' ? {} : { note: trimmed }),
       });
-      setDetail(res);
+      // PATCH 응답 형태가 GET 상세와 다를 수 있어 상세를 다시 조회
+      const fresh = await moveInCaseService.getGuestOrderDetail(orderId);
+      setDetail(fresh);
       await load();
     } catch (e: any) {
       alert(e?.message || '배송 상태 변경에 실패했습니다.');
@@ -499,7 +502,7 @@ export default function MoveInGuestOrderList() {
                 주문 항목
               </div>
               <div className="space-y-1">
-                {detail.items.map((it) => (
+                {(detail.items ?? []).map((it) => (
                   <div
                     key={it.id}
                     className="flex items-center justify-between text-sm py-1"
@@ -526,7 +529,7 @@ export default function MoveInGuestOrderList() {
                 결제 내역
               </div>
               <div className="space-y-2">
-                {detail.payments.map((p) => (
+                {(detail.payments ?? []).map((p) => (
                   <div
                     key={p.id}
                     className="flex items-center justify-between text-sm"
@@ -547,11 +550,11 @@ export default function MoveInGuestOrderList() {
               <div className="text-sm font-semibold text-gray-900 mb-2">
                 변경 이력
               </div>
-              {detail.logs.length === 0 ? (
+              {(detail.logs ?? []).length === 0 ? (
                 <p className="text-sm text-gray-500">이력이 없습니다.</p>
               ) : (
                 <div className="space-y-2">
-                  {detail.logs.map((log) => (
+                  {(detail.logs ?? []).map((log) => (
                     <div
                       key={log.id}
                       className="text-sm border-l-2 border-gray-200 pl-3 py-0.5"
