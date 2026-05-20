@@ -212,10 +212,10 @@ export default function RentalRefundList() {
       key: 'contract' as keyof RentalRefundRequestBase,
       title: '게스트',
       width: '10%',
-      render: (value: RentalRefundRequestBase['contract']) => (
+      render: (value: RentalRefundRequestBase['contract'] | undefined) => (
         <div>
-          <div className="font-medium text-sm">{value.guest.name}</div>
-          <div className="text-xs text-gray-500">{value.guest.nickname}</div>
+          <div className="font-medium text-sm">{value?.guest?.name ?? '-'}</div>
+          <div className="text-xs text-gray-500">{value?.guest?.nickname ?? ''}</div>
         </div>
       ),
     },
@@ -223,16 +223,20 @@ export default function RentalRefundList() {
       key: 'rentalOrder' as keyof RentalRefundRequestBase,
       title: '주문번호',
       width: '13%',
-      render: (value: RentalRefundRequestBase['rentalOrder']) => (
-        <span className="font-mono text-xs text-gray-700">{value.orderId}</span>
+      render: (value: RentalRefundRequestBase['rentalOrder'] | undefined) => (
+        <span className="font-mono text-xs text-gray-700">{value?.orderId ?? '-'}</span>
       ),
     },
     {
       key: 'rentalOrder' as keyof RentalRefundRequestBase,
       title: '상품',
       width: '16%',
-      render: (value: RentalRefundRequestBase['rentalOrder']) => {
-        const names = value.items.map((i) => `${i.name} ×${i.quantity}`).join(', ');
+      render: (value: RentalRefundRequestBase['rentalOrder'] | undefined) => {
+        const items = value?.items ?? [];
+        if (items.length === 0) {
+          return <span className="text-gray-400 text-sm">-</span>;
+        }
+        const names = items.map((i) => `${i.name} ×${i.quantity}`).join(', ');
         return (
           <span className="truncate block max-w-[140px] text-sm" title={names}>{names}</span>
         );
@@ -261,14 +265,14 @@ export default function RentalRefundList() {
       key: 'retrievalStatus' as keyof RentalRefundRequestBase,
       title: '수거 상태',
       width: '10%',
-      render: (value: RetrievalStatus | null) =>
-        value ? (
-          <Badge variant={RETRIEVAL_STATUS_MAP[value].variant}>
-            {RETRIEVAL_STATUS_MAP[value].label}
-          </Badge>
+      render: (value: RetrievalStatus | null) => {
+        const cfg = value ? RETRIEVAL_STATUS_MAP[value] : null;
+        return cfg ? (
+          <Badge variant={cfg.variant}>{cfg.label}</Badge>
         ) : (
           <span className="text-gray-400 text-xs">-</span>
-        ),
+        );
+      },
     },
     {
       key: 'createdAt' as keyof RentalRefundRequestBase,
@@ -280,11 +284,14 @@ export default function RentalRefundList() {
       key: 'status' as keyof RentalRefundRequestBase,
       title: '상태',
       width: '9%',
-      render: (value: RentalRefundRequestStatus) => (
-        <Badge variant={REQUEST_STATUS_MAP[value].variant}>
-          {REQUEST_STATUS_MAP[value].label}
-        </Badge>
-      ),
+      render: (value: RentalRefundRequestStatus) => {
+        const cfg = REQUEST_STATUS_MAP[value];
+        return cfg ? (
+          <Badge variant={cfg.variant}>{cfg.label}</Badge>
+        ) : (
+          <span className="text-gray-400 text-xs">{value ?? '-'}</span>
+        );
+      },
     },
     {
       key: 'id' as keyof RentalRefundRequestBase,
