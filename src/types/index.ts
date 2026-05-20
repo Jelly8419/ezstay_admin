@@ -348,8 +348,15 @@ export type PaymentTransactionType = 'PAYMENT_COMPLETED' | 'PARTIAL_CANCEL' | 'F
 // 결제 유형
 export type PaymentType = 'CONTRACT' | 'HOST_BURDEN';
 
-// 결제 행 유형 (계약 결제 or 렌탈 추가결제)
-export type PaymentRowType = 'CONTRACT' | 'RENTAL';
+// 결제 행 유형 (계약 결제 / 렌탈 추가결제 / 입주 준비 청소 / 입주 준비 게스트 옵션)
+export type PaymentRowType =
+  | 'CONTRACT'
+  | 'RENTAL'
+  | 'MOVE_IN_CLEANING'
+  | 'MOVE_IN_GUEST_ORDER';
+
+// 도메인 상위 필터 (메인 결제내역 화면)
+export type PaymentSourceFilter = 'all' | 'internal' | 'move_in';
 
 // 탭1: 주문별 결제 현황 (/admin/payments/summary)
 export interface PaymentSummaryItem {

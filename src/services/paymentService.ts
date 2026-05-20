@@ -12,6 +12,7 @@ export interface PaymentSummaryParams {
   startDate?: string;
   endDate?: string;
   productType?: string;
+  source?: 'all' | 'internal' | 'move_in';
 }
 
 export interface PaymentLogParams {
@@ -22,6 +23,7 @@ export interface PaymentLogParams {
   endDate?: string;
   transactionType?: string;
   productType?: string;
+  source?: 'all' | 'internal' | 'move_in';
 }
 
 export interface PaymentSummaryListResponse {

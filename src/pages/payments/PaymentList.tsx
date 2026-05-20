@@ -4,6 +4,7 @@ import type {
   PaymentSummaryItem,
   PaymentLog,
   Pagination as PaginationType,
+  PaymentSourceFilter,
 } from '../../types';
 import { formatCurrency, formatDateTime } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
@@ -67,17 +68,59 @@ const getUserTypeBadge = (userType: string) => {
   return <Badge variant="success">게스트</Badge>;
 };
 
-/** 상품구분 뱃지 (API가 한글로 내려줌: 계약, 렌탈 등) */
+/** 상품구분 뱃지 (API가 한글로 내려줌: 계약, 렌탈, 청소 등) */
 const getProductTypeBadge = (type: string) => {
-  const map: Record<string, 'default' | 'info' | 'warning' | 'danger'> = {
+  const map: Record<string, 'default' | 'info' | 'warning' | 'danger' | 'success'> = {
     '계약': 'default',
     '렌탈': 'info',
     '위약금': 'danger',
     '보증금 환급': 'info',
     '호스트부담금': 'warning',
+    // 입주 준비
+    '청소': 'success',
+    '입주용품': 'info',
+    '침구류대여': 'info',
+    '입주용품+침구류': 'info',
   };
   return <Badge variant={map[type] || 'default'}>{type}</Badge>;
 };
+
+// ── 도메인 필터 옵션 ──
+
+const SOURCE_OPTIONS: { value: PaymentSourceFilter; label: string }[] = [
+  { value: 'all',      label: '전체 도메인' },
+  { value: 'internal', label: '내부 계약' },
+  { value: 'move_in',  label: '입주 준비' },
+];
+
+// 도메인별 productType 옵션
+const INTERNAL_PRODUCT_OPTIONS = [
+  { value: '', label: '상품 전체' },
+  { value: '계약', label: '계약' },
+  { value: '렌탈', label: '렌탈' },
+  { value: '보증금 환급', label: '보증금 환급' },
+  { value: '호스트부담금', label: '호스트부담금' },
+];
+
+const MOVE_IN_PRODUCT_OPTIONS = [
+  { value: '', label: '상품 전체' },
+  { value: '청소', label: '청소' },
+  { value: '입주용품', label: '입주용품' },
+  { value: '침구류대여', label: '침구류대여' },
+  { value: '입주용품+침구류', label: '입주용품+침구류' },
+];
+
+const ALL_PRODUCT_OPTIONS = [
+  { value: '', label: '상품 전체' },
+  ...INTERNAL_PRODUCT_OPTIONS.slice(1),
+  ...MOVE_IN_PRODUCT_OPTIONS.slice(1),
+];
+
+function productOptionsFor(source: PaymentSourceFilter) {
+  if (source === 'internal') return INTERNAL_PRODUCT_OPTIONS;
+  if (source === 'move_in') return MOVE_IN_PRODUCT_OPTIONS;
+  return ALL_PRODUCT_OPTIONS;
+}
 
 /** 결제유형 뱃지 (paymentType: CONTRACT | HOST_BURDEN) */
 const getPaymentTypeBadge = (paymentType?: string) => {
@@ -87,7 +130,11 @@ const getPaymentTypeBadge = (paymentType?: string) => {
 
 // ── 탭1: 주문별 결제 현황 ──
 
-function OrderPaymentTab() {
+interface SubTabProps {
+  source: PaymentSourceFilter;
+}
+
+function OrderPaymentTab({ source }: SubTabProps) {
   const [payments, setPayments] = useState<PaymentSummaryItem[]>([]);
   const [pagination, setPagination] = useState<PaginationType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -105,6 +152,7 @@ function OrderPaymentTab() {
       const response = await paymentService.getPaymentSummary({
         page: currentPage,
         limit: 20,
+        source,
         ...(searchTerm && { search: searchTerm }),
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
@@ -122,9 +170,15 @@ function OrderPaymentTab() {
     }
   };
 
+  // source 변경 시 페이지/상품필터 리셋 후 재로드
+  useEffect(() => {
+    setCurrentPage(1);
+    setProductTypeFilter('');
+  }, [source]);
+
   useEffect(() => {
     loadPayments();
-  }, [currentPage]);
+  }, [currentPage, source]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -273,11 +327,11 @@ function OrderPaymentTab() {
                 }}
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
               >
-                <option value="">상품 전체</option>
-                <option value="contract">계약</option>
-                <option value="rental">렌탈</option>
-                <option value="contract_rental">계약/렌탈</option>
-                <option value="penalty">위약금</option>
+                {productOptionsFor(source).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex-1 min-w-[250px]">
@@ -323,7 +377,7 @@ function OrderPaymentTab() {
 
 // ── 탭2: 결제/취소 내역 ──
 
-function PaymentLogTab() {
+function PaymentLogTab({ source }: SubTabProps) {
   const [logs, setLogs] = useState<PaymentLog[]>([]);
   const [pagination, setPagination] = useState<PaginationType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -342,6 +396,7 @@ function PaymentLogTab() {
       const response = await paymentService.getPaymentLogs({
         page: currentPage,
         limit: 20,
+        source,
         ...(searchTerm && { search: searchTerm }),
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
@@ -360,9 +415,15 @@ function PaymentLogTab() {
     }
   };
 
+  // source 변경 시 페이지/상품필터 리셋 후 재로드
+  useEffect(() => {
+    setCurrentPage(1);
+    setProductTypeFilter('');
+  }, [source]);
+
   useEffect(() => {
     loadLogs();
-  }, [currentPage]);
+  }, [currentPage, source]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -496,11 +557,11 @@ function PaymentLogTab() {
                 }}
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
               >
-                <option value="">상품 전체</option>
-                <option value="contract">계약</option>
-                <option value="rental">렌탈</option>
-                <option value="deposit_refund">보증금 환급</option>
-                <option value="penalty">위약금</option>
+                {productOptionsFor(source).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex-1 min-w-[250px]">
@@ -552,6 +613,7 @@ export default function PaymentList() {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'orders' ? 'orders' : 'logs';
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const [sourceFilter, setSourceFilter] = useState<PaymentSourceFilter>('all');
 
   const tabs: { key: TabType; label: string }[] = [
     { key: 'logs', label: '결제/취소 내역' },
@@ -581,8 +643,32 @@ export default function PaymentList() {
         </nav>
       </div>
 
+      {/* 도메인 필터 (양 탭 공통) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium text-gray-700">도메인</span>
+        <div className="inline-flex bg-gray-100 rounded-lg p-1">
+          {SOURCE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setSourceFilter(opt.value)}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                sourceFilter === opt.value
+                  ? 'bg-white shadow text-gray-900 font-medium'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* 탭 컨텐츠 */}
-      {activeTab === 'orders' ? <OrderPaymentTab /> : <PaymentLogTab />}
+      {activeTab === 'orders' ? (
+        <OrderPaymentTab source={sourceFilter} />
+      ) : (
+        <PaymentLogTab source={sourceFilter} />
+      )}
     </div>
   );
 }
