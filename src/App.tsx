@@ -25,9 +25,7 @@ import { SupportCenter } from './pages/support/SupportCenter';
 import DepositHoldList from './pages/deposit-holds/DepositHoldList';
 import DepositHoldDetailPage from './pages/deposit-holds/DepositHoldDetail';
 import CancelRequestList from './pages/contracts/CancelRequestList';
-import RentalRefundList from './pages/rental-refund-requests/RentalRefundList';
-import RentalOrderList from './pages/rental-orders/RentalOrderList';
-import RentalItemList from './pages/rental-items/RentalItemList';
+import RentalOptionPage from './pages/rental-orders/RentalOptionPage';
 import ServiceTaskList from './pages/service-tasks/ServiceTaskList';
 import ReceiptList from './pages/receipts/ReceiptList';
 import AlimtalkManagement from './pages/alimtalk/AlimtalkManagement';
@@ -93,10 +91,16 @@ function App() {
               <Route path="payouts" element={<PayoutList />} />
               <Route path="payouts/:payoutId" element={<PayoutDetail />} />
 
-              {/* 옵션상품 관리 */}
-              <Route path="rental-orders" element={<RentalOrderList />} />
-              <Route path="rental-refund-requests" element={<RentalRefundList />} />
-              <Route path="rental-items" element={<RentalItemList />} />
+              {/* 옵션상품 관리 (내부 계약 / 입주 준비 도메인 통합) */}
+              <Route path="rental-orders" element={<RentalOptionPage />} />
+              <Route
+                path="rental-refund-requests"
+                element={<Navigate to="/rental-orders?tab=refunds" replace />}
+              />
+              <Route
+                path="rental-items"
+                element={<Navigate to="/rental-orders?tab=items" replace />}
+              />
 
               {/* 예약 관리 */}
               <Route path="service-tasks" element={<ServiceTaskList />} />

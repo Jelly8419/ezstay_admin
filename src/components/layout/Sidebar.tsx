@@ -80,11 +80,6 @@ const navItems: NavItem[] = [
     path: '/rental-orders',
     label: '옵션상품 관리',
     icon: <Package className="w-5 h-5" />,
-    children: [
-      { path: '/rental-orders',          label: '배송 상태 관리' },
-      { path: '/rental-refund-requests', label: '환불 요청 관리' },
-      { path: '/rental-items',           label: '재고 관리' },
-    ]
   },
   {
     path: '/service-tasks',
