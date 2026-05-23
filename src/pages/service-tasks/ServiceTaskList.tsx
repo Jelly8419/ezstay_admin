@@ -97,7 +97,10 @@ function buildColumns(
       key: 'source',
       title: '도메인',
       render: (_: any, task: ServiceTask) => {
-        const cfg = SOURCE_BADGE[task.source];
+        const cfg = task.source ? SOURCE_BADGE[task.source] : undefined;
+        if (!cfg) {
+          return <span className="text-xs text-gray-400">{task.source ?? '-'}</span>;
+        }
         return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
       },
     });
@@ -159,7 +162,7 @@ function buildColumns(
       key: 'taskType',
       title: '타입',
       render: (value: ServiceTaskType) => (
-        <Badge variant="default">{TASK_TYPE_LABELS[value]}</Badge>
+        <Badge variant="default">{TASK_TYPE_LABELS[value] ?? value ?? '-'}</Badge>
       ),
     },
     {
@@ -185,8 +188,12 @@ function buildColumns(
       key: 'status',
       title: '상태',
       render: (value: ServiceTaskStatus, task: ServiceTask) => {
-        const cfg = STATUS_CONFIG[value];
-        const badge = <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+        const cfg = value ? STATUS_CONFIG[value] : undefined;
+        const badge = cfg ? (
+          <Badge variant={cfg.variant}>{cfg.label}</Badge>
+        ) : (
+          <span className="text-xs text-gray-400">{value ?? '-'}</span>
+        );
         if (value === 'ISSUE' && (task as any).issueNote) {
           return (
             <span title={(task as any).issueNote} className="cursor-help">
